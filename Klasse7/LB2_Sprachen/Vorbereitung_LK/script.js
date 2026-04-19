@@ -12,7 +12,7 @@ class CSSExplorer {
       { term: 'Grundgeruest', definition: 'Jede HTML-Datei besteht aus <html>, <head> und <body>. Das ist das Grundgeruest.', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
       { term: 'Ueberschrift', definition: 'Mit <h1> bis <h6> erstellst du Ueberschriften. h1 ist die wichtigste, h6 die kleinste.', example: '<h1>Groesste</h1>  <h6>Kleinste</h6>' },
       { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', example: '<p>Das ist ein Absatz.</p>' },
-      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
+      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', example: '<ul>\n  <li>Apfel</li>\n  <li>Banane</li>\n</ul>\n\n<ol>\n  <li>Aufwaermen</li>\n  <li>Spielen</li>\n</ol>' },
       { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', example: '<a href="https://example.com">Klick mich</a>' },
       { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, width bestimmt die Breite.', example: '<img src="bild.jpg" width="200">' }
     ];
@@ -41,7 +41,7 @@ class CSSExplorer {
       { icon: '📄', title: 'HTML-Dokument', definition: 'Jede Webseite ist eine HTML-Datei. Sie beginnt mit <!DOCTYPE html> und hat die Bereiche <html>, <head> und <body>.', example: '<!DOCTYPE html>\n<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
       { icon: '📌', title: 'Ueberschriften', definition: 'Es gibt 6 Ueberschriften-Stufen: <h1> (wichtigste) bis <h6> (kleinste). Pro Seite sollte es nur eine <h1> geben.', example: '<h1>Haupttitel</h1>\n<h2>Untertitel</h2>' },
       { icon: '📝', title: 'Absatz (p)', definition: 'Mit dem <p>-Tag erstellst du Textabsaetze. Der Browser fuegt automatisch Abstand darueber und darunter ein.', example: '<p>Ein Absatz mit Text.</p>' },
-      { icon: '📋', title: 'Listen', definition: 'Ungeordnete Listen (<ul>) zeigen Aufzaehlungspunkte. Geordnete Listen (<ol>) zeigen Nummern. Eintraege stehen in <li>.', example: '<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>' },
+      { icon: '📋', title: 'Listen', definition: 'Ungeordnete Listen (<ul>) zeigen Aufzaehlungspunkte. Geordnete Listen (<ol>) zeigen Nummern. Eintraege stehen in <li>.', example: '<ul>\n  <li>Apfel</li>\n  <li>Banane</li>\n</ul>\n\n<ol>\n  <li>Aufwaermen</li>\n  <li>Spielen</li>\n</ol>' },
       { icon: '🔗', title: 'Links (a)', definition: 'Mit <a href="URL"> erstellst du einen klickbaren Link. Das href-Attribut gibt an, wohin der Link fuehrt.', example: '<a href="https://example.com">\n  Klick mich!\n</a>' },
       { icon: '🖼️', title: 'Bilder (img)', definition: 'Mit <img> fuegst du Bilder ein. src gibt die Bilddatei an, width bestimmt die Breite des Bildes.', example: '<img src="foto.jpg"\n     width="200">' }
     ];
