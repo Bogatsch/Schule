@@ -12,7 +12,8 @@
             <h1>HTML &amp; CSS - Mach deine Webseite schoen!</h1>
             <p>Hier wiederholen und vertiefen wir dein Wissen zu HTML und CSS.</p>
             <nav class="header-nav">
-                <button class="glossary-btn" id="open-glossary">Glossar: HTML &amp; CSS</button>
+                <button class="glossary-btn glossary-btn-html" id="open-glossary-html">Glossar: HTML</button>
+                <button class="glossary-btn glossary-btn-css" id="open-glossary-css">Glossar: CSS</button>
             </nav>
         </header>
 
@@ -37,6 +38,12 @@
                 <div class="subsection">
                     <h3>HTML-Elemente ausprobieren</h3>
                     <div id="html-element-playground"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Uebungsflaeche: HTML</h3>
+                    <p>Schreibe frei HTML-Code und sieh live das Ergebnis!</p>
+                    <div id="html-playground"></div>
                 </div>
             </section>
 
@@ -83,6 +90,12 @@
                     <h3>Typografie</h3>
                     <div class="typo-workshop" id="typo-workshop"></div>
                 </div>
+
+                <div class="subsection">
+                    <h3>Uebungsflaeche: HTML &amp; CSS</h3>
+                    <p>Schreibe HTML und CSS und sieh live das Ergebnis!</p>
+                    <div id="html-css-playground"></div>
+                </div>
             </section>
 
             <!-- Missionen -->
@@ -94,12 +107,21 @@
         </div>
     </div>
 
-    <!-- Glossar Modal -->
-    <div class="modal-overlay" id="glossary-modal" role="dialog" aria-modal="true" aria-label="Glossar">
+    <!-- Glossar HTML Modal -->
+    <div class="modal-overlay" id="glossary-modal-html" role="dialog" aria-modal="true" aria-label="Glossar HTML">
         <div class="modal-content">
-            <button class="modal-close" id="close-glossary" aria-label="Glossar schliessen">&times;</button>
-            <h2>Glossar: HTML &amp; CSS</h2>
-            <div id="glossary-list"></div>
+            <button class="modal-close" id="close-glossary-html" aria-label="Glossar schliessen">&times;</button>
+            <h2>Glossar: HTML</h2>
+            <div id="glossary-list-html"></div>
+        </div>
+    </div>
+
+    <!-- Glossar CSS Modal -->
+    <div class="modal-overlay" id="glossary-modal-css" role="dialog" aria-modal="true" aria-label="Glossar CSS">
+        <div class="modal-content">
+            <button class="modal-close" id="close-glossary-css" aria-label="Glossar schliessen">&times;</button>
+            <h2>Glossar: CSS</h2>
+            <div id="glossary-list-css"></div>
         </div>
     </div>
 
@@ -122,7 +144,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 Dominik Bechinie - Erstellt fuer den Informatikunterricht</p>
+        <p>&copy; 2026 FK Informatik Manos - Erstellt fuer den Informatikunterricht</p>
     </footer>
 
     <script src="script.js"></script>

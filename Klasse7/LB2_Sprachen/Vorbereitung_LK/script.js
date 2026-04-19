@@ -5,26 +5,30 @@ class CSSExplorer {
     this.missionState = {};
     this._missionAbort = null;
 
-    // ---- GLOSSARY (HTML + CSS) ----
-    this.glossary = [
-      { term: 'HTML', definition: 'HTML steht fuer HyperText Markup Language. Damit bestimmst du den Inhalt und die Struktur deiner Webseite.', analogy: '', example: '<h1>Ueberschrift</h1>' },
-      { term: 'DOCTYPE', definition: 'Die DOCTYPE-Deklaration sagt dem Browser, welche HTML-Version verwendet wird. Steht immer ganz oben.', analogy: '', example: '<!DOCTYPE html>' },
-      { term: 'Grundgeruest', definition: 'Jede HTML-Datei besteht aus <html>, <head> und <body>. Das ist das Grundgeruest.', analogy: '', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
-      { term: 'Ueberschrift', definition: 'Mit <h1> bis <h6> erstellst du Ueberschriften. h1 ist die wichtigste, h6 die kleinste.', analogy: '', example: '<h1>Groesste</h1>  <h6>Kleinste</h6>' },
-      { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', analogy: '', example: '<p>Das ist ein Absatz.</p>' },
-      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', analogy: '', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
-      { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', analogy: '', example: '<a href="https://example.com">Klick mich</a>' },
-      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, alt einen Beschreibungstext.', analogy: '', example: '<img src="bild.jpg" alt="Mein Bild">' },
-      { term: 'CSS', definition: 'CSS steht fuer Cascading Style Sheets. Es ist die Sprache, mit der du das Aussehen deiner Webseite bestimmst.', analogy: '', example: 'p { color: red; }' },
-      { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', analogy: '', example: 'h1 { ... }' },
-      { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', analogy: '', example: 'color, font-size, background' },
-      { term: 'Wert', definition: 'Der Wert sagt, WIE die Eigenschaft aussehen soll (z.B. rot, 16px, fett).', analogy: '', example: 'color: blue;  (blue ist der Wert)' },
-      { term: 'ID', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Jede ID darf nur einmal auf der Seite vorkommen.', analogy: '', example: '#titel { font-size: 2em; }' },
-      { term: 'Inline CSS', definition: 'CSS-Regeln direkt im style-Attribut eines HTML-Elements. Nur fuer Notfaelle!', analogy: '', example: '<p style="color:red">Text</p>' },
-      { term: 'Internes CSS', definition: 'CSS-Regeln im style-Element im head-Bereich der HTML-Datei.', analogy: '', example: '<style> p { color: red; } </style>' },
-      { term: 'Externes CSS', definition: 'CSS-Regeln in einer eigenen .css-Datei, die per link eingebunden wird. Die beste Methode!', analogy: '', example: '<link rel="stylesheet" href="style.css">' },
-      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', analogy: '', example: 'Inline > ID > Element' },
-      { term: 'Farbe (color)', definition: 'Mit color bestimmst du die Textfarbe. Mit background-color die Hintergrundfarbe.', analogy: '', example: 'color: #ff6600; background-color: yellow;' }
+    // ---- GLOSSARY HTML ----
+    this.glossaryHtml = [
+      { term: 'HTML', definition: 'HTML steht fuer HyperText Markup Language. Damit bestimmst du den Inhalt und die Struktur deiner Webseite.', example: '<h1>Ueberschrift</h1>' },
+      { term: 'DOCTYPE', definition: 'Die DOCTYPE-Deklaration sagt dem Browser, welche HTML-Version verwendet wird. Steht immer ganz oben.', example: '<!DOCTYPE html>' },
+      { term: 'Grundgeruest', definition: 'Jede HTML-Datei besteht aus <html>, <head> und <body>. Das ist das Grundgeruest.', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
+      { term: 'Ueberschrift', definition: 'Mit <h1> bis <h6> erstellst du Ueberschriften. h1 ist die wichtigste, h6 die kleinste.', example: '<h1>Groesste</h1>  <h6>Kleinste</h6>' },
+      { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', example: '<p>Das ist ein Absatz.</p>' },
+      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
+      { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', example: '<a href="https://example.com">Klick mich</a>' },
+      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, alt einen Beschreibungstext.', example: '<img src="bild.jpg" alt="Mein Bild">' }
+    ];
+
+    // ---- GLOSSARY CSS ----
+    this.glossaryCss = [
+      { term: 'CSS', definition: 'CSS steht fuer Cascading Style Sheets. Es ist die Sprache, mit der du das Aussehen deiner Webseite bestimmst.', example: 'p { color: red; }' },
+      { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', example: 'h1 { ... }' },
+      { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', example: 'color, font-size, background' },
+      { term: 'Wert', definition: 'Der Wert sagt, WIE die Eigenschaft aussehen soll (z.B. rot, 16px, fett).', example: 'color: blue;  (blue ist der Wert)' },
+      { term: 'ID', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Jede ID darf nur einmal auf der Seite vorkommen.', example: '#titel { font-size: 2em; }' },
+      { term: 'Inline CSS', definition: 'CSS-Regeln direkt im style-Attribut eines HTML-Elements. Nur fuer Notfaelle!', example: '<p style="color:red">Text</p>' },
+      { term: 'Internes CSS', definition: 'CSS-Regeln im style-Element im head-Bereich der HTML-Datei.', example: '<style> p { color: red; } </style>' },
+      { term: 'Externes CSS', definition: 'CSS-Regeln in einer eigenen .css-Datei, die per link eingebunden wird. Die beste Methode!', example: '<link rel="stylesheet" href="style.css">' },
+      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', example: 'Inline > ID > Element' },
+      { term: 'Farbe (color)', definition: 'Mit color bestimmst du die Textfarbe. Mit background-color die Hintergrundfarbe.', example: 'color: #ff6600; background-color: yellow;' }
     ];
 
     // ---- HTML REFERENCES (for badges) ----
@@ -86,9 +90,9 @@ class CSSExplorer {
       },
       {
         title: 'Bilder',
-        code: '<img src="bild.jpg"\n     alt="Ein Beispielbild"\n     width="200">',
-        preview: '<div style="background:#ddd;width:200px;height:120px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#666;">Bild-Platzhalter</div>',
-        explanation: 'src gibt die Bilddatei an. alt beschreibt das Bild (wichtig fuer Barrierefreiheit!). width bestimmt die Breite.'
+        code: '<img src="manos_logo.gif"\n     alt="MANOS Schullogo"\n     width="200">',
+        preview: '<img src="manos_logo.gif" alt="MANOS Schullogo" width="200">',
+        explanation: 'src gibt die Bilddatei an (z.B. "manos_logo.gif"). Du kannst auch einen Link zu einem Bild nutzen, z.B. src="https://example.com/bild.png". alt beschreibt das Bild (wichtig fuer Barrierefreiheit!).'
       }
     ];
 
@@ -105,21 +109,27 @@ class CSSExplorer {
     this.workshopSteps = [
       {
         title: 'Inline-Style',
-        code: '<code>&lt;p <span class="highlight-css">style="color: blue; font-size: 20px;"</span>&gt;</code>\n  Dieser Text ist blau und gross!\n<code>&lt;/p&gt;</code>',
+        htmlCode: '<p style="color: blue; font-size: 20px;">\n  Dieser Text ist blau und gross!\n</p>',
+        highlightText: 'style="color: blue; font-size: 20px;"',
+        cssCode: null,
         preview: '<p style="color: blue; font-size: 20px;">Dieser Text ist blau und gross!</p><p>Dieser Text hat keinen Style.</p>',
-        explanation: 'Inline-CSS schreibst du direkt ins HTML-Element mit dem style-Attribut. Praktisch zum Ausprobieren, aber nicht fuer grosse Seiten geeignet – es wird schnell unuebersichtlich!'
+        explanation: 'Inline-CSS schreibst du direkt ins HTML-Element mit dem style-Attribut. Hier brauchst du keine extra style.css – alles steht in der index.html. Praktisch zum Ausprobieren, aber nicht fuer grosse Seiten geeignet!'
       },
       {
         title: 'Interner Style',
-        code: '<code>&lt;head&gt;</code>\n  <code>&lt;style&gt;</code>\n    <span class="highlight-css">p { color: green; font-size: 18px; }</span>\n  <code>&lt;/style&gt;</code>\n<code>&lt;/head&gt;</code>\n<code>&lt;body&gt;</code>\n  <code>&lt;p&gt;</code>Alle Absaetze sind gruen!<code>&lt;/p&gt;</code>\n<code>&lt;/body&gt;</code>',
+        htmlCode: '<head>\n  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>\n</head>\n<body>\n  <p>Alle Absaetze sind gruen!</p>\n</body>',
+        highlightText: '  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>',
+        cssCode: null,
         preview: '<style>p { color: green; font-size: 18px; }</style><p>Alle Absaetze sind gruen!</p><p>Dieser auch!</p>',
-        explanation: 'Internes CSS schreibst du in einen <style>-Block im <head> deines HTML-Dokuments. Gut fuer einzelne Seiten, aber besser ist ein externes Stylesheet!'
+        explanation: 'Internes CSS schreibst du in einen <style>-Block im <head>. Auch hier brauchst du keine extra style.css – alles steht in der index.html. Gut fuer einzelne Seiten, aber besser ist ein externes Stylesheet!'
       },
       {
         title: 'Externes Stylesheet',
-        code: '<span class="highlight-html">&lt;!-- In der HTML-Datei: --&gt;</span>\n<code>&lt;head&gt;</code>\n  <code>&lt;link rel="stylesheet" <span class="highlight-css">href="style.css"</span>&gt;</code>\n<code>&lt;/head&gt;</code>\n\n<span class="highlight-css">/* In style.css: */</span>\n<span class="highlight-css">p { color: purple; font-size: 18px; }</span>',
+        htmlCode: '<head>\n  <link rel="stylesheet"\n        href="style.css">\n</head>\n<body>\n  <p>CSS aus einer eigenen Datei!</p>\n  <p>So machen es die Profis.</p>\n</body>',
+        highlightText: '  <link rel="stylesheet"\n        href="style.css">',
+        cssCode: 'p {\n  color: purple;\n  font-size: 18px;\n}',
         preview: '<style>p { color: purple; font-size: 18px; }</style><p>CSS aus einer eigenen Datei!</p><p>So machen es die Profis.</p>',
-        explanation: 'Bei einem externen Stylesheet schreibst du dein CSS in eine eigene .css-Datei und bindest sie mit <link> ein. Das ist die beste Methode! Du kannst dieselbe CSS-Datei fuer viele HTML-Seiten nutzen.'
+        explanation: 'Hier brauchst du zwei Dateien: In der index.html bindest du die style.css mit <link> ein. Das CSS schreibst du in die style.css. Das ist die beste Methode! Du kannst dieselbe style.css fuer viele HTML-Seiten nutzen.'
       }
     ];
 
@@ -131,7 +141,7 @@ class CSSExplorer {
         { tag: 'p', text: 'Zweiter Absatz', attrs: '', id: '', cls: '' },
         { tag: 'h2', text: 'Unterueberschrift', attrs: ' id="sub"', id: 'sub', cls: '' },
         { tag: 'p', text: 'Dritter Absatz', attrs: '', id: '', cls: '' },
-        { tag: 'img', text: '', attrs: ' src="bild.jpg" alt="Bild"', id: '', cls: '', selfClosing: true }
+        { tag: 'img', text: '', attrs: ' src="manos_logo.gif" alt="Schullogo"', id: '', cls: '', selfClosing: true }
       ],
       selectors: [
         { selector: 'h1', label: 'h1', desc: 'Waehlt alle h1-Ueberschriften aus.', matchFn: el => el.tag === 'h1' },
@@ -180,10 +190,10 @@ class CSSExplorer {
       },
       {
         title: 'Listen erstellen',
-        text: 'Erstelle eine h1-Ueberschrift und darunter sowohl eine ungeordnete Liste (<ul>) als auch eine geordnete Liste (<ol>) mit jeweils mindestens 3 Eintraegen (<li>).',
+        text: 'Ergaenze die Listen! Fuer jede Liste ist ein Beispiel vorgegeben. Fuege jeweils mindestens 2 weitere Eintraege (<li>) hinzu.',
         format: 'html-write',
         data: {
-          starterHtml: '<h1>Meine Listen</h1>\n\n<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>\n\n<ol>\n  <li></li>\n  <li></li>\n  <li></li>\n</ol>',
+          starterHtml: '<h1>Meine Listen</h1>\n\n<h2>Baeume die ich kenne</h2>\n<ul>\n  <li>Eiche</li>\n  <!-- Ergaenze 2 weitere Baeume! -->\n</ul>\n\n<h2>Mein Lieblingsfaecher-Ranking</h2>\n<ol>\n  <li>Informatik</li>\n  <!-- Ergaenze 2 weitere Faecher! -->\n</ol>',
           checks: [
             { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
             { type: 'dom', selector: 'ul', minCount: 1, desc: 'Ungeordnete Liste (<ul>) vorhanden' },
@@ -196,16 +206,16 @@ class CSSExplorer {
       },
       {
         title: 'Links & Bilder',
-        text: 'Erstelle eine Seite mit einer h1-Ueberschrift, einem Link (<a> mit href-Attribut) und einem Bild (<img> mit src und alt). Tipp: Fuer src kannst du "bild.jpg" als Platzhalter nehmen.',
+        text: 'Schau dir den Code an: Der Link fuehrt zur MANOS-Schulhomepage. Das Bild zeigt das Schullogo. Ergaenze einen passenden alt-Text fuer das Bild!',
         format: 'html-write',
         data: {
-          starterHtml: '<h1>Meine Seite</h1>\n<p>Besuche <a href="">diese Seite</a>!</p>\n<img src="" alt="">',
+          starterHtml: '<h1>Meine Seite</h1>\n\n<p>Besuche <a href="https://manos-dresden.de/">die MANOS-Homepage</a>!</p>\n\n<img src="manos_logo.gif" alt="" width="200">',
           checks: [
             { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
             { type: 'dom', selector: 'a[href]', minCount: 1, desc: 'Link (<a>) mit href vorhanden' },
             { type: 'attr', selector: 'a', attr: 'href', notEmpty: true, desc: 'Link hat ein nicht-leeres href' },
             { type: 'dom', selector: 'img[src]', minCount: 1, desc: 'Bild (<img>) mit src vorhanden' },
-            { type: 'attr', selector: 'img', attr: 'alt', exists: true, desc: 'Bild hat ein alt-Attribut' }
+            { type: 'attr', selector: 'img', attr: 'alt', notEmpty: true, desc: 'Bild hat einen alt-Text' }
           ]
         },
         success: 'Toll! Du kannst Links und Bilder in HTML einbauen!'
@@ -501,11 +511,13 @@ class CSSExplorer {
     this.renderHtmlFlipCards();
     this.renderHtmlStructure();
     this.renderHtmlElementPlayground();
+    this.renderHtmlPlayground();
     this.renderFlipCards();
     this.renderWorkshop();
     this.renderSelectorPlayground();
     this.renderColorExplorer();
     this.renderTypoWorkshop();
+    this.renderHtmlCssPlayground();
     this.createMissionButtons();
     this.updateMission();
     this.bindHtmlRefBadges();
@@ -516,24 +528,30 @@ class CSSExplorer {
   // GLOSSARY
   // ==========================
   bindGlossary() {
-    const openBtn = document.getElementById('open-glossary');
-    const modal = document.getElementById('glossary-modal');
-    const closeBtn = document.getElementById('close-glossary');
-    if (openBtn && modal) {
-      openBtn.addEventListener('click', () => modal.classList.add('active'));
-      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
-    }
+    ['html', 'css'].forEach(type => {
+      const openBtn = document.getElementById('open-glossary-' + type);
+      const modal = document.getElementById('glossary-modal-' + type);
+      const closeBtn = document.getElementById('close-glossary-' + type);
+      if (openBtn && modal) {
+        openBtn.addEventListener('click', () => modal.classList.add('active'));
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+      }
+    });
   }
 
   renderGlossary() {
-    const list = document.getElementById('glossary-list');
-    if (!list) return;
-    list.innerHTML = this.glossary.map(g => `
+    this._renderGlossaryList('glossary-list-html', this.glossaryHtml);
+    this._renderGlossaryList('glossary-list-css', this.glossaryCss);
+  }
+
+  _renderGlossaryList(containerId, entries) {
+    const list = document.getElementById(containerId);
+    if (!list || !entries) return;
+    list.innerHTML = entries.map(g => `
       <div class="glossary-entry">
         <h3>${this.esc(g.term)}</h3>
         <p class="glossary-definition">${this.esc(g.definition)}</p>
-        <p class="glossary-analogy">${this.esc(g.analogy)}</p>
         <div class="glossary-example">${this.esc(g.example)}</div>
       </div>
     `).join('');
@@ -545,29 +563,32 @@ class CSSExplorer {
   renderHtmlFlipCards() {
     const container = document.getElementById('html-flip-cards-container');
     if (!container) return;
+    container.className = 'html-accordion-list';
     container.innerHTML = this.htmlFlipCards.map((card, i) => `
-      <div class="flip-card" role="listitem" tabindex="0" data-index="${i}">
-        <div class="flip-card-inner">
-          <div class="flip-card-front html-card-front">
-            <span class="flip-icon">${card.icon}</span>
-            <span class="flip-title">${this.esc(card.title)}</span>
-            <span class="flip-hint">Klicke zum Umdrehen</span>
-          </div>
-          <div class="flip-card-back html-card-back">
-            <p class="flip-definition">${this.esc(card.definition)}</p>
-            <div class="flip-example">${this.esc(card.example)}</div>
-          </div>
+      <div class="html-accordion-item" data-index="${i}">
+        <button class="html-accordion-header" type="button" aria-expanded="false">
+          <span class="accordion-icon">${card.icon}</span>
+          <span class="accordion-title">${this.esc(card.title)}</span>
+          <span class="accordion-chevron">&#9662;</span>
+        </button>
+        <div class="html-accordion-body">
+          <p class="accordion-definition">${this.esc(card.definition)}</p>
+          <pre class="accordion-example">${this.colorizeHtml(card.example)}</pre>
         </div>
       </div>
     `).join('');
     container.addEventListener('click', (e) => {
-      const card = e.target.closest('.flip-card');
-      if (card) card.classList.toggle('flipped');
-    });
-    container.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        const card = e.target.closest('.flip-card');
-        if (card) { e.preventDefault(); card.classList.toggle('flipped'); }
+      const header = e.target.closest('.html-accordion-header');
+      if (!header) return;
+      const item = header.closest('.html-accordion-item');
+      const isOpen = item.classList.contains('open');
+      container.querySelectorAll('.html-accordion-item').forEach(el => {
+        el.classList.remove('open');
+        el.querySelector('.html-accordion-header')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        header.setAttribute('aria-expanded', 'true');
       }
     });
   }
@@ -592,23 +613,29 @@ class CSSExplorer {
     &lt;p&gt;Mein erster Text.&lt;/p&gt;
   <span class="structure-part" data-part="5">&lt;/body&gt;</span>
 <span class="structure-part" data-part="1">&lt;/html&gt;</span></pre>
-        <div class="html-structure-info" id="html-structure-info">
-          Klicke auf einen <span style="color:var(--accent-html)">orangenen</span> Teil, um mehr zu erfahren!
+        <div class="html-structure-parts-list" id="html-structure-parts-list">
+          ${this.htmlStructureParts.map((part, i) => `
+            <div class="structure-part-item" data-part="${i}">
+              <h4 class="structure-part-heading">${this.esc(part.label)}</h4>
+              <p class="structure-part-desc">${this.esc(part.desc)}</p>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
 
-    const parts = this.htmlStructureParts;
     container.addEventListener('click', (e) => {
       const span = e.target.closest('.structure-part');
-      if (!span) return;
-      const idx = parseInt(span.dataset.part, 10);
-      const info = document.getElementById('html-structure-info');
-      if (info && parts[idx]) {
-        container.querySelectorAll('.structure-part').forEach(s => s.classList.remove('active'));
-        container.querySelectorAll(`.structure-part[data-part="${idx}"]`).forEach(s => s.classList.add('active'));
-        info.innerHTML = `<strong>${this.esc(parts[idx].label)}</strong><br>${this.esc(parts[idx].desc)}`;
-      }
+      const listItem = e.target.closest('.structure-part-item');
+      let idx = -1;
+      if (span) idx = parseInt(span.dataset.part, 10);
+      else if (listItem) idx = parseInt(listItem.dataset.part, 10);
+      if (idx < 0) return;
+      container.querySelectorAll('.structure-part').forEach(s => s.classList.remove('active'));
+      container.querySelectorAll(`.structure-part[data-part="${idx}"]`).forEach(s => s.classList.add('active'));
+      container.querySelectorAll('.structure-part-item').forEach(el => el.classList.remove('active'));
+      const item = container.querySelector(`.structure-part-item[data-part="${idx}"]`);
+      if (item) item.classList.add('active');
     });
   }
 
@@ -646,18 +673,120 @@ class CSSExplorer {
     content.innerHTML = `
       <div class="html-elem-split">
         <div class="html-elem-code-panel">
-          <div class="editor-label html-label">HTML-Code</div>
-          <pre class="html-elem-code">${this.esc(ex.code)}</pre>
+          <div class="editor-label html-label">index.html</div>
+          <div class="code-editor-wrapper">
+            <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(ex.code)}\n</pre>
+            <textarea class="html-elem-editor code-editor-input" spellcheck="false">${this.esc(ex.code)}</textarea>
+          </div>
         </div>
         <div class="html-elem-preview-panel">
-          <div class="editor-label preview-label">Ergebnis</div>
+          <div class="editor-label preview-label">Vorschau</div>
           <iframe class="html-elem-preview" sandbox="allow-same-origin" title="Element Vorschau"></iframe>
         </div>
       </div>
       <div class="html-elem-explanation">${this.esc(ex.explanation)}</div>
     `;
+    const textarea = content.querySelector('.html-elem-editor');
+    const highlight = content.querySelector('.code-editor-highlight');
     const iframe = content.querySelector('iframe');
-    if (iframe) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + ex.preview + '</body>';
+    const updatePreview = () => {
+      if (iframe && textarea) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + textarea.value + '</body>';
+      if (highlight && textarea) highlight.innerHTML = this.colorizeHtml(textarea.value) + '\n';
+    };
+    if (textarea) {
+      textarea.addEventListener('input', updatePreview);
+      textarea.addEventListener('scroll', () => {
+        if (highlight) { highlight.scrollTop = textarea.scrollTop; highlight.scrollLeft = textarea.scrollLeft; }
+      });
+      updatePreview();
+    }
+  }
+
+  // ==========================
+  // HTML PLAYGROUND (free coding)
+  // ==========================
+  renderHtmlPlayground() {
+    const container = document.getElementById('html-playground');
+    if (!container) return;
+    const defaultCode = '<h1>Hallo Welt!</h1>\n<p>Mein erster Text.</p>\n<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>';
+    container.innerHTML = `
+      <div class="playground-area">
+        <div class="playground-editor-panel">
+          <div class="editor-label html-label">index.html</div>
+          <div class="code-editor-wrapper">
+            <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(defaultCode)}\n</pre>
+            <textarea id="html-playground-input" class="playground-textarea code-editor-input" spellcheck="false" placeholder="Schreibe hier dein HTML...">${this.esc(defaultCode)}</textarea>
+          </div>
+        </div>
+        <div class="playground-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-playground-frame" sandbox="allow-same-origin" title="HTML Vorschau"></iframe>
+        </div>
+      </div>
+    `;
+    const textarea = document.getElementById('html-playground-input');
+    const highlight = container.querySelector('.code-editor-highlight');
+    const iframe = document.getElementById('html-playground-frame');
+    const update = () => {
+      if (textarea && iframe) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + textarea.value + '</body>';
+      if (highlight && textarea) highlight.innerHTML = this.colorizeHtml(textarea.value) + '\n';
+    };
+    if (textarea) {
+      textarea.addEventListener('input', update);
+      textarea.addEventListener('scroll', () => {
+        if (highlight) { highlight.scrollTop = textarea.scrollTop; highlight.scrollLeft = textarea.scrollLeft; }
+      });
+      update();
+    }
+  }
+
+  // ==========================
+  // HTML+CSS PLAYGROUND (free coding)
+  // ==========================
+  renderHtmlCssPlayground() {
+    const container = document.getElementById('html-css-playground');
+    if (!container) return;
+    const defaultHtml = '<h1>Meine Seite</h1>\n<p>Willkommen!</p>';
+    const defaultCss = 'h1 {\n  color: purple;\n}\n\np {\n  font-size: 18px;\n}';
+    container.innerHTML = `
+      <div class="playground-area playground-area-dual">
+        <div class="playground-editors">
+          <div class="playground-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <div class="code-editor-wrapper">
+              <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(defaultHtml)}\n</pre>
+              <textarea id="htmlcss-playground-html" class="playground-textarea code-editor-input" spellcheck="false" placeholder="HTML hier...">${this.esc(defaultHtml)}</textarea>
+            </div>
+          </div>
+          <div class="playground-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <textarea id="htmlcss-playground-css" class="playground-textarea" spellcheck="false" placeholder="CSS hier...">${this.esc(defaultCss)}</textarea>
+          </div>
+        </div>
+        <div class="playground-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="htmlcss-playground-frame" sandbox="allow-same-origin" title="HTML &amp; CSS Vorschau"></iframe>
+        </div>
+      </div>
+    `;
+    const htmlInput = document.getElementById('htmlcss-playground-html');
+    const htmlHighlight = container.querySelector('.code-editor-highlight');
+    const cssInput = document.getElementById('htmlcss-playground-css');
+    const iframe = document.getElementById('htmlcss-playground-frame');
+    const update = () => {
+      if (htmlInput && cssInput && iframe) {
+        iframe.srcdoc = '<style>' + cssInput.value + '</style><body style="font-family:sans-serif;padding:8px;">' + htmlInput.value + '</body>';
+      }
+      if (htmlHighlight && htmlInput) htmlHighlight.innerHTML = this.colorizeHtml(htmlInput.value) + '\n';
+    };
+    if (htmlInput) {
+      htmlInput.addEventListener('input', update);
+      htmlInput.addEventListener('scroll', () => {
+        if (htmlHighlight) { htmlHighlight.scrollTop = htmlInput.scrollTop; htmlHighlight.scrollLeft = htmlInput.scrollLeft; }
+      });
+    }
+    if (cssInput) cssInput.addEventListener('input', update);
+    update();
   }
 
   // ==========================
@@ -798,10 +927,32 @@ li { margin: 6px 0; color: #e2e8f0; }
   renderWorkshopStep(index, container) {
     const step = this.workshopSteps[index];
     if (!step || !container) return;
+    const hasCss = !!step.cssCode;
+    const gridStyle = hasCss ? '' : ' style="grid-template-columns:1fr;"';
+
+    const cssPanel = hasCss ? `
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <pre class="workshop-code-readonly workshop-css-code">${this.esc(step.cssCode)}</pre>
+          </div>` : '';
+
+    let htmlDisplay = this.colorizeHtml(step.htmlCode);
+    if (step.highlightText) {
+      const hlEscaped = this.esc(step.highlightText);
+      const hlColorized = this.colorizeHtml(step.highlightText);
+      htmlDisplay = htmlDisplay.replace(hlColorized, '<span class="workshop-highlight">' + hlColorized + '</span>');
+    }
+
     container.innerHTML = `
-      <div class="workshop-split">
-        <div class="workshop-code-panel">${step.code}</div>
-        <div class="workshop-preview-panel">
+      <div class="html-css-write-area">
+        <div class="html-css-editors"${gridStyle}>
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <pre class="workshop-code-readonly">${htmlDisplay}</pre>
+          </div>${cssPanel}
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
           <iframe sandbox="allow-same-origin" title="Workshop Vorschau"></iframe>
         </div>
       </div>
@@ -1360,11 +1511,11 @@ li { margin: 6px 0; color: #e2e8f0; }
       <div class="html-css-write-area">
         <div class="html-css-editors">
           <div class="html-css-editor-panel">
-            <div class="editor-label html-label">HTML</div>
+            <div class="editor-label html-label">index.html</div>
             <textarea id="code-write-html-display" spellcheck="false" readonly>${this.esc(m.data.htmlTemplate)}</textarea>
           </div>
           <div class="html-css-editor-panel">
-            <div class="editor-label css-label">CSS</div>
+            <div class="editor-label css-label">style.css</div>
             <textarea id="code-write-input" spellcheck="false">${this.esc(savedCode)}</textarea>
           </div>
         </div>
@@ -1385,11 +1536,11 @@ li { margin: 6px 0; color: #e2e8f0; }
       <div class="html-css-write-area">
         <div class="html-css-editors">
           <div class="html-css-editor-panel">
-            <div class="editor-label html-label">HTML</div>
+            <div class="editor-label html-label">index.html</div>
             <textarea id="html-write-input" spellcheck="false">${this.esc(savedHtml)}</textarea>
           </div>
           <div class="html-css-editor-panel">
-            <div class="editor-label css-label">CSS</div>
+            <div class="editor-label css-label">style.css</div>
             <textarea id="css-write-input" spellcheck="false">${this.esc(savedCss)}</textarea>
           </div>
         </div>
@@ -1409,8 +1560,8 @@ li { margin: 6px 0; color: #e2e8f0; }
       <div class="html-css-write-area">
         <div class="html-css-editors" style="grid-template-columns:1fr;">
           <div class="html-css-editor-panel">
-            <div class="editor-label html-label">HTML</div>
-            <textarea id="html-only-input" spellcheck="false" style="min-height:180px;">${this.esc(savedHtml)}</textarea>
+            <div class="editor-label html-label">index.html</div>
+            <textarea id="html-only-input" spellcheck="false">${this.esc(savedHtml)}</textarea>
           </div>
         </div>
         <div class="html-css-preview-panel">
@@ -1961,6 +2112,11 @@ li { margin: 6px 0; color: #e2e8f0; }
     const div = document.createElement('div');
     div.textContent = String(str);
     return div.innerHTML;
+  }
+
+  colorizeHtml(code) {
+    let escaped = this.esc(code);
+    return escaped.replace(/(&lt;\/?\w[\s\S]*?&gt;)/g, '<span class="hl-tag">$1</span>');
   }
 }
 
