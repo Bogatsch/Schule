@@ -109,7 +109,7 @@ class CSSExplorer {
     this.workshopSteps = [
       {
         title: 'Inline-Style',
-        htmlCode: '<p style="color: blue; font-size: 20px;">\n  Dieser Text ist blau und gross!\n</p>',
+        htmlCode: '<p style="color: blue; font-size: 20px;">\n  Dieser Text ist blau und gross!\n</p>\n<p>Dieser Text hat keinen Style.</p>',
         highlightText: 'style="color: blue; font-size: 20px;"',
         cssCode: null,
         preview: '<p style="color: blue; font-size: 20px;">Dieser Text ist blau und gross!</p><p>Dieser Text hat keinen Style.</p>',
@@ -117,7 +117,7 @@ class CSSExplorer {
       },
       {
         title: 'Interner Style',
-        htmlCode: '<head>\n  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>\n</head>\n<body>\n  <p>Alle Absaetze sind gruen!</p>\n</body>',
+        htmlCode: '<head>\n  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>\n</head>\n<body>\n  <p>Alle Absaetze sind gruen!</p>\n  <p>Dieser auch!</p>\n</body>',
         highlightText: '  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>',
         cssCode: null,
         preview: '<style>p { color: green; font-size: 18px; }</style><p>Alle Absaetze sind gruen!</p><p>Dieser auch!</p>',
