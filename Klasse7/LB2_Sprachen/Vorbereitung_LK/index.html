@@ -3,24 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSS - Mach deine Webseite schoen!</title>
+    <title>HTML & CSS - Mach deine Webseite schoen!</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>CSS - Mach deine Webseite schoen!</h1>
-            <p>Hier wiederholen und vertiefen wir dein Wissen zu CSS.</p>
+            <h1>HTML &amp; CSS - Mach deine Webseite schoen!</h1>
+            <p>Hier wiederholen und vertiefen wir dein Wissen zu HTML und CSS.</p>
             <nav class="header-nav">
-                <button class="glossary-btn" id="open-glossary">Glossar: Wichtige CSS-Befehle</button>
+                <button class="glossary-btn" id="open-glossary">Glossar: HTML &amp; CSS</button>
             </nav>
         </header>
 
         <div class="main-content">
-            <!-- Lerninsel 1: CSS-Grundlagen -->
+            <!-- Lerninsel 1: HTML-Grundlagen -->
+            <section class="lerninsel" id="lerninsel-html" aria-label="HTML-Grundlagen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number html-number">1</span>
+                    <h2>HTML-Grundlagen</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Wichtige HTML-Begriffe</h3>
+                    <div id="html-flip-cards-container" class="flip-cards-grid" role="list" aria-label="HTML-Begriffe Flip-Cards"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Aufbau einer HTML-Datei</h3>
+                    <div id="html-structure-explorer"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>HTML-Elemente ausprobieren</h3>
+                    <div id="html-element-playground"></div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 2: CSS-Grundlagen -->
             <section class="lerninsel" id="lerninsel-1" aria-label="CSS-Grundlagen">
                 <div class="lerninsel-header">
-                    <span class="lerninsel-number">1</span>
+                    <span class="lerninsel-number">2</span>
                     <h2>CSS-Grundlagen</h2>
                 </div>
 
@@ -44,10 +67,10 @@
                 </div>
             </section>
 
-            <!-- Lerninsel 2: Farben & Typografie -->
+            <!-- Lerninsel 3: Farben & Typografie -->
             <section class="lerninsel" id="lerninsel-2" aria-label="Farben und Typografie">
                 <div class="lerninsel-header">
-                    <span class="lerninsel-number">2</span>
+                    <span class="lerninsel-number">3</span>
                     <h2>Farben &amp; Typografie</h2>
                 </div>
 
@@ -75,7 +98,7 @@
     <div class="modal-overlay" id="glossary-modal" role="dialog" aria-modal="true" aria-label="Glossar">
         <div class="modal-content">
             <button class="modal-close" id="close-glossary" aria-label="Glossar schliessen">&times;</button>
-            <h2>Glossar: Wichtige CSS-Befehle</h2>
+            <h2>Glossar: HTML &amp; CSS</h2>
             <div id="glossary-list"></div>
         </div>
     </div>

@@ -5,8 +5,16 @@ class CSSExplorer {
     this.missionState = {};
     this._missionAbort = null;
 
-    // ---- GLOSSARY ----
+    // ---- GLOSSARY (HTML + CSS) ----
     this.glossary = [
+      { term: 'HTML', definition: 'HTML steht fuer HyperText Markup Language. Damit bestimmst du den Inhalt und die Struktur deiner Webseite.', analogy: '', example: '<h1>Ueberschrift</h1>' },
+      { term: 'DOCTYPE', definition: 'Die DOCTYPE-Deklaration sagt dem Browser, welche HTML-Version verwendet wird. Steht immer ganz oben.', analogy: '', example: '<!DOCTYPE html>' },
+      { term: 'Grundgeruest', definition: 'Jede HTML-Datei besteht aus <html>, <head> und <body>. Das ist das Grundgeruest.', analogy: '', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
+      { term: 'Ueberschrift', definition: 'Mit <h1> bis <h6> erstellst du Ueberschriften. h1 ist die wichtigste, h6 die kleinste.', analogy: '', example: '<h1>Groesste</h1>  <h6>Kleinste</h6>' },
+      { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', analogy: '', example: '<p>Das ist ein Absatz.</p>' },
+      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', analogy: '', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
+      { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', analogy: '', example: '<a href="https://example.com">Klick mich</a>' },
+      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, alt einen Beschreibungstext.', analogy: '', example: '<img src="bild.jpg" alt="Mein Bild">' },
       { term: 'CSS', definition: 'CSS steht fuer Cascading Style Sheets. Es ist die Sprache, mit der du das Aussehen deiner Webseite bestimmst.', analogy: '', example: 'p { color: red; }' },
       { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', analogy: '', example: 'h1 { ... }' },
       { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', analogy: '', example: 'color, font-size, background' },
@@ -24,7 +32,67 @@ class CSSExplorer {
       typo: 'In HTML legst du mit <h1> bis <h6> und <p> die Textstruktur fest. Die Ueberschriften-Tags bestimmen die Wichtigkeit, CSS bestimmt dann das Aussehen.'
     };
 
-    // ---- FLIP CARDS ----
+    // ---- HTML FLIP CARDS ----
+    this.htmlFlipCards = [
+      { icon: '📄', title: 'HTML-Dokument', definition: 'Jede Webseite ist eine HTML-Datei. Sie beginnt mit <!DOCTYPE html> und hat die Bereiche <html>, <head> und <body>.', example: '<!DOCTYPE html>\n<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
+      { icon: '📌', title: 'Ueberschriften', definition: 'Es gibt 6 Ueberschriften-Stufen: <h1> (wichtigste) bis <h6> (kleinste). Pro Seite sollte es nur eine <h1> geben.', example: '<h1>Haupttitel</h1>\n<h2>Untertitel</h2>' },
+      { icon: '📝', title: 'Absatz (p)', definition: 'Mit dem <p>-Tag erstellst du Textabsaetze. Der Browser fuegt automatisch Abstand darueber und darunter ein.', example: '<p>Ein Absatz mit Text.</p>' },
+      { icon: '📋', title: 'Listen', definition: 'Ungeordnete Listen (<ul>) zeigen Aufzaehlungspunkte. Geordnete Listen (<ol>) zeigen Nummern. Eintraege stehen in <li>.', example: '<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>' },
+      { icon: '🔗', title: 'Links (a)', definition: 'Mit <a href="URL"> erstellst du einen klickbaren Link. Das href-Attribut gibt an, wohin der Link fuehrt.', example: '<a href="https://example.com">\n  Klick mich!\n</a>' },
+      { icon: '🖼️', title: 'Bilder (img)', definition: 'Mit <img> fuegst du Bilder ein. src gibt die Bilddatei an, alt beschreibt das Bild fuer Screenreader.', example: '<img src="foto.jpg"\n     alt="Beschreibung">' }
+    ];
+
+    // ---- HTML STRUCTURE PARTS ----
+    this.htmlStructureParts = [
+      { label: '<!DOCTYPE html>', desc: 'Sagt dem Browser: "Das ist eine HTML5-Seite!" Steht immer in der allerersten Zeile.' },
+      { label: '<html>', desc: 'Das Wurzelelement – alles andere steht darin. Es umschliesst die gesamte Seite.' },
+      { label: '<head>', desc: 'Der Kopf der Seite. Hier stehen unsichtbare Infos wie der Seitentitel und die CSS-Einbindung.' },
+      { label: '<title>', desc: 'Der Seitentitel – erscheint oben im Browser-Tab. Steht im <head>.' },
+      { label: '<link>', desc: 'Verbindet die HTML-Datei mit einer CSS-Datei. Steht im <head>.' },
+      { label: '<body>', desc: 'Der Koerper der Seite. Hier steht alles, was der Benutzer sieht: Texte, Bilder, Links usw.' }
+    ];
+
+    // ---- HTML ELEMENT EXAMPLES ----
+    this.htmlElementExamples = [
+      {
+        title: 'Ueberschriften',
+        code: '<h1>Hauptueberschrift</h1>\n<h2>Unterueberschrift</h2>\n<h3>Noch kleiner</h3>',
+        preview: '<h1 style="margin:4px 0">Hauptueberschrift</h1><h2 style="margin:4px 0">Unterueberschrift</h2><h3 style="margin:4px 0">Noch kleiner</h3>',
+        explanation: 'h1 ist die wichtigste Ueberschrift, h6 die kleinste. Verwende h1 nur einmal pro Seite!'
+      },
+      {
+        title: 'Absaetze',
+        code: '<p>Das ist der erste Absatz.</p>\n<p>Das ist der zweite Absatz.</p>',
+        preview: '<p>Das ist der erste Absatz.</p><p>Das ist der zweite Absatz.</p>',
+        explanation: 'Jeder Absatz bekommt automatisch Abstand. Benutze <p> fuer laengere Texte.'
+      },
+      {
+        title: 'Ungeordnete Liste',
+        code: '<ul>\n  <li>Apfel</li>\n  <li>Banane</li>\n  <li>Kirsche</li>\n</ul>',
+        preview: '<ul><li>Apfel</li><li>Banane</li><li>Kirsche</li></ul>',
+        explanation: 'Eine ungeordnete Liste (<ul>) zeigt Aufzaehlungspunkte. Jeder Eintrag steht in <li>.'
+      },
+      {
+        title: 'Geordnete Liste',
+        code: '<ol>\n  <li>Erster Schritt</li>\n  <li>Zweiter Schritt</li>\n  <li>Dritter Schritt</li>\n</ol>',
+        preview: '<ol><li>Erster Schritt</li><li>Zweiter Schritt</li><li>Dritter Schritt</li></ol>',
+        explanation: 'Eine geordnete Liste (<ol>) zeigt Nummern. Perfekt fuer Anleitungen oder Ranglisten.'
+      },
+      {
+        title: 'Links',
+        code: '<a href="https://example.com">\n  Zur Beispielseite\n</a>',
+        preview: '<a href="https://example.com" style="color:#8b5cf6;">Zur Beispielseite</a>',
+        explanation: 'Das href-Attribut gibt an, wohin der Link fuehrt. Der Text dazwischen wird klickbar.'
+      },
+      {
+        title: 'Bilder',
+        code: '<img src="bild.jpg"\n     alt="Ein Beispielbild"\n     width="200">',
+        preview: '<div style="background:#ddd;width:200px;height:120px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#666;">Bild-Platzhalter</div>',
+        explanation: 'src gibt die Bilddatei an. alt beschreibt das Bild (wichtig fuer Barrierefreiheit!). width bestimmt die Breite.'
+      }
+    ];
+
+    // ---- CSS FLIP CARDS ----
     this.flipCards = [
       { icon: '📝', title: 'CSS-Regel', definition: 'Eine CSS-Regel besteht aus einem Selektor und einem Deklarationsblock mit Eigenschaften und Werten.', example: 'h1 { color: blue; }', htmlRef: 'Der Selektor h1 waehlt alle <h1>-Ueberschriften aus dem HTML.' },
       { icon: '🎯', title: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestylt wird. Es gibt Element- und ID-Selektoren.', example: 'p { }  h1 { }  #titel { }', htmlRef: 'Selektoren beziehen sich immer auf HTML-Elemente oder deren Attribute.' },
@@ -75,8 +143,77 @@ class CSSExplorer {
 
     // ---- MISSIONS ----
     this.missions = [
+      // ==== HTML MISSIONEN ====
+      {
+        title: 'HTML-Grundgeruest',
+        section: 'HTML',
+        text: 'Erstelle das Grundgeruest einer HTML-Seite! Du brauchst: <!DOCTYPE html>, dann <html> mit <head> (inkl. <title>) und <body>. Schreibe in den body eine h1-Ueberschrift.',
+        format: 'html-write',
+        data: {
+          starterHtml: '',
+          checks: [
+            { type: 'text', pattern: '<!DOCTYPE html>', desc: '<!DOCTYPE html> ist vorhanden' },
+            { type: 'text', pattern: '<html', desc: '<html>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<head', desc: '<head>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<title', desc: '<title>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<body', desc: '<body>-Tag ist vorhanden' },
+            { type: 'dom', selector: 'h1', minCount: 1, desc: 'Eine <h1>-Ueberschrift ist vorhanden' }
+          ]
+        },
+        success: 'Super! Du kennst das HTML-Grundgeruest!'
+      },
+      {
+        title: 'Ueberschriften & Absaetze',
+        text: 'Erstelle eine Seite mit einer h1-Ueberschrift, einer h2-Unterueberschrift und mindestens 2 Absaetzen (p).',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1></h1>\n<h2></h2>\n<p></p>\n<p></p>',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'h2', minCount: 1, desc: '<h2>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'p', minCount: 2, desc: 'Mindestens 2 Absaetze (<p>) vorhanden' },
+            { type: 'content', selector: 'h1', desc: '<h1> hat Text-Inhalt' },
+            { type: 'content', selector: 'p', desc: '<p> hat Text-Inhalt' }
+          ]
+        },
+        success: 'Perfekt! Ueberschriften und Absaetze beherrschst du!'
+      },
+      {
+        title: 'Listen erstellen',
+        text: 'Erstelle eine h1-Ueberschrift und darunter sowohl eine ungeordnete Liste (<ul>) als auch eine geordnete Liste (<ol>) mit jeweils mindestens 3 Eintraegen (<li>).',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1>Meine Listen</h1>\n\n<ul>\n  <li></li>\n  <li></li>\n  <li></li>\n</ul>\n\n<ol>\n  <li></li>\n  <li></li>\n  <li></li>\n</ol>',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'ul', minCount: 1, desc: 'Ungeordnete Liste (<ul>) vorhanden' },
+            { type: 'dom', selector: 'ol', minCount: 1, desc: 'Geordnete Liste (<ol>) vorhanden' },
+            { type: 'dom', selector: 'ul > li', minCount: 3, desc: 'Mindestens 3 Eintraege in <ul>' },
+            { type: 'dom', selector: 'ol > li', minCount: 3, desc: 'Mindestens 3 Eintraege in <ol>' }
+          ]
+        },
+        success: 'Klasse! Du kannst Listen in HTML erstellen!'
+      },
+      {
+        title: 'Links & Bilder',
+        text: 'Erstelle eine Seite mit einer h1-Ueberschrift, einem Link (<a> mit href-Attribut) und einem Bild (<img> mit src und alt). Tipp: Fuer src kannst du "bild.jpg" als Platzhalter nehmen.',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1>Meine Seite</h1>\n<p>Besuche <a href="">diese Seite</a>!</p>\n<img src="" alt="">',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'a[href]', minCount: 1, desc: 'Link (<a>) mit href vorhanden' },
+            { type: 'attr', selector: 'a', attr: 'href', notEmpty: true, desc: 'Link hat ein nicht-leeres href' },
+            { type: 'dom', selector: 'img[src]', minCount: 1, desc: 'Bild (<img>) mit src vorhanden' },
+            { type: 'attr', selector: 'img', attr: 'alt', exists: true, desc: 'Bild hat ein alt-Attribut' }
+          ]
+        },
+        success: 'Toll! Du kannst Links und Bilder in HTML einbauen!'
+      },
+      // ==== CSS GRUNDLAGEN ====
       {
         title: 'CSS-Begriffe zuordnen',
+        section: 'CSS',
         text: 'Ordne jeden CSS-Begriff der richtigen Beschreibung zu.',
         format: 'matching',
         data: {
@@ -142,8 +279,10 @@ class CSSExplorer {
         },
         success: 'Sehr gut! Du kannst wahre und falsche CSS-Aussagen unterscheiden!'
       },
+      // ==== CSS CODE ====
       {
         title: 'CSS selbst schreiben',
+        section: 'CSS Code',
         text: 'Schreibe CSS-Code, um die Ueberschrift blau und 24 Pixel gross zu machen. Verwende den Selektor h1.',
         format: 'code-write',
         data: {
@@ -202,9 +341,10 @@ class CSSExplorer {
         },
         success: 'Meisterhaft! Du hast alle CSS-Grundlagen kombiniert!'
       },
-      // ---- HTML + CSS Missionen ----
+      // ==== HTML + CSS MISSIONEN ====
       {
         title: 'Mein Steckbrief',
+        section: 'HTML + CSS',
         text: 'Erstelle einen Steckbrief! Schreibe HTML links und CSS rechts. Du brauchst eine h1-Ueberschrift und mindestens 2 Absaetze (p). Die Ueberschrift soll lila (#8b5cf6) sein.',
         format: 'html-css-write',
         data: {
@@ -259,9 +399,10 @@ class CSSExplorer {
         },
         success: 'Super! Deine Hobby-Liste ist perfekt!'
       },
-      // ---- PROFI-MISSIONEN ----
+      // ==== PROFI-MISSIONEN ====
       {
         title: 'Dark-Mode Seite',
+        section: 'Profi',
         text: 'Baue eine coole Dark-Mode Webseite! body: Hintergrund #1a1a2e, Schrift #e0e0e0. Die h1 soll die Farbe #a78bfa haben. Erstelle h1, h2 und mindestens einen Absatz.',
         format: 'html-css-write',
         profi: true,
@@ -357,6 +498,9 @@ class CSSExplorer {
   init() {
     this.bindGlossary();
     this.renderGlossary();
+    this.renderHtmlFlipCards();
+    this.renderHtmlStructure();
+    this.renderHtmlElementPlayground();
     this.renderFlipCards();
     this.renderWorkshop();
     this.renderSelectorPlayground();
@@ -393,6 +537,127 @@ class CSSExplorer {
         <div class="glossary-example">${this.esc(g.example)}</div>
       </div>
     `).join('');
+  }
+
+  // ==========================
+  // HTML FLIP CARDS
+  // ==========================
+  renderHtmlFlipCards() {
+    const container = document.getElementById('html-flip-cards-container');
+    if (!container) return;
+    container.innerHTML = this.htmlFlipCards.map((card, i) => `
+      <div class="flip-card" role="listitem" tabindex="0" data-index="${i}">
+        <div class="flip-card-inner">
+          <div class="flip-card-front html-card-front">
+            <span class="flip-icon">${card.icon}</span>
+            <span class="flip-title">${this.esc(card.title)}</span>
+            <span class="flip-hint">Klicke zum Umdrehen</span>
+          </div>
+          <div class="flip-card-back html-card-back">
+            <p class="flip-definition">${this.esc(card.definition)}</p>
+            <div class="flip-example">${this.esc(card.example)}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    container.addEventListener('click', (e) => {
+      const card = e.target.closest('.flip-card');
+      if (card) card.classList.toggle('flipped');
+    });
+    container.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const card = e.target.closest('.flip-card');
+        if (card) { e.preventDefault(); card.classList.toggle('flipped'); }
+      }
+    });
+  }
+
+  // ==========================
+  // HTML STRUCTURE EXPLORER
+  // ==========================
+  renderHtmlStructure() {
+    const container = document.getElementById('html-structure-explorer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="html-structure-diagram">
+        <pre class="html-structure-code" id="html-structure-code"><span class="structure-part" data-part="0">&lt;!DOCTYPE html&gt;</span>
+<span class="structure-part" data-part="1">&lt;html&gt;</span>
+  <span class="structure-part" data-part="2">&lt;head&gt;</span>
+    <span class="structure-part" data-part="3">&lt;title&gt;</span>Meine Seite<span class="structure-part" data-part="3">&lt;/title&gt;</span>
+    <span class="structure-part" data-part="4">&lt;link rel="stylesheet" href="style.css"&gt;</span>
+  <span class="structure-part" data-part="2">&lt;/head&gt;</span>
+  <span class="structure-part" data-part="5">&lt;body&gt;</span>
+    &lt;h1&gt;Hallo Welt!&lt;/h1&gt;
+    &lt;p&gt;Mein erster Text.&lt;/p&gt;
+  <span class="structure-part" data-part="5">&lt;/body&gt;</span>
+<span class="structure-part" data-part="1">&lt;/html&gt;</span></pre>
+        <div class="html-structure-info" id="html-structure-info">
+          Klicke auf einen <span style="color:var(--accent-html)">orangenen</span> Teil, um mehr zu erfahren!
+        </div>
+      </div>
+    `;
+
+    const parts = this.htmlStructureParts;
+    container.addEventListener('click', (e) => {
+      const span = e.target.closest('.structure-part');
+      if (!span) return;
+      const idx = parseInt(span.dataset.part, 10);
+      const info = document.getElementById('html-structure-info');
+      if (info && parts[idx]) {
+        container.querySelectorAll('.structure-part').forEach(s => s.classList.remove('active'));
+        container.querySelectorAll(`.structure-part[data-part="${idx}"]`).forEach(s => s.classList.add('active'));
+        info.innerHTML = `<strong>${this.esc(parts[idx].label)}</strong><br>${this.esc(parts[idx].desc)}`;
+      }
+    });
+  }
+
+  // ==========================
+  // HTML ELEMENT PLAYGROUND
+  // ==========================
+  renderHtmlElementPlayground() {
+    const container = document.getElementById('html-element-playground');
+    if (!container) return;
+
+    const examples = this.htmlElementExamples;
+    container.innerHTML = `
+      <div class="html-elem-tabs">
+        ${examples.map((ex, i) => `<button class="html-elem-tab${i === 0 ? ' active' : ''}" data-idx="${i}" type="button">${this.esc(ex.title)}</button>`).join('')}
+      </div>
+      <div class="html-elem-content" id="html-elem-content"></div>
+    `;
+
+    this.renderHtmlElementExample(0, container);
+
+    container.querySelector('.html-elem-tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.html-elem-tab');
+      if (!btn) return;
+      container.querySelectorAll('.html-elem-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      this.renderHtmlElementExample(parseInt(btn.dataset.idx, 10), container);
+    });
+  }
+
+  renderHtmlElementExample(idx, container) {
+    const ex = this.htmlElementExamples[idx];
+    if (!ex) return;
+    const content = container.querySelector('#html-elem-content');
+    if (!content) return;
+    content.innerHTML = `
+      <div class="html-elem-split">
+        <div class="html-elem-code-panel">
+          <div class="editor-label html-label">HTML-Code</div>
+          <pre class="html-elem-code">${this.esc(ex.code)}</pre>
+        </div>
+        <div class="html-elem-preview-panel">
+          <div class="editor-label preview-label">Ergebnis</div>
+          <iframe class="html-elem-preview" sandbox="allow-same-origin" title="Element Vorschau"></iframe>
+        </div>
+      </div>
+      <div class="html-elem-explanation">${this.esc(ex.explanation)}</div>
+    `;
+    const iframe = content.querySelector('iframe');
+    if (iframe) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + ex.preview + '</body>';
   }
 
   // ==========================
@@ -474,7 +739,7 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   // ==========================
-  // FLIP CARDS
+  // CSS FLIP CARDS
   // ==========================
   renderFlipCards() {
     const container = document.getElementById('flip-cards-container');
@@ -824,11 +1089,13 @@ li { margin: 6px 0; color: #e2e8f0; }
   createMissionButtons() {
     const nav = document.getElementById('mission-nav');
     if (!nav) return;
-    const profiStart = this.missions.findIndex(m => m.profi);
     let html = '';
+    let lastSection = null;
     this.missions.forEach((m, i) => {
-      if (i === profiStart) {
-        html += '<span class="mission-divider">Profi</span>';
+      if (m.section && m.section !== lastSection) {
+        const dividerClass = m.profi ? ' profi-divider' : '';
+        html += `<span class="mission-divider${dividerClass}">${this.esc(m.section)}</span>`;
+        lastSection = m.section;
       }
       const profiClass = m.profi ? ' profi' : '';
       html += `<button class="mission-btn${i === 0 ? ' active' : ''}${profiClass}" data-mi="${i}" type="button" role="tab" aria-label="Mission ${i + 1}: ${this.esc(m.title)}">${i + 1}</button>`;
@@ -859,7 +1126,6 @@ li { margin: 6px 0; color: #e2e8f0; }
     if (modal && closeBtn) {
       closeBtn.addEventListener('click', () => {
         modal.classList.remove('active');
-        // Advance to next mission if available
         if (this.currentMission < this.missions.length - 1) {
           this.currentMission++;
           this.updateMissionNav();
@@ -890,7 +1156,6 @@ li { margin: 6px 0; color: #e2e8f0; }
     const area = document.getElementById('mission-area');
     if (!area) return;
 
-    // Abort previous mission event listeners
     if (this._missionAbort) this._missionAbort.abort();
     this._missionAbort = new AbortController();
 
@@ -916,6 +1181,7 @@ li { margin: 6px 0; color: #e2e8f0; }
       case 'cloze': content += this.renderClozeMission(m, mi); break;
       case 'code-write': content += this.renderCodeWriteMission(m, mi); break;
       case 'html-css-write': content += this.renderHtmlCssWriteMission(m, mi); break;
+      case 'html-write': content += this.renderHtmlWriteMission(m, mi); break;
     }
 
     area.innerHTML = content;
@@ -972,11 +1238,35 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   renderSingleChoiceMission(m, mi) {
-    if (!this.missionState[mi]) this.missionState[mi] = { currentQ: 0, correct: 0 };
+    if (!this.missionState[mi]) this.missionState[mi] = { currentQ: 0, correct: 0, answers: {} };
     const state = this.missionState[mi];
+    if (!state.answers) state.answers = {};
+
     if (state.currentQ >= m.data.questions.length) {
-      return `<p style="color:var(--accent-green);font-weight:700;">Alle Fragen beantwortet!</p>`;
+      // Show review of all questions with answers
+      let html = '';
+      m.data.questions.forEach((q, qi) => {
+        const chosen = state.answers[qi];
+        html += `
+          <div class="choice-review">
+            <p style="color:var(--text-muted);font-size:0.8rem;margin:0;">Frage ${qi + 1}</p>
+            <p style="font-weight:600;margin:4px 0 8px;">${this.esc(q.q)}</p>
+            <div class="choice-options reviewed">
+              ${q.options.map((opt, i) => {
+                let cls = '';
+                if (i === q.correct) cls += ' correct';
+                if (i === chosen && i !== q.correct) cls += ' wrong';
+                if (i === chosen) cls += ' chosen';
+                return `<div class="choice-option${cls} disabled"><span class="choice-marker"></span><span>${this.esc(opt)}</span></div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+      html += `<p style="color:var(--accent-green);font-weight:700;margin-top:12px;">Alle Fragen beantwortet! (${state.correct}/${m.data.questions.length} richtig)</p>`;
+      return html;
     }
+
     const q = m.data.questions[state.currentQ];
     return `
       <p style="color:var(--text-muted);font-size:0.85rem;">Frage ${state.currentQ + 1} von ${m.data.questions.length}</p>
@@ -1003,7 +1293,6 @@ li { margin: 6px 0; color: #e2e8f0; }
       state.shuffledTags = [...m.data.tags].sort(() => Math.random() - 0.5);
     }
     const tags = state.shuffledTags;
-    // Determine which tags are already placed
     const placedTags = new Set();
     Object.values(state.placed).forEach(arr => arr.forEach(t => placedTags.add(t)));
 
@@ -1068,16 +1357,23 @@ li { margin: 6px 0; color: #e2e8f0; }
   renderCodeWriteMission(m, mi) {
     const savedCode = this.missionState[mi]?.code ?? m.data.starterCode;
     return `
-      <div class="code-write-area">
-        <div class="code-write-editor">
-          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Schreibe dein CSS hier:</p>
-          <textarea id="code-write-input" spellcheck="false">${this.esc(savedCode)}</textarea>
-          <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="html-css-write-area">
+        <div class="html-css-editors">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">HTML</div>
+            <textarea id="code-write-html-display" spellcheck="false" readonly>${this.esc(m.data.htmlTemplate)}</textarea>
+          </div>
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">CSS</div>
+            <textarea id="code-write-input" spellcheck="false">${this.esc(savedCode)}</textarea>
+          </div>
         </div>
-        <div class="code-write-preview">
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
           <iframe id="code-write-preview-frame" sandbox="allow-same-origin" title="Code Vorschau"></iframe>
         </div>
       </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
       <div class="mission-feedback" id="mission-feedback"></div>
     `;
   }
@@ -1107,6 +1403,26 @@ li { margin: 6px 0; color: #e2e8f0; }
     `;
   }
 
+  renderHtmlWriteMission(m, mi) {
+    const savedHtml = this.missionState[mi]?.html ?? m.data.starterHtml;
+    return `
+      <div class="html-css-write-area">
+        <div class="html-css-editors" style="grid-template-columns:1fr;">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">HTML</div>
+            <textarea id="html-only-input" spellcheck="false" style="min-height:180px;">${this.esc(savedHtml)}</textarea>
+          </div>
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-only-preview-frame" sandbox="allow-same-origin" title="Vorschau"></iframe>
+        </div>
+      </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="mission-feedback" id="mission-feedback"></div>
+    `;
+  }
+
   // --- Mission Interaction Bindings ---
   bindMissionInteractions(format, mi) {
     const area = document.getElementById('mission-area');
@@ -1118,37 +1434,32 @@ li { margin: 6px 0; color: #e2e8f0; }
       case 'exploration':
         area.querySelector('#mission-check')?.addEventListener('click', () => this.showMissionSuccess(m.success), { signal });
         break;
-
       case 'matching':
         this.bindMatchingMission(area, m, mi, signal);
         break;
-
       case 'sorting':
         this.bindSortingMission(area, m, mi, signal);
         break;
-
       case 'single-choice':
         this.bindSingleChoiceMission(area, m, mi, signal);
         break;
-
       case 'assignment':
         this.bindAssignmentMission(area, m, mi, signal);
         break;
-
       case 'true-false':
         this.bindTrueFalseMission(area, m, mi, signal);
         break;
-
       case 'cloze':
         area.querySelector('#mission-check')?.addEventListener('click', () => this.checkClozeMission(area, m, mi), { signal });
         break;
-
       case 'code-write':
         this.bindCodeWriteMission(area, m, mi, signal);
         break;
-
       case 'html-css-write':
         this.bindHtmlCssWriteMission(area, m, mi, signal);
+        break;
+      case 'html-write':
+        this.bindHtmlWriteMission(area, m, mi, signal);
         break;
     }
   }
@@ -1217,6 +1528,7 @@ li { margin: 6px 0; color: #e2e8f0; }
 
   bindSingleChoiceMission(area, m, mi, signal) {
     const state = this.missionState[mi];
+    if (!state.answers) state.answers = {};
     area.querySelector('#choice-options')?.addEventListener('click', (e) => {
       const opt = e.target.closest('.choice-option');
       if (!opt || opt.classList.contains('correct') || opt.classList.contains('wrong')) return;
@@ -1226,6 +1538,8 @@ li { margin: 6px 0; color: #e2e8f0; }
       const allOpts = area.querySelectorAll('.choice-option');
 
       allOpts.forEach(o => o.classList.add('disabled'));
+      state.answers[state.currentQ] = oi;
+
       if (oi === q.correct) {
         opt.classList.add('correct');
         state.correct++;
@@ -1252,7 +1566,6 @@ li { margin: 6px 0; color: #e2e8f0; }
     let selectedTag = null;
 
     area.addEventListener('click', (e) => {
-      // Undo: click on a placed item to return it to the pool
       const placedItem = e.target.closest('.assignment-placed');
       if (placedItem) {
         const tag = placedItem.dataset.tag;
@@ -1262,7 +1575,6 @@ li { margin: 6px 0; color: #e2e8f0; }
         placedItem.remove();
         const tagEl = area.querySelector(`.assignment-tag[data-tag="${CSS.escape(tag)}"]`);
         if (tagEl) tagEl.classList.remove('placed');
-        // Clear feedback
         const fb = document.getElementById('mission-feedback');
         if (fb) { fb.textContent = ''; fb.className = 'mission-feedback'; }
         return;
@@ -1475,7 +1787,6 @@ li { margin: 6px 0; color: #e2e8f0; }
         let allPass = true;
         const results = [];
 
-        // Check HTML requirements
         if (m.data.htmlChecks) {
           m.data.htmlChecks.forEach(check => {
             const elements = doc.querySelectorAll(check.selector);
@@ -1491,7 +1802,6 @@ li { margin: 6px 0; color: #e2e8f0; }
           });
         }
 
-        // Check CSS requirements
         if (m.data.cssChecks) {
           m.data.cssChecks.forEach(check => {
             const el = doc.querySelector(check.element);
@@ -1519,6 +1829,100 @@ li { margin: 6px 0; color: #e2e8f0; }
         }
       } catch (err) {
         if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein Code korrekt?'; fb.className = 'mission-feedback error'; }
+      }
+    }, { signal });
+  }
+
+  bindHtmlWriteMission(area, m, mi, signal) {
+    const htmlInput = area.querySelector('#html-only-input');
+    const iframe = area.querySelector('#html-only-preview-frame');
+    const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+
+    const updatePreview = () => {
+      if (!htmlInput || !iframe) return;
+      iframe.srcdoc = htmlInput.value;
+    };
+
+    if (htmlInput) {
+      htmlInput.addEventListener('input', () => {
+        this.missionState[mi].html = htmlInput.value;
+        updatePreview();
+      }, { signal });
+      updatePreview();
+    }
+
+    checkBtn?.addEventListener('click', () => {
+      if (!iframe) return;
+      const fb = document.getElementById('mission-feedback');
+      const htmlSrc = htmlInput ? htmlInput.value : '';
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        let allPass = true;
+        const results = [];
+
+        m.data.checks.forEach(check => {
+          if (check.type === 'text') {
+            if (htmlSrc.toLowerCase().includes(check.pattern.toLowerCase())) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          } else if (check.type === 'dom') {
+            const elements = doc.querySelectorAll(check.selector);
+            if (check.minCount && elements.length < check.minCount) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (gefunden: ' + elements.length + ')');
+            } else if (elements.length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          } else if (check.type === 'content') {
+            const el = doc.querySelector(check.selector);
+            if (el && el.textContent.trim().length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗ (Element leer)');
+            }
+          } else if (check.type === 'attr') {
+            const el = doc.querySelector(check.selector);
+            if (!el) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (Element nicht gefunden)');
+            } else if (check.notEmpty) {
+              const val = el.getAttribute(check.attr);
+              if (val && val.trim().length > 0) {
+                results.push(check.desc + ' ✓');
+              } else {
+                allPass = false;
+                results.push(check.desc + ' ✗ (Attribut leer)');
+              }
+            } else if (check.exists) {
+              if (el.hasAttribute(check.attr)) {
+                results.push(check.desc + ' ✓');
+              } else {
+                allPass = false;
+                results.push(check.desc + ' ✗ (Attribut fehlt)');
+              }
+            }
+          }
+        });
+
+        if (fb) {
+          if (allPass) {
+            this.showMissionSuccess(m.success);
+          } else {
+            fb.innerHTML = results.map(r => '<div>' + this.esc(r) + '</div>').join('');
+            fb.className = 'mission-feedback error';
+          }
+        }
+      } catch (err) {
+        if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein HTML korrekt?'; fb.className = 'mission-feedback error'; }
       }
     }, { signal });
   }
