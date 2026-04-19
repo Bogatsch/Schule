@@ -3,39 +3,105 @@ class CSSExplorer {
     this.currentMission = 0;
     this.completedMissions = new Set();
     this.missionState = {};
+    this._missionAbort = null;
 
-    // ---- GLOSSARY ----
-    this.glossary = [
-      { term: 'CSS', definition: 'CSS steht fuer Cascading Style Sheets. Es ist die Sprache, mit der du das Aussehen deiner Webseite bestimmst.', analogy: '', example: 'p { color: red; }' },
-      { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', analogy: '', example: 'h1 { ... }' },
-      { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', analogy: '', example: 'color, font-size, background' },
-      { term: 'Wert', definition: 'Der Wert sagt, WIE die Eigenschaft aussehen soll (z.B. rot, 16px, fett).', analogy: '', example: 'color: blue;  (blue ist der Wert)' },
-      { term: 'Klasse', definition: 'Eine Klasse ist ein Name, den du HTML-Elementen gibst. Mehrere Elemente koennen dieselbe Klasse haben.', analogy: '', example: '.wichtig { font-weight: bold; }' },
-      { term: 'ID', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Jede ID darf nur einmal auf der Seite vorkommen.', analogy: '', example: '#titel { font-size: 2em; }' },
-      { term: 'Box-Modell', definition: 'Jedes HTML-Element ist eine rechteckige Box. Das Box-Modell beschreibt Content, Padding, Border und Margin.', analogy: '', example: 'margin: 10px; padding: 5px;' },
-      { term: 'Margin', definition: 'Margin ist der aeussere Abstand einer Box zu benachbarten Elementen.', analogy: '', example: 'margin: 20px;' },
-      { term: 'Padding', definition: 'Padding ist der innere Abstand zwischen dem Inhalt und dem Rand (Border) einer Box.', analogy: '', example: 'padding: 15px;' },
-      { term: 'Border', definition: 'Border ist der sichtbare Rand um ein Element herum.', analogy: '', example: 'border: 2px solid black;' },
-      { term: 'Inline CSS', definition: 'CSS-Regeln direkt im style-Attribut eines HTML-Elements. Nur fuer Notfaelle!', analogy: '', example: '<p style="color:red">Text</p>' },
-      { term: 'Internes CSS', definition: 'CSS-Regeln im style-Element im head-Bereich der HTML-Datei.', analogy: '', example: '<style> p { color: red; } </style>' },
-      { term: 'Externes CSS', definition: 'CSS-Regeln in einer eigenen .css-Datei, die per link eingebunden wird. Die beste Methode!', analogy: '', example: '<link rel="stylesheet" href="style.css">' },
-      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', analogy: '', example: 'Inline > ID > Klasse > Element' },
-      { term: 'Farbe (color)', definition: 'Mit color bestimmst du die Textfarbe. Mit background-color die Hintergrundfarbe.', analogy: '', example: 'color: #ff6600; background-color: yellow;' }
+    // ---- GLOSSARY HTML ----
+    this.glossaryHtml = [
+      { term: 'HTML', definition: 'HTML steht fuer HyperText Markup Language. Damit bestimmst du den Inhalt und die Struktur deiner Webseite.', example: '<h1>Ueberschrift</h1>' },
+      { term: 'DOCTYPE', definition: 'Die DOCTYPE-Deklaration sagt dem Browser, welche HTML-Version verwendet wird. Steht immer ganz oben.', example: '<!DOCTYPE html>' },
+      { term: 'Grundgeruest', definition: 'Jede HTML-Datei besteht aus <html>, <head> und <body>. Das ist das Grundgeruest.', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
+      { term: 'Ueberschrift', definition: 'Mit <h1> bis <h6> erstellst du Ueberschriften. h1 ist die wichtigste, h6 die kleinste.', example: '<h1>Groesste</h1>  <h6>Kleinste</h6>' },
+      { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', example: '<p>Das ist ein Absatz.</p>' },
+      { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
+      { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', example: '<a href="https://example.com">Klick mich</a>' },
+      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, width bestimmt die Breite.', example: '<img src="bild.jpg" width="200">' }
+    ];
+
+    // ---- GLOSSARY CSS ----
+    this.glossaryCss = [
+      { term: 'CSS', definition: 'CSS steht fuer Cascading Style Sheets. Es ist die Sprache, mit der du das Aussehen deiner Webseite bestimmst.', example: 'p { color: red; }' },
+      { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', example: 'h1 { ... }' },
+      { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', example: 'color, font-size, background' },
+      { term: 'Wert', definition: 'Der Wert sagt, WIE die Eigenschaft aussehen soll (z.B. rot, 16px, fett).', example: 'color: blue;  (blue ist der Wert)' },
+      { term: 'ID', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Jede ID darf nur einmal auf der Seite vorkommen.', example: '#titel { font-size: 2em; }' },
+      { term: 'Inline CSS', definition: 'CSS-Regeln direkt im style-Attribut eines HTML-Elements. Nur fuer Notfaelle!', example: '<p style="color:red">Text</p>' },
+      { term: 'Internes CSS', definition: 'CSS-Regeln im style-Element im head-Bereich der HTML-Datei.', example: '<style> p { color: red; } </style>' },
+      { term: 'Externes CSS', definition: 'CSS-Regeln in einer eigenen .css-Datei, die per link eingebunden wird. Die beste Methode!', example: '<link rel="stylesheet" href="style.css">' },
+      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', example: 'Inline > ID > Element' },
+      { term: 'Farbe (color)', definition: 'Mit color bestimmst du die Textfarbe. Mit background-color die Hintergrundfarbe.', example: 'color: #ff6600; background-color: yellow;' }
     ];
 
     // ---- HTML REFERENCES (for badges) ----
     this.htmlReferences = {
-      typo: 'In HTML legst du mit <h1> bis <h6> und <p> die Textstruktur fest. Die Ueberschriften-Tags bestimmen die Wichtigkeit, CSS bestimmt dann das Aussehen.',
-      box: 'In HTML sind alle Elemente (div, p, h1, img...) rechteckige Bloecke. HTML legt fest, WELCHE Elemente da sind – CSS bestimmt, wie gross sie sind und wie viel Platz sie haben.'
+      typo: 'In HTML legst du mit <h1> bis <h6> und <p> die Textstruktur fest. Die Ueberschriften-Tags bestimmen die Wichtigkeit, CSS bestimmt dann das Aussehen.'
     };
 
-    // ---- FLIP CARDS ----
+    // ---- HTML FLIP CARDS ----
+    this.htmlFlipCards = [
+      { icon: '📄', title: 'HTML-Dokument', definition: 'Jede Webseite ist eine HTML-Datei. Sie beginnt mit <!DOCTYPE html> und hat die Bereiche <html>, <head> und <body>.', example: '<!DOCTYPE html>\n<html>\n  <head>...</head>\n  <body>...</body>\n</html>' },
+      { icon: '📌', title: 'Ueberschriften', definition: 'Es gibt 6 Ueberschriften-Stufen: <h1> (wichtigste) bis <h6> (kleinste). Pro Seite sollte es nur eine <h1> geben.', example: '<h1>Haupttitel</h1>\n<h2>Untertitel</h2>' },
+      { icon: '📝', title: 'Absatz (p)', definition: 'Mit dem <p>-Tag erstellst du Textabsaetze. Der Browser fuegt automatisch Abstand darueber und darunter ein.', example: '<p>Ein Absatz mit Text.</p>' },
+      { icon: '📋', title: 'Listen', definition: 'Ungeordnete Listen (<ul>) zeigen Aufzaehlungspunkte. Geordnete Listen (<ol>) zeigen Nummern. Eintraege stehen in <li>.', example: '<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>' },
+      { icon: '🔗', title: 'Links (a)', definition: 'Mit <a href="URL"> erstellst du einen klickbaren Link. Das href-Attribut gibt an, wohin der Link fuehrt.', example: '<a href="https://example.com">\n  Klick mich!\n</a>' },
+      { icon: '🖼️', title: 'Bilder (img)', definition: 'Mit <img> fuegst du Bilder ein. src gibt die Bilddatei an, width bestimmt die Breite des Bildes.', example: '<img src="foto.jpg"\n     width="200">' }
+    ];
+
+    // ---- HTML STRUCTURE PARTS ----
+    this.htmlStructureParts = [
+      { label: '<!DOCTYPE html>', desc: 'Sagt dem Browser: "Das ist eine HTML5-Seite!" Steht immer in der allerersten Zeile.' },
+      { label: '<html>', desc: 'Das Wurzelelement – alles andere steht darin. Es umschliesst die gesamte Seite.' },
+      { label: '<head>', desc: 'Der Kopf der Seite. Hier stehen unsichtbare Infos wie der Seitentitel und die CSS-Einbindung.' },
+      { label: '<title>', desc: 'Der Seitentitel – erscheint oben im Browser-Tab. Steht im <head>.' },
+      { label: '<link>', desc: 'Verbindet die HTML-Datei mit einer CSS-Datei. Steht im <head>.' },
+      { label: '<body>', desc: 'Der Koerper der Seite. Hier steht alles, was der Benutzer sieht: Texte, Bilder, Links usw.' }
+    ];
+
+    // ---- HTML ELEMENT EXAMPLES ----
+    this.htmlElementExamples = [
+      {
+        title: 'Ueberschriften',
+        code: '<h1>Hauptueberschrift</h1>\n<h2>Unterueberschrift</h2>\n<h3>Noch kleiner</h3>',
+        preview: '<h1 style="margin:4px 0">Hauptueberschrift</h1><h2 style="margin:4px 0">Unterueberschrift</h2><h3 style="margin:4px 0">Noch kleiner</h3>',
+        explanation: 'h1 ist die wichtigste Ueberschrift, h6 die kleinste. Verwende h1 nur einmal pro Seite!'
+      },
+      {
+        title: 'Absaetze',
+        code: '<p>Das ist der erste Absatz.</p>\n<p>Das ist der zweite Absatz.</p>',
+        preview: '<p>Das ist der erste Absatz.</p><p>Das ist der zweite Absatz.</p>',
+        explanation: 'Jeder Absatz bekommt automatisch Abstand. Benutze <p> fuer laengere Texte.'
+      },
+      {
+        title: 'Ungeordnete Liste',
+        code: '<ul>\n  <li>Apfel</li>\n  <li>Banane</li>\n  <li>Kirsche</li>\n</ul>',
+        preview: '<ul><li>Apfel</li><li>Banane</li><li>Kirsche</li></ul>',
+        explanation: 'Eine ungeordnete Liste (<ul>) zeigt Aufzaehlungspunkte. Jeder Eintrag steht in <li>.'
+      },
+      {
+        title: 'Geordnete Liste',
+        code: '<ol>\n  <li>Erster Schritt</li>\n  <li>Zweiter Schritt</li>\n  <li>Dritter Schritt</li>\n</ol>',
+        preview: '<ol><li>Erster Schritt</li><li>Zweiter Schritt</li><li>Dritter Schritt</li></ol>',
+        explanation: 'Eine geordnete Liste (<ol>) zeigt Nummern. Perfekt fuer Anleitungen oder Ranglisten.'
+      },
+      {
+        title: 'Links',
+        code: '<a href="https://example.com">\n  Zur Beispielseite\n</a>',
+        preview: '<a href="https://example.com" style="color:#8b5cf6;">Zur Beispielseite</a>',
+        explanation: 'Das href-Attribut gibt an, wohin der Link fuehrt. Der Text dazwischen wird klickbar.'
+      },
+      {
+        title: 'Bilder',
+        code: '<img src="manos_logo.gif"\n     width="200">',
+        preview: '<img src="manos_logo.gif" width="200">',
+        explanation: 'src gibt die Bilddatei an (z.B. "manos_logo.gif"). Mit width steuerst du die Breite des Bildes, z.B. width="200".'
+      }
+    ];
+
+    // ---- CSS FLIP CARDS ----
     this.flipCards = [
       { icon: '📝', title: 'CSS-Regel', definition: 'Eine CSS-Regel besteht aus einem Selektor und einem Deklarationsblock mit Eigenschaften und Werten.', example: 'h1 { color: blue; }', htmlRef: 'Der Selektor h1 waehlt alle <h1>-Ueberschriften aus dem HTML.' },
-      { icon: '🎯', title: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestylt wird. Es gibt Element-, Klassen- und ID-Selektoren.', example: 'p { }  .info { }  #titel { }', htmlRef: 'Selektoren beziehen sich immer auf HTML-Elemente oder deren Attribute.' },
+      { icon: '🎯', title: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestylt wird. Es gibt Element- und ID-Selektoren.', example: 'p { }  h1 { }  #titel { }', htmlRef: 'Selektoren beziehen sich immer auf HTML-Elemente oder deren Attribute.' },
       { icon: '🔧', title: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert wird: Farbe, Groesse, Abstand und vieles mehr.', example: 'color  font-size  margin', htmlRef: 'Jedes HTML-Element hat viele CSS-Eigenschaften, die du veraendern kannst.' },
       { icon: '🎨', title: 'Wert', definition: 'Der Wert bestimmt, WIE die Eigenschaft aussieht: z.B. welche Farbe, wie gross, wie weit.', example: 'red  16px  bold  center', htmlRef: 'Werte passen zum jeweiligen HTML-Element und dessen Eigenschaft.' },
-      { icon: '👥', title: 'Klasse (.)', definition: 'Eine Klasse ist ein Name, den du mit class="..." im HTML vergibst. Mehrere Elemente koennen die gleiche Klasse haben.', example: '.wichtig { font-weight: bold; }', htmlRef: 'Im HTML: <p class="wichtig">Text</p>' },
       { icon: '🆔', title: 'ID (#)', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Im CSS nutzt du das #-Zeichen.', example: '#haupttitel { font-size: 2em; }', htmlRef: 'Im HTML: <h1 id="haupttitel">Titel</h1>' }
     ];
 
@@ -43,21 +109,27 @@ class CSSExplorer {
     this.workshopSteps = [
       {
         title: 'Inline-Style',
-        code: '<code>&lt;p <span class="highlight-css">style="color: blue; font-size: 20px;"</span>&gt;</code>\n  Dieser Text ist blau und gross!\n<code>&lt;/p&gt;</code>',
+        htmlCode: '<p style="color: blue; font-size: 20px;">\n  Dieser Text ist blau und gross!\n</p>',
+        highlightText: 'style="color: blue; font-size: 20px;"',
+        cssCode: null,
         preview: '<p style="color: blue; font-size: 20px;">Dieser Text ist blau und gross!</p><p>Dieser Text hat keinen Style.</p>',
-        explanation: 'Inline-CSS schreibst du direkt ins HTML-Element mit dem style-Attribut. Praktisch zum Ausprobieren, aber nicht fuer grosse Seiten geeignet – es wird schnell unuebersichtlich!'
+        explanation: 'Inline-CSS schreibst du direkt ins HTML-Element mit dem style-Attribut. Hier brauchst du keine extra style.css – alles steht in der index.html. Praktisch zum Ausprobieren, aber nicht fuer grosse Seiten geeignet!'
       },
       {
         title: 'Interner Style',
-        code: '<code>&lt;head&gt;</code>\n  <code>&lt;style&gt;</code>\n    <span class="highlight-css">p { color: green; font-size: 18px; }</span>\n  <code>&lt;/style&gt;</code>\n<code>&lt;/head&gt;</code>\n<code>&lt;body&gt;</code>\n  <code>&lt;p&gt;</code>Alle Absaetze sind gruen!<code>&lt;/p&gt;</code>\n<code>&lt;/body&gt;</code>',
+        htmlCode: '<head>\n  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>\n</head>\n<body>\n  <p>Alle Absaetze sind gruen!</p>\n</body>',
+        highlightText: '  <style>\n    p {\n      color: green;\n      font-size: 18px;\n    }\n  </style>',
+        cssCode: null,
         preview: '<style>p { color: green; font-size: 18px; }</style><p>Alle Absaetze sind gruen!</p><p>Dieser auch!</p>',
-        explanation: 'Internes CSS schreibst du in einen <style>-Block im <head> deines HTML-Dokuments. Gut fuer einzelne Seiten, aber besser ist ein externes Stylesheet!'
+        explanation: 'Internes CSS schreibst du in einen <style>-Block im <head>. Auch hier brauchst du keine extra style.css – alles steht in der index.html. Gut fuer einzelne Seiten, aber besser ist ein externes Stylesheet!'
       },
       {
         title: 'Externes Stylesheet',
-        code: '<span class="highlight-html">&lt;!-- In der HTML-Datei: --&gt;</span>\n<code>&lt;head&gt;</code>\n  <code>&lt;link rel="stylesheet" <span class="highlight-css">href="style.css"</span>&gt;</code>\n<code>&lt;/head&gt;</code>\n\n<span class="highlight-css">/* In style.css: */</span>\n<span class="highlight-css">p { color: purple; font-size: 18px; }</span>',
+        htmlCode: '<head>\n  <link rel="stylesheet"\n        href="style.css">\n</head>\n<body>\n  <p>CSS aus einer eigenen Datei!</p>\n  <p>So machen es die Profis.</p>\n</body>',
+        highlightText: '  <link rel="stylesheet"\n        href="style.css">',
+        cssCode: 'p {\n  color: purple;\n  font-size: 18px;\n}',
         preview: '<style>p { color: purple; font-size: 18px; }</style><p>CSS aus einer eigenen Datei!</p><p>So machen es die Profis.</p>',
-        explanation: 'Bei einem externen Stylesheet schreibst du dein CSS in eine eigene .css-Datei und bindest sie mit <link> ein. Das ist die beste Methode! Du kannst dieselbe CSS-Datei fuer viele HTML-Seiten nutzen.'
+        explanation: 'Hier brauchst du zwei Dateien: In der index.html bindest du die style.css mit <link> ein. Das CSS schreibst du in die style.css. Das ist die beste Methode! Du kannst dieselbe style.css fuer viele HTML-Seiten nutzen.'
       }
     ];
 
@@ -65,33 +137,93 @@ class CSSExplorer {
     this.selectorPlayground = {
       html: [
         { tag: 'h1', text: 'Willkommen!', attrs: '', id: '', cls: '' },
-        { tag: 'p', text: 'Erster Absatz', attrs: ' class="info"', id: '', cls: 'info' },
+        { tag: 'p', text: 'Erster Absatz', attrs: '', id: '', cls: '' },
         { tag: 'p', text: 'Zweiter Absatz', attrs: '', id: '', cls: '' },
         { tag: 'h2', text: 'Unterueberschrift', attrs: ' id="sub"', id: 'sub', cls: '' },
-        { tag: 'p', text: 'Dritter Absatz', attrs: ' class="info"', id: '', cls: 'info' },
-        { tag: 'img', text: '', attrs: ' src="bild.jpg" alt="Bild"', id: '', cls: '', selfClosing: true }
+        { tag: 'p', text: 'Dritter Absatz', attrs: '', id: '', cls: '' },
+        { tag: 'img', text: '', attrs: ' src="manos_logo.gif" width="200"', id: '', cls: '', selfClosing: true }
       ],
       selectors: [
         { selector: 'h1', label: 'h1', desc: 'Waehlt alle h1-Ueberschriften aus.', matchFn: el => el.tag === 'h1' },
         { selector: 'p', label: 'p', desc: 'Waehlt alle Absaetze (p-Elemente) aus.', matchFn: el => el.tag === 'p' },
-        { selector: '.info', label: '.info', desc: 'Waehlt alle Elemente mit class="info" aus.', matchFn: el => el.cls === 'info' },
         { selector: '#sub', label: '#sub', desc: 'Waehlt genau das Element mit id="sub" aus.', matchFn: el => el.id === 'sub' },
         { selector: 'img', label: 'img', desc: 'Waehlt alle Bilder aus.', matchFn: el => el.tag === 'img' }
       ]
     };
 
-    // ---- BOX MODEL ----
-    this.boxLayers = [
-      { name: 'Margin', cssClass: 'box-layer-margin', color: '#ef4444', analogy: 'Der Abstand zum naechsten Paket im Regal.', desc: 'Margin ist der aeussere Abstand. Er schafft Platz zwischen deinem Element und seinen Nachbarn.', code: 'margin: 20px;' },
-      { name: 'Border', cssClass: 'box-layer-border', color: '#fb8500', analogy: 'Der Karton um dein Paket.', desc: 'Border ist der sichtbare Rand um dein Element. Du kannst Dicke, Stil und Farbe bestimmen.', code: 'border: 3px solid orange;' },
-      { name: 'Padding', cssClass: 'box-layer-padding', color: '#22c55e', analogy: 'Die Polsterung im Paket, die den Inhalt schuetzt.', desc: 'Padding ist der innere Abstand zwischen dem Inhalt und dem Rand (Border).', code: 'padding: 15px;' },
-      { name: 'Content', cssClass: 'box-layer-content', color: '#8b5cf6', analogy: 'Der eigentliche Inhalt im Paket.', desc: 'Content ist der Bereich, in dem Text, Bilder oder andere Elemente stehen.', code: 'width: 200px; height: 100px;' }
-    ];
-
     // ---- MISSIONS ----
     this.missions = [
+      // ==== HTML MISSIONEN ====
+      {
+        title: 'HTML-Grundgeruest',
+        section: 'HTML-Grundlagen',
+        text: 'Erstelle das Grundgeruest einer HTML-Seite! Du brauchst: <!DOCTYPE html>, dann <html> mit <head> (inkl. <title>) und <body>. Schreibe in den body eine h1-Ueberschrift.',
+        format: 'html-write',
+        data: {
+          starterHtml: '',
+          checks: [
+            { type: 'text', pattern: '<!DOCTYPE html>', desc: '<!DOCTYPE html> ist vorhanden' },
+            { type: 'text', pattern: '<html', desc: '<html>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<head', desc: '<head>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<title', desc: '<title>-Tag ist vorhanden' },
+            { type: 'text', pattern: '<body', desc: '<body>-Tag ist vorhanden' },
+            { type: 'dom', selector: 'h1', minCount: 1, desc: 'Eine <h1>-Ueberschrift ist vorhanden' }
+          ]
+        },
+        success: 'Super! Du kennst das HTML-Grundgeruest!'
+      },
+      {
+        title: 'Ueberschriften & Absaetze',
+        text: 'Erstelle eine Seite mit einer h1-Ueberschrift, einer h2-Unterueberschrift und mindestens 2 Absaetzen (p).',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1></h1>\n<h2></h2>\n<p></p>\n<p></p>',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'h2', minCount: 1, desc: '<h2>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'p', minCount: 2, desc: 'Mindestens 2 Absaetze (<p>) vorhanden' },
+            { type: 'content', selector: 'h1', desc: '<h1> hat Text-Inhalt' },
+            { type: 'content', selector: 'p', desc: '<p> hat Text-Inhalt' }
+          ]
+        },
+        success: 'Perfekt! Ueberschriften und Absaetze beherrschst du!'
+      },
+      {
+        title: 'Listen erstellen',
+        text: 'Ergaenze die Listen! Fuer jede Liste ist ein Beispiel vorgegeben. Fuege jeweils mindestens 2 weitere Eintraege (<li>) hinzu.',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1>Meine Listen</h1>\n\n<h2>Baeume die ich kenne</h2>\n<ul>\n  <li>Eiche</li>\n  <!-- Ergaenze 2 weitere Baeume! -->\n</ul>\n\n<h2>Mein Lieblingsfaecher-Ranking</h2>\n<ol>\n  <li>Informatik</li>\n  <!-- Ergaenze 2 weitere Faecher! -->\n</ol>',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'dom', selector: 'ul', minCount: 1, desc: 'Ungeordnete Liste (<ul>) vorhanden' },
+            { type: 'dom', selector: 'ol', minCount: 1, desc: 'Geordnete Liste (<ol>) vorhanden' },
+            { type: 'dom', selector: 'ul > li', minCount: 3, desc: 'Mindestens 3 Eintraege in <ul>' },
+            { type: 'dom', selector: 'ol > li', minCount: 3, desc: 'Mindestens 3 Eintraege in <ol>' }
+          ]
+        },
+        success: 'Klasse! Du kannst Listen in HTML erstellen!'
+      },
+      {
+        title: 'Links & Bilder',
+        text: 'Schau dir den Code an: Der Link fuehrt zur MANOS-Schulhomepage. Finde selbst einen passenden Text fuer die h1-Ueberschrift und fuege das Bild manos_logo.gif mit width="200" ein.',
+        format: 'html-write',
+        data: {
+          starterHtml: '<h1></h1>\n\n<p>Besuche <a href="https://manos-dresden.de/">die MANOS-Homepage</a>!</p>',
+          checks: [
+            { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'content', selector: 'h1', desc: '<h1> hat einen passenden Text' },
+            { type: 'dom', selector: 'a[href]', minCount: 1, desc: 'Link (<a>) mit href vorhanden' },
+            { type: 'attr', selector: 'a', attr: 'href', notEmpty: true, desc: 'Link hat ein nicht-leeres href' },
+            { type: 'dom', selector: 'img[src="manos_logo.gif"][width="200"]', minCount: 1, desc: 'Bild manos_logo.gif mit width="200" ist eingefuegt' }
+          ]
+        },
+        success: 'Toll! Du kannst Links und Bilder in HTML einbauen!'
+      },
+      // ==== CSS GRUNDLAGEN ====
       {
         title: 'CSS-Begriffe zuordnen',
+        section: 'CSS-Grundlagen',
         text: 'Ordne jeden CSS-Begriff der richtigen Beschreibung zu.',
         format: 'matching',
         data: {
@@ -99,7 +231,6 @@ class CSSExplorer {
             { left: 'Selektor', right: 'Bestimmt, welches Element gestylt wird' },
             { left: 'Eigenschaft', right: 'Sagt, WAS veraendert wird' },
             { left: 'Wert', right: 'Sagt, WIE es aussehen soll' },
-            { left: 'Klasse (.)', right: 'Name fuer mehrere Elemente' },
             { left: 'ID (#)', right: 'Einzigartiger Name fuer ein Element' }
           ]
         },
@@ -121,27 +252,13 @@ class CSSExplorer {
         format: 'single-choice',
         data: {
           questions: [
-            { q: 'Welcher Selektor waehlt alle Absaetze aus?', options: ['#p', '.p', 'p', 'absatz'], correct: 2 },
-            { q: 'Wie selektierst du ein Element mit class="highlight"?', options: ['#highlight', '.highlight', 'highlight', '*highlight'], correct: 1 },
-            { q: 'Wie selektierst du ein Element mit id="logo"?', options: ['.logo', 'logo', '#logo', '@logo'], correct: 2 },
-            { q: 'Was bedeutet h1 { color: red; }?', options: ['Nur die erste h1 wird rot', 'Alle h1-Elemente werden rot', 'Die Seite wird rot', 'Nichts, das ist falsch'], correct: 1 }
+            { q: 'Welcher Selektor waehlt alle Absaetze aus?', options: ['#p', 'absatz', 'p', 'paragraph'], correct: 2 },
+            { q: 'Wie selektierst du ein Element mit id="logo"?', options: ['logo', '@logo', '#logo', '*logo'], correct: 2 },
+            { q: 'Was bedeutet h1 { color: red; }?', options: ['Nur die erste h1 wird rot', 'Alle h1-Elemente werden rot', 'Die Seite wird rot', 'Nichts, das ist falsch'], correct: 1 },
+            { q: 'Was macht der Selektor img?', options: ['Waehlt nur das erste Bild', 'Waehlt alle Bilder aus', 'Erstellt ein Bild', 'Loescht Bilder'], correct: 1 }
           ]
         },
         success: 'Super! Du verstehst, wie Selektoren HTML-Elemente ansprechen!'
-      },
-      {
-        title: 'Farb-Challenge',
-        text: 'Ordne die Farbwerte den richtigen Formaten zu.',
-        format: 'assignment',
-        data: {
-          tags: ['red', '#ff0000', 'rgb(255,0,0)', 'blue', '#00f', 'rgb(0,0,255)'],
-          categories: [
-            { name: 'Farbname', correct: ['red', 'blue'] },
-            { name: 'Hex-Code', correct: ['#ff0000', '#00f'] },
-            { name: 'RGB-Wert', correct: ['rgb(255,0,0)', 'rgb(0,0,255)'] }
-          ]
-        },
-        success: 'Klasse! Du kennst die drei wichtigsten Farbformate in CSS!'
       },
       {
         title: 'CSS-Aussagen bewerten',
@@ -152,31 +269,11 @@ class CSSExplorer {
             { text: 'CSS steht fuer "Cascading Style Sheets".', correct: true, explanation: 'Richtig! CSS = Cascading Style Sheets.' },
             { text: 'Mit CSS kann man den Inhalt einer Webseite aendern.', correct: false, explanation: 'Falsch! CSS aendert nur das Aussehen. Den Inhalt aenderst du mit HTML.' },
             { text: 'Eine ID darf auf einer Seite nur einmal vorkommen.', correct: true, explanation: 'Richtig! IDs sind einzigartig.' },
-            { text: 'Padding ist der aeussere Abstand eines Elements.', correct: false, explanation: 'Falsch! Padding ist der INNERE Abstand. Der aeussere heisst Margin.' },
             { text: 'Externes CSS ist besser als Inline-CSS fuer grosse Webseiten.', correct: true, explanation: 'Richtig! Externes CSS ist uebersichtlicher und wiederverwendbar.' },
-            { text: 'Der Selektor .name waehlt ein Element mit id="name".', correct: false, explanation: 'Falsch! Der Punkt (.) steht fuer Klassen. Fuer IDs nutzt man das Raute-Zeichen (#).' }
+            { text: 'Der Selektor #name waehlt ein Element mit id="name".', correct: true, explanation: 'Richtig! Das Raute-Zeichen (#) steht fuer IDs.' }
           ]
         },
         success: 'Sehr gut! Du kannst wahre und falsche CSS-Aussagen unterscheiden!'
-      },
-      {
-        title: 'Box-Modell Lueckentext',
-        text: 'Fuelle die Luecken mit den richtigen Box-Modell-Begriffen.',
-        format: 'cloze',
-        data: {
-          segments: [
-            { type: 'text', value: 'Jedes HTML-Element ist eine Box. Ganz aussen ist der ' },
-            { type: 'gap', correct: 'Margin', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der aeussere Abstand. Dann kommt der ' },
-            { type: 'gap', correct: 'Border', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der sichtbare Rand. Danach folgt das ' },
-            { type: 'gap', correct: 'Padding', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der innere Abstand. Und ganz innen ist der ' },
-            { type: 'gap', correct: 'Content', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der eigentliche Inhalt.' }
-          ]
-        },
-        success: 'Perfekt! Du kennst alle vier Schichten des Box-Modells!'
       },
       {
         title: 'CSS selbst schreiben',
@@ -191,6 +288,22 @@ class CSSExplorer {
           ]
         },
         success: 'Fantastisch! Du hast dein erstes CSS selbst geschrieben!'
+      },
+      // ==== FARBEN & TYPOGRAFIE ====
+      {
+        title: 'Farb-Challenge',
+        section: 'Farben & Typografie',
+        text: 'Ordne die Farbwerte den richtigen Formaten zu. Klicke einen Wert an und dann auf die passende Kategorie. Zum Zuruecknehmen klicke auf einen platzierten Wert.',
+        format: 'assignment',
+        data: {
+          tags: ['red', '#ff0000', 'rgb(255,0,0)', 'blue', '#00f', 'rgb(0,0,255)'],
+          categories: [
+            { name: 'Farbname', correct: ['red', 'blue'] },
+            { name: 'Hex-Code', correct: ['#ff0000', '#00f'] },
+            { name: 'RGB-Wert', correct: ['rgb(255,0,0)', 'rgb(0,0,255)'] }
+          ]
+        },
+        success: 'Klasse! Du kennst die drei wichtigsten Farbformate in CSS!'
       },
       {
         title: 'Hintergrund & Hex-Farben',
@@ -207,35 +320,6 @@ class CSSExplorer {
         success: 'Super! Du beherrschst Hex-Farbcodes!'
       },
       {
-        title: 'Klassen stylen',
-        text: 'Style die Klasse .highlight: Hintergrundfarbe gelb (yellow), Schrift fett (bold).',
-        format: 'code-write',
-        data: {
-          starterCode: '.highlight {\n  \n}',
-          htmlTemplate: '<p>Normaler Text.</p>\n<p class="highlight">Wichtiger Text!</p>\n<p>Noch mehr Text.</p>',
-          checks: [
-            { property: 'background-color', value: 'yellow', element: '.highlight', desc: '.highlight soll gelben Hintergrund haben' },
-            { property: 'font-weight', value: 'bold', element: '.highlight', desc: '.highlight soll fett sein' }
-          ]
-        },
-        success: 'Klasse! Du kannst Klassen-Selektoren einsetzen!'
-      },
-      {
-        title: 'Rahmen & Abstaende',
-        text: 'Gib dem Element .card einen 2px solid schwarzen Rahmen, 16px Innenabstand (padding) und 20px Aussenabstand (margin).',
-        format: 'code-write',
-        data: {
-          starterCode: '.card {\n  \n}',
-          htmlTemplate: '<div class="card">Ich bin eine Karte mit Rahmen und Abstaenden.</div>\n<div class="card">Noch eine Karte.</div>',
-          checks: [
-            { property: 'border', value: '2px solid', element: '.card', desc: '.card soll einen 2px solid Rahmen haben' },
-            { property: 'padding', value: '16px', element: '.card', desc: '.card soll 16px padding haben' },
-            { property: 'margin', value: '20px', element: '.card', desc: '.card soll 20px margin haben' }
-          ]
-        },
-        success: 'Toll! Das Box-Modell sitzt!'
-      },
-      {
         title: 'Text-Gestaltung',
         text: 'Style h2: zentriert (center), 20px Schriftgroesse und Schriftart Arial, sans-serif.',
         format: 'code-write',
@@ -250,22 +334,147 @@ class CSSExplorer {
         },
         success: 'Perfekt! Typografie ist kein Problem fuer dich!'
       },
+      // ==== ALLES KOMBINIERT ====
       {
         title: 'Alles kombiniert',
-        text: 'Style #header: weisser Text auf dunklem Hintergrund (#2d2d44), 24px Schrift, zentriert, 20px Innenabstand.',
+        section: 'Alles kombiniert',
+        text: 'Style die h1: weisser Text auf dunklem Hintergrund (#2d2d44), 24px Schrift, zentriert, 20px Innenabstand (padding).',
         format: 'code-write',
         data: {
-          starterCode: '#header {\n  \n}',
-          htmlTemplate: '<div id="header">Meine Webseite</div>\n<p>Willkommen auf meiner Seite!</p>',
+          starterCode: 'h1 {\n  \n}',
+          htmlTemplate: '<h1>Meine Webseite</h1>\n<p>Willkommen auf meiner Seite!</p>',
           checks: [
-            { property: 'color', value: 'rgb(255, 255, 255)', element: '#header', desc: '#header soll weisse Schrift haben' },
-            { property: 'background-color', value: 'rgb(45, 45, 68)', element: '#header', desc: '#header soll Hintergrund #2d2d44 haben' },
-            { property: 'font-size', value: '24px', element: '#header', desc: '#header soll 24px gross sein' },
-            { property: 'text-align', value: 'center', element: '#header', desc: '#header soll zentriert sein' },
-            { property: 'padding', value: '20px', element: '#header', desc: '#header soll 20px padding haben' }
+            { property: 'color', value: 'rgb(255, 255, 255)', element: 'h1', desc: 'h1 soll weisse Schrift haben' },
+            { property: 'background-color', value: 'rgb(45, 45, 68)', element: 'h1', desc: 'h1 soll Hintergrund #2d2d44 haben' },
+            { property: 'font-size', value: '24px', element: 'h1', desc: 'h1 soll 24px gross sein' },
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'padding', value: '20px', element: 'h1', desc: 'h1 soll 20px padding haben' }
           ]
         },
         success: 'Meisterhaft! Du hast alle CSS-Grundlagen kombiniert!'
+      },
+      {
+        title: 'Mein Steckbrief',
+        text: 'Erstelle einen Steckbrief! Schreibe HTML links und CSS rechts. Du brauchst eine h1-Ueberschrift und mindestens 2 Absaetze (p). Die Ueberschrift soll lila (#8b5cf6) sein.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Max Mustermann</h1>\n<p>Ich bin 12 Jahre alt.</p>\n<p>Mein Hobby ist Programmieren!</p>',
+          starterCss: 'h1 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'Eine h1-Ueberschrift ist vorhanden' },
+            { selector: 'p', minCount: 2, desc: 'Mindestens 2 Absaetze vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'rgb(139, 92, 246)', element: 'h1', desc: 'h1 soll lila (#8b5cf6) sein' }
+          ]
+        },
+        success: 'Toll! Dein Steckbrief sieht super aus!'
+      },
+      {
+        title: 'Bunte Seite gestalten',
+        text: 'Baue eine kleine Webseite mit h1, h2 und einem Absatz (p). Die h1 soll rot sein, die h2 blau und der Text soll Schriftgroesse 18px haben.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Willkommen</h1>\n<h2>Untertitel</h2>\n<p>Hier steht mein Text.</p>',
+          starterCss: 'h1 {\n  \n}\n\nh2 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1-Ueberschrift vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2-Ueberschrift vorhanden' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'red', element: 'h1', desc: 'h1 soll rot sein' },
+            { property: 'color', value: 'blue', element: 'h2', desc: 'h2 soll blau sein' },
+            { property: 'font-size', value: '18px', element: 'p', desc: 'p soll 18px gross sein' }
+          ]
+        },
+        success: 'Wunderbar! Deine bunte Seite sieht klasse aus!'
+      },
+      {
+        title: 'Meine Hobbys als Liste',
+        text: 'Erstelle eine Seite mit einer h1-Ueberschrift und einer Liste (ul mit mindestens 3 li-Eintraegen). Die h1 soll zentriert und gruen sein.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Meine Hobbys</h1>\n<ul>\n  <li>Hobby 1</li>\n  <li>Hobby 2</li>\n  <li>Hobby 3</li>\n</ul>',
+          starterCss: 'h1 {\n  \n}\n\nul {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'ul', minCount: 1, desc: 'Liste (ul) vorhanden' },
+            { selector: 'li', minCount: 3, desc: 'Mindestens 3 Listeneintraege' }
+          ],
+          cssChecks: [
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'color', value: 'green', element: 'h1', desc: 'h1 soll gruen sein' }
+          ]
+        },
+        success: 'Super! Deine Hobby-Liste ist perfekt!'
+      },
+      // ==== PROFI-MISSIONEN ====
+      {
+        title: 'Dark-Mode Seite',
+        section: 'Profi',
+        text: 'Baue eine coole Dark-Mode Webseite! body: Hintergrund #1a1a2e, Schrift #e0e0e0. Die h1 soll die Farbe #a78bfa haben. Erstelle h1, h2 und mindestens einen Absatz.',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Meine Dark-Mode Seite</h1>\n<h2>Ueber mich</h2>\n<p>Schreibe hier etwas ueber dich...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2 vorhanden' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'background-color', value: 'rgb(26, 26, 46)', element: 'body', desc: 'body Hintergrund #1a1a2e' },
+            { property: 'color', value: 'rgb(224, 224, 224)', element: 'body', desc: 'body Schriftfarbe #e0e0e0' },
+            { property: 'color', value: 'rgb(167, 139, 250)', element: 'h1', desc: 'h1 Farbe #a78bfa' }
+          ]
+        },
+        success: 'Wow! Deine Dark-Mode Seite sieht professionell aus!'
+      },
+      {
+        title: 'Rezept-Seite',
+        text: 'Baue eine Rezeptseite! Du brauchst: h1 (orange) fuer den Namen, 2x h2 (gruen) fuer "Zutaten" und "Zubereitung", eine Liste und einen Absatz. body soll Schriftart Arial haben.',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Mein Lieblingsrezept</h1>\n<h2>Zutaten</h2>\n<ul>\n  <li>Zutat 1</li>\n  <li>Zutat 2</li>\n</ul>\n<h2>Zubereitung</h2>\n<p>Beschreibe die Schritte...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}\n\nh2 {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 2, desc: 'Mindestens 2x h2 vorhanden' },
+            { selector: 'ul', minCount: 1, desc: 'Liste (ul) vorhanden' },
+            { selector: 'li', minCount: 2, desc: 'Mindestens 2 Listeneintraege' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'orange', element: 'h1', desc: 'h1 soll orange sein' },
+            { property: 'color', value: 'green', element: 'h2', desc: 'h2 soll gruen sein' },
+            { property: 'font-family', value: 'arial', element: 'body', desc: 'body soll Schriftart Arial haben' }
+          ]
+        },
+        success: 'Lecker! Deine Rezeptseite ist ein Meisterwerk!'
+      },
+      {
+        title: 'Kreativ-Challenge',
+        text: 'Zeig was du kannst! Baue eine Mini-Webseite: h1 (zentriert), h2, mindestens 3 Absaetze. body: Hintergrund #222233, Schrift #eeeeee. Mach sie so cool wie moeglich!',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Meine Webseite</h1>\n<h2>Abschnitt 1</h2>\n<p>Text...</p>\n<p>Mehr Text...</p>\n<p>Noch mehr...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}\n\nh2 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2 vorhanden' },
+            { selector: 'p', minCount: 3, desc: 'Mindestens 3 Absaetze' }
+          ],
+          cssChecks: [
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'background-color', value: 'rgb(34, 34, 51)', element: 'body', desc: 'body Hintergrund #222233' },
+            { property: 'color', value: 'rgb(238, 238, 238)', element: 'body', desc: 'body Schrift #eeeeee' }
+          ]
+        },
+        success: 'Unglaublich! Du bist ein echter Web-Profi!'
       }
     ];
 
@@ -299,44 +508,297 @@ class CSSExplorer {
   init() {
     this.bindGlossary();
     this.renderGlossary();
+    this.renderHtmlFlipCards();
+    this.renderHtmlStructure();
+    this.renderHtmlElementPlayground();
+    this.renderHtmlPlayground();
     this.renderFlipCards();
     this.renderWorkshop();
     this.renderSelectorPlayground();
     this.renderColorExplorer();
     this.renderTypoWorkshop();
-    this.renderBoxModel();
-    this.renderBoxWorkshop();
+    this.renderHtmlCssPlayground();
     this.createMissionButtons();
     this.updateMission();
     this.bindHtmlRefBadges();
     this.bindMissionSuccessModal();
+    this.bindLerninselToggle();
+  }
+
+  // ==========================
+  // LERNINSEL TOGGLE
+  // ==========================
+  bindLerninselToggle() {
+    document.querySelectorAll('.lerninsel-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.closest('.lerninsel').classList.toggle('collapsed');
+      });
+    });
   }
 
   // ==========================
   // GLOSSARY
   // ==========================
   bindGlossary() {
-    const openBtn = document.getElementById('open-glossary');
-    const modal = document.getElementById('glossary-modal');
-    const closeBtn = document.getElementById('close-glossary');
-    if (openBtn && modal) {
-      openBtn.addEventListener('click', () => modal.classList.add('active'));
-      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
-    }
+    ['html', 'css'].forEach(type => {
+      const openBtn = document.getElementById('open-glossary-' + type);
+      const modal = document.getElementById('glossary-modal-' + type);
+      const closeBtn = document.getElementById('close-glossary-' + type);
+      if (openBtn && modal) {
+        openBtn.addEventListener('click', () => modal.classList.add('active'));
+        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+      }
+    });
   }
 
   renderGlossary() {
-    const list = document.getElementById('glossary-list');
-    if (!list) return;
-    list.innerHTML = this.glossary.map(g => `
+    this._renderGlossaryList('glossary-list-html', this.glossaryHtml);
+    this._renderGlossaryList('glossary-list-css', this.glossaryCss);
+  }
+
+  _renderGlossaryList(containerId, entries) {
+    const list = document.getElementById(containerId);
+    if (!list || !entries) return;
+    list.innerHTML = entries.map(g => `
       <div class="glossary-entry">
         <h3>${this.esc(g.term)}</h3>
         <p class="glossary-definition">${this.esc(g.definition)}</p>
-        <p class="glossary-analogy">${this.esc(g.analogy)}</p>
         <div class="glossary-example">${this.esc(g.example)}</div>
       </div>
     `).join('');
+  }
+
+  // ==========================
+  // HTML FLIP CARDS
+  // ==========================
+  renderHtmlFlipCards() {
+    const container = document.getElementById('html-flip-cards-container');
+    if (!container) return;
+    container.className = 'html-accordion-list';
+    container.innerHTML = this.htmlFlipCards.map((card, i) => `
+      <div class="html-accordion-item" data-index="${i}">
+        <button class="html-accordion-header" type="button" aria-expanded="false">
+          <span class="accordion-icon">${card.icon}</span>
+          <span class="accordion-title">${this.esc(card.title)}</span>
+          <span class="accordion-chevron">&#9662;</span>
+        </button>
+        <div class="html-accordion-body">
+          <p class="accordion-definition">${this.esc(card.definition)}</p>
+          <pre class="accordion-example">${this.colorizeHtml(card.example)}</pre>
+        </div>
+      </div>
+    `).join('');
+    container.addEventListener('click', (e) => {
+      const header = e.target.closest('.html-accordion-header');
+      if (!header) return;
+      const item = header.closest('.html-accordion-item');
+      const isOpen = item.classList.contains('open');
+      container.querySelectorAll('.html-accordion-item').forEach(el => {
+        el.classList.remove('open');
+        el.querySelector('.html-accordion-header')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        header.setAttribute('aria-expanded', 'true');
+      }
+    });
+  }
+
+  // ==========================
+  // HTML STRUCTURE EXPLORER
+  // ==========================
+  renderHtmlStructure() {
+    const container = document.getElementById('html-structure-explorer');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="html-structure-diagram">
+        <pre class="html-structure-code" id="html-structure-code"><span class="structure-part" data-part="0">&lt;!DOCTYPE html&gt;</span>
+<span class="structure-part" data-part="1">&lt;html&gt;</span>
+  <span class="structure-part" data-part="2">&lt;head&gt;</span>
+    <span class="structure-part" data-part="3">&lt;title&gt;</span>Meine Seite<span class="structure-part" data-part="3">&lt;/title&gt;</span>
+    <span class="structure-part" data-part="4">&lt;link rel="stylesheet" href="style.css"&gt;</span>
+  <span class="structure-part" data-part="2">&lt;/head&gt;</span>
+  <span class="structure-part" data-part="5">&lt;body&gt;</span>
+    &lt;h1&gt;Hallo Welt!&lt;/h1&gt;
+    &lt;p&gt;Mein erster Text.&lt;/p&gt;
+  <span class="structure-part" data-part="5">&lt;/body&gt;</span>
+<span class="structure-part" data-part="1">&lt;/html&gt;</span></pre>
+        <div class="html-structure-parts-list" id="html-structure-parts-list">
+          ${this.htmlStructureParts.map((part, i) => `
+            <div class="structure-part-item" data-part="${i}">
+              <h4 class="structure-part-heading">${this.esc(part.label)}</h4>
+              <p class="structure-part-desc">${this.esc(part.desc)}</p>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    container.addEventListener('click', (e) => {
+      const span = e.target.closest('.structure-part');
+      const listItem = e.target.closest('.structure-part-item');
+      let idx = -1;
+      if (span) idx = parseInt(span.dataset.part, 10);
+      else if (listItem) idx = parseInt(listItem.dataset.part, 10);
+      if (idx < 0) return;
+      container.querySelectorAll('.structure-part').forEach(s => s.classList.remove('active'));
+      container.querySelectorAll(`.structure-part[data-part="${idx}"]`).forEach(s => s.classList.add('active'));
+      container.querySelectorAll('.structure-part-item').forEach(el => el.classList.remove('active'));
+      const item = container.querySelector(`.structure-part-item[data-part="${idx}"]`);
+      if (item) item.classList.add('active');
+    });
+  }
+
+  // ==========================
+  // HTML ELEMENT PLAYGROUND
+  // ==========================
+  renderHtmlElementPlayground() {
+    const container = document.getElementById('html-element-playground');
+    if (!container) return;
+
+    const examples = this.htmlElementExamples;
+    container.innerHTML = `
+      <div class="html-elem-tabs">
+        ${examples.map((ex, i) => `<button class="html-elem-tab${i === 0 ? ' active' : ''}" data-idx="${i}" type="button">${this.esc(ex.title)}</button>`).join('')}
+      </div>
+      <div class="html-elem-content" id="html-elem-content"></div>
+    `;
+
+    this.renderHtmlElementExample(0, container);
+
+    container.querySelector('.html-elem-tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.html-elem-tab');
+      if (!btn) return;
+      container.querySelectorAll('.html-elem-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      this.renderHtmlElementExample(parseInt(btn.dataset.idx, 10), container);
+    });
+  }
+
+  renderHtmlElementExample(idx, container) {
+    const ex = this.htmlElementExamples[idx];
+    if (!ex) return;
+    const content = container.querySelector('#html-elem-content');
+    if (!content) return;
+    content.innerHTML = `
+      <div class="html-elem-split">
+        <div class="html-elem-code-panel">
+          <div class="editor-label html-label">index.html</div>
+          <div class="code-editor-wrapper">
+            <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(ex.code)}\n</pre>
+            <textarea class="html-elem-editor code-editor-input" spellcheck="false">${this.esc(ex.code)}</textarea>
+          </div>
+        </div>
+        <div class="html-elem-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe class="html-elem-preview" sandbox="allow-same-origin" title="Element Vorschau"></iframe>
+        </div>
+      </div>
+      <div class="html-elem-explanation">${this.esc(ex.explanation)}</div>
+    `;
+    const textarea = content.querySelector('.html-elem-editor');
+    const highlight = content.querySelector('.code-editor-highlight');
+    const iframe = content.querySelector('iframe');
+    const updatePreview = () => {
+      if (iframe && textarea) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + textarea.value + '</body>';
+      if (highlight && textarea) highlight.innerHTML = this.colorizeHtml(textarea.value) + '\n';
+    };
+    if (textarea) {
+      textarea.addEventListener('input', updatePreview);
+      textarea.addEventListener('scroll', () => {
+        if (highlight) { highlight.scrollTop = textarea.scrollTop; highlight.scrollLeft = textarea.scrollLeft; }
+      });
+      updatePreview();
+    }
+  }
+
+  // ==========================
+  // HTML PLAYGROUND (free coding)
+  // ==========================
+  renderHtmlPlayground() {
+    const container = document.getElementById('html-playground');
+    if (!container) return;
+    const defaultCode = '<h1>Hallo Welt!</h1>\n<p>Mein erster Text.</p>\n<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>';
+    container.innerHTML = `
+      <div class="playground-area">
+        <div class="playground-editor-panel">
+          <div class="editor-label html-label">index.html</div>
+          <div class="code-editor-wrapper">
+            <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(defaultCode)}\n</pre>
+            <textarea id="html-playground-input" class="playground-textarea code-editor-input" spellcheck="false" placeholder="Schreibe hier dein HTML...">${this.esc(defaultCode)}</textarea>
+          </div>
+        </div>
+        <div class="playground-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-playground-frame" sandbox="allow-same-origin" title="HTML Vorschau"></iframe>
+        </div>
+      </div>
+    `;
+    const textarea = document.getElementById('html-playground-input');
+    const highlight = container.querySelector('.code-editor-highlight');
+    const iframe = document.getElementById('html-playground-frame');
+    const update = () => {
+      if (textarea && iframe) iframe.srcdoc = '<body style="font-family:sans-serif;padding:8px;">' + textarea.value + '</body>';
+      if (highlight && textarea) highlight.innerHTML = this.colorizeHtml(textarea.value) + '\n';
+    };
+    if (textarea) {
+      textarea.addEventListener('input', update);
+      textarea.addEventListener('scroll', () => {
+        if (highlight) { highlight.scrollTop = textarea.scrollTop; highlight.scrollLeft = textarea.scrollLeft; }
+      });
+      update();
+    }
+  }
+
+  // ==========================
+  // HTML+CSS PLAYGROUND (free coding)
+  // ==========================
+  renderHtmlCssPlayground() {
+    const container = document.getElementById('html-css-playground');
+    if (!container) return;
+    const defaultHtml = '<h1>Meine Seite</h1>\n<p>Willkommen!</p>';
+    const defaultCss = 'h1 {\n  color: purple;\n}\n\np {\n  font-size: 18px;\n}';
+    container.innerHTML = `
+      <div class="playground-area playground-area-dual">
+        <div class="playground-editors">
+          <div class="playground-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <div class="code-editor-wrapper">
+              <pre class="code-editor-highlight" aria-hidden="true">${this.colorizeHtml(defaultHtml)}\n</pre>
+              <textarea id="htmlcss-playground-html" class="playground-textarea code-editor-input" spellcheck="false" placeholder="HTML hier...">${this.esc(defaultHtml)}</textarea>
+            </div>
+          </div>
+          <div class="playground-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <textarea id="htmlcss-playground-css" class="playground-textarea" spellcheck="false" placeholder="CSS hier...">${this.esc(defaultCss)}</textarea>
+          </div>
+        </div>
+        <div class="playground-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="htmlcss-playground-frame" sandbox="allow-same-origin" title="HTML &amp; CSS Vorschau"></iframe>
+        </div>
+      </div>
+    `;
+    const htmlInput = document.getElementById('htmlcss-playground-html');
+    const htmlHighlight = container.querySelector('.code-editor-highlight');
+    const cssInput = document.getElementById('htmlcss-playground-css');
+    const iframe = document.getElementById('htmlcss-playground-frame');
+    const update = () => {
+      if (htmlInput && cssInput && iframe) {
+        iframe.srcdoc = '<style>' + cssInput.value + '</style><body style="font-family:sans-serif;padding:8px;">' + htmlInput.value + '</body>';
+      }
+      if (htmlHighlight && htmlInput) htmlHighlight.innerHTML = this.colorizeHtml(htmlInput.value) + '\n';
+    };
+    if (htmlInput) {
+      htmlInput.addEventListener('input', update);
+      htmlInput.addEventListener('scroll', () => {
+        if (htmlHighlight) { htmlHighlight.scrollTop = htmlInput.scrollTop; htmlHighlight.scrollLeft = htmlInput.scrollLeft; }
+      });
+    }
+    if (cssInput) cssInput.addEventListener('input', update);
+    update();
   }
 
   // ==========================
@@ -418,7 +880,7 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   // ==========================
-  // FLIP CARDS
+  // CSS FLIP CARDS
   // ==========================
   renderFlipCards() {
     const container = document.getElementById('flip-cards-container');
@@ -477,10 +939,32 @@ li { margin: 6px 0; color: #e2e8f0; }
   renderWorkshopStep(index, container) {
     const step = this.workshopSteps[index];
     if (!step || !container) return;
+    const hasCss = !!step.cssCode;
+    const gridStyle = hasCss ? '' : ' style="grid-template-columns:1fr;"';
+
+    const cssPanel = hasCss ? `
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <pre class="workshop-code-readonly workshop-css-code">${this.esc(step.cssCode)}</pre>
+          </div>` : '';
+
+    let htmlDisplay = this.colorizeHtml(step.htmlCode);
+    if (step.highlightText) {
+      const hlEscaped = this.esc(step.highlightText);
+      const hlColorized = this.colorizeHtml(step.highlightText);
+      htmlDisplay = htmlDisplay.replace(hlColorized, '<span class="workshop-highlight">' + hlColorized + '</span>');
+    }
+
     container.innerHTML = `
-      <div class="workshop-split">
-        <div class="workshop-code-panel">${step.code}</div>
-        <div class="workshop-preview-panel">
+      <div class="html-css-write-area">
+        <div class="html-css-editors"${gridStyle}>
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <pre class="workshop-code-readonly">${htmlDisplay}</pre>
+          </div>${cssPanel}
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
           <iframe sandbox="allow-same-origin" title="Workshop Vorschau"></iframe>
         </div>
       </div>
@@ -513,21 +997,6 @@ li { margin: 6px 0; color: #e2e8f0; }
       <pre class="selector-html-display" id="selector-html-display">&lt;body&gt;\n${htmlDisplay}\n&lt;/body&gt;</pre>
       <div class="selector-info" id="selector-info">Klicke auf einen Selektor links!</div>
     `;
-
-    /* const htmlDisplay = sp.html.map((el, i) => {
-      if (el.selfClosing) {
-        return `<span data-idx="${i}">&lt;${this.esc(el.tag)}${this.esc(el.attrs)} /&gt;</span>`;
-      }
-      return `<span data-idx="${i}">&lt;${this.esc(el.tag)}${this.esc(el.attrs)}&gt;${this.esc(el.text)}&lt;/${this.esc(el.tag)}&gt;</span>`;
-    }).join('\n');
-
-    container.innerHTML = `
-      <div class="selector-buttons">
-        ${sp.selectors.map((s, i) => `<button class="selector-btn" data-si="${i}" type="button">${this.esc(s.label)}</button>`).join('')}
-      </div>
-      <div class="selector-html-display" id="selector-html-display">${htmlDisplay}</div>
-      <div class="selector-info" id="selector-info">Klicke auf einen Selektor links!</div>
-    `; */
 
     container.addEventListener('click', (e) => {
       const btn = e.target.closest('.selector-btn');
@@ -748,108 +1217,6 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   // ==========================
-  // BOX MODEL
-  // ==========================
-  renderBoxModel() {
-    const container = document.getElementById('box-model-visual');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="box-model-diagram">
-        <div class="box-layer box-layer-margin" data-layer="0">
-          <span class="box-layer-label">Margin</span>
-          <div class="box-layer box-layer-border" data-layer="1">
-            <span class="box-layer-label">Border</span>
-            <div class="box-layer box-layer-padding" data-layer="2">
-              <span class="box-layer-label">Padding</span>
-              <div class="box-layer box-layer-content" data-layer="3">
-                <span class="box-layer-label">Content</span>
-                Inhalt
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    container.addEventListener('click', (e) => {
-      const layer = e.target.closest('.box-layer');
-      if (!layer) return;
-      e.stopPropagation();
-      const idx = parseInt(layer.dataset.layer, 10);
-      container.querySelectorAll('.box-layer').forEach(l => l.classList.remove('active'));
-      layer.classList.add('active');
-      this.showBoxDetail(idx);
-    });
-    this.showBoxDetail(null);
-  }
-
-  showBoxDetail(idx) {
-    const detail = document.getElementById('box-model-detail');
-    if (!detail) return;
-    if (idx === null || idx === undefined) {
-      detail.innerHTML = '<em>Klicke auf eine Schicht im Box-Modell!</em>';
-      return;
-    }
-    const layer = this.boxLayers[idx];
-    detail.innerHTML = `
-      <div class="detail-title">${this.esc(layer.name)}</div>
-      <div class="detail-analogy">${this.esc(layer.analogy)}</div>
-      <p>${this.esc(layer.desc)}</p>
-      <div class="detail-code">${this.esc(layer.code)}</div>
-    `;
-  }
-
-  // ==========================
-  // BOX WORKSHOP (Sliders)
-  // ==========================
-  renderBoxWorkshop() {
-    const container = document.getElementById('box-workshop');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="box-sliders">
-        <div class="box-slider-group">
-          <label class="margin-label">Margin: <span class="slider-value" id="bw-margin-val">20px</span></label>
-          <input type="range" id="bw-margin" min="0" max="60" value="20" style="accent-color:var(--box-margin)">
-        </div>
-        <div class="box-slider-group">
-          <label class="border-label">Border: <span class="slider-value" id="bw-border-val">3px</span></label>
-          <input type="range" id="bw-border" min="0" max="20" value="3" style="accent-color:var(--box-border)">
-        </div>
-        <div class="box-slider-group">
-          <label class="padding-label">Padding: <span class="slider-value" id="bw-padding-val">15px</span></label>
-          <input type="range" id="bw-padding" min="0" max="60" value="15" style="accent-color:var(--box-padding)">
-        </div>
-      </div>
-      <div class="box-live-preview" id="bw-preview">
-        <div class="box-preview-element" id="bw-element">Mein Element</div>
-      </div>
-      <div class="box-css-output" id="bw-css-output"></div>
-    `;
-    this.updateBoxWorkshop();
-    container.querySelectorAll('input[type="range"]').forEach(inp => inp.addEventListener('input', () => this.updateBoxWorkshop()));
-  }
-
-  updateBoxWorkshop() {
-    const margin = document.getElementById('bw-margin')?.value || '20';
-    const border = document.getElementById('bw-border')?.value || '3';
-    const padding = document.getElementById('bw-padding')?.value || '15';
-    const el = document.getElementById('bw-element');
-    const output = document.getElementById('bw-css-output');
-
-    document.getElementById('bw-margin-val').textContent = margin + 'px';
-    document.getElementById('bw-border-val').textContent = border + 'px';
-    document.getElementById('bw-padding-val').textContent = padding + 'px';
-
-    if (el) {
-      el.style.margin = margin + 'px';
-      el.style.border = border + 'px solid #fb8500';
-      el.style.padding = padding + 'px';
-    }
-    if (output) {
-      output.textContent = `.element {\n  margin: ${margin}px;\n  border: ${border}px solid orange;\n  padding: ${padding}px;\n}`;
-    }
-  }
-
-  // ==========================
   // HTML REF BADGES
   // ==========================
   bindHtmlRefBadges() {
@@ -885,9 +1252,18 @@ li { margin: 6px 0; color: #e2e8f0; }
   createMissionButtons() {
     const nav = document.getElementById('mission-nav');
     if (!nav) return;
-    nav.innerHTML = this.missions.map((m, i) => `
-      <button class="mission-btn${i === 0 ? ' active' : ''}" data-mi="${i}" type="button" role="tab" aria-label="Mission ${i + 1}: ${this.esc(m.title)}">${i + 1}</button>
-    `).join('');
+    let html = '';
+    let lastSection = null;
+    this.missions.forEach((m, i) => {
+      if (m.section && m.section !== lastSection) {
+        const dividerClass = m.profi ? ' profi-divider' : '';
+        html += `<span class="mission-divider${dividerClass}">${this.esc(m.section)}</span>`;
+        lastSection = m.section;
+      }
+      const profiClass = m.profi ? ' profi' : '';
+      html += `<button class="mission-btn${i === 0 ? ' active' : ''}${profiClass}" data-mi="${i}" type="button" role="tab" aria-label="Mission ${i + 1}: ${this.esc(m.title)}">${i + 1}</button>`;
+    });
+    nav.innerHTML = html;
     nav.addEventListener('click', (e) => {
       const btn = e.target.closest('.mission-btn');
       if (!btn) return;
@@ -942,12 +1318,19 @@ li { margin: 6px 0; color: #e2e8f0; }
   updateMission() {
     const area = document.getElementById('mission-area');
     if (!area) return;
+
+    if (this._missionAbort) this._missionAbort.abort();
+    this._missionAbort = new AbortController();
+
     const m = this.missions[this.currentMission];
     const mi = this.currentMission;
 
+    const mascotImg = this.completedMissions.has(mi) ? 'Byte_mascot/Byte_Happy.png' : 'Byte_mascot/Byte_Thinking.png';
+    const mascotAlt = this.completedMissions.has(mi) ? 'Byte ist gluecklich' : 'Byte denkt nach';
+
     let content = `
-      <img src="Byte_mascot/Byte_Thinking.png" alt="Byte denkt nach" class="mission-mascot">
-      <h3>Mission ${mi + 1}: ${this.esc(m.title)}</h3>
+      <img src="${mascotImg}" alt="${mascotAlt}" class="mission-mascot">
+      <h3>Mission ${mi + 1}: ${this.esc(m.title)}${m.profi ? ' ⭐' : ''}</h3>
       <p class="mission-text">${this.esc(m.text)}</p>
     `;
 
@@ -960,6 +1343,8 @@ li { margin: 6px 0; color: #e2e8f0; }
       case 'true-false': content += this.renderTrueFalseMission(m, mi); break;
       case 'cloze': content += this.renderClozeMission(m, mi); break;
       case 'code-write': content += this.renderCodeWriteMission(m, mi); break;
+      case 'html-css-write': content += this.renderHtmlCssWriteMission(m, mi); break;
+      case 'html-write': content += this.renderHtmlWriteMission(m, mi); break;
     }
 
     area.innerHTML = content;
@@ -972,17 +1357,21 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   renderMatchingMission(m, mi) {
-    const state = this.missionState[mi] || { selected: null, matched: [] };
-    this.missionState[mi] = state;
-    const shuffledRight = m.data.pairs.map(p => p.right).sort(() => Math.random() - 0.5);
-    this.missionState[mi].shuffledRight = shuffledRight;
+    if (!this.missionState[mi]) {
+      this.missionState[mi] = { selected: null, matched: [] };
+    }
+    const state = this.missionState[mi];
+    if (!state.shuffledRight) {
+      state.shuffledRight = [...m.data.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
+    }
+    const matchedRightTexts = new Set(state.matched.map(li => m.data.pairs[li].right));
     return `
       <div class="matching-container">
         <div class="matching-left">
-          ${m.data.pairs.map((p, i) => `<div class="matching-item matching-left-item" data-idx="${i}">${this.esc(p.left)}</div>`).join('')}
+          ${m.data.pairs.map((p, i) => `<div class="matching-item matching-left-item${state.matched.includes(i) ? ' matched' : ''}" data-idx="${i}">${this.esc(p.left)}</div>`).join('')}
         </div>
         <div class="matching-right">
-          ${shuffledRight.map((r, i) => `<div class="matching-item matching-right-item" data-idx="${i}">${this.esc(r)}</div>`).join('')}
+          ${state.shuffledRight.map((r, i) => `<div class="matching-item matching-right-item${matchedRightTexts.has(r) ? ' matched' : ''}" data-idx="${i}">${this.esc(r)}</div>`).join('')}
         </div>
       </div>
       <div class="mission-feedback" id="mission-feedback"></div>
@@ -1012,8 +1401,35 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   renderSingleChoiceMission(m, mi) {
-    if (!this.missionState[mi]) this.missionState[mi] = { currentQ: 0, correct: 0 };
+    if (!this.missionState[mi]) this.missionState[mi] = { currentQ: 0, correct: 0, answers: {} };
     const state = this.missionState[mi];
+    if (!state.answers) state.answers = {};
+
+    if (state.currentQ >= m.data.questions.length) {
+      // Show review of all questions with answers
+      let html = '';
+      m.data.questions.forEach((q, qi) => {
+        const chosen = state.answers[qi];
+        html += `
+          <div class="choice-review">
+            <p style="color:var(--text-muted);font-size:0.8rem;margin:0;">Frage ${qi + 1}</p>
+            <p style="font-weight:600;margin:4px 0 8px;">${this.esc(q.q)}</p>
+            <div class="choice-options reviewed">
+              ${q.options.map((opt, i) => {
+                let cls = '';
+                if (i === q.correct) cls += ' correct';
+                if (i === chosen && i !== q.correct) cls += ' wrong';
+                if (i === chosen) cls += ' chosen';
+                return `<div class="choice-option${cls} disabled"><span class="choice-marker"></span><span>${this.esc(opt)}</span></div>`;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+      html += `<p style="color:var(--accent-green);font-weight:700;margin-top:12px;">Alle Fragen beantwortet! (${state.correct}/${m.data.questions.length} richtig)</p>`;
+      return html;
+    }
+
     const q = m.data.questions[state.currentQ];
     return `
       <p style="color:var(--text-muted);font-size:0.85rem;">Frage ${state.currentQ + 1} von ${m.data.questions.length}</p>
@@ -1032,20 +1448,28 @@ li { margin: 6px 0; color: #e2e8f0; }
 
   renderAssignmentMission(m, mi) {
     if (!this.missionState[mi]) {
-      this.missionState[mi] = { placed: {}, selectedTag: null };
+      this.missionState[mi] = { placed: {} };
       m.data.categories.forEach((_, i) => { this.missionState[mi].placed[i] = []; });
     }
-    const tags = m.data.tags.sort(() => Math.random() - 0.5);
-    this.missionState[mi].shuffledTags = tags;
+    const state = this.missionState[mi];
+    if (!state.shuffledTags) {
+      state.shuffledTags = [...m.data.tags].sort(() => Math.random() - 0.5);
+    }
+    const tags = state.shuffledTags;
+    const placedTags = new Set();
+    Object.values(state.placed).forEach(arr => arr.forEach(t => placedTags.add(t)));
+
     return `
       <div class="assignment-container">
         <div class="assignment-pool" id="assignment-pool">
-          ${tags.map(t => `<span class="assignment-tag" data-tag="${this.esc(t)}">${this.esc(t)}</span>`).join('')}
+          ${tags.map(t => `<span class="assignment-tag${placedTags.has(t) ? ' placed' : ''}" data-tag="${this.esc(t)}">${this.esc(t)}</span>`).join('')}
         </div>
         ${m.data.categories.map((cat, i) => `
           <div class="assignment-category" data-ci="${i}">
             <h4>${this.esc(cat.name)}</h4>
-            <div class="placed-items" data-ci="${i}"></div>
+            <div class="placed-items" data-ci="${i}">
+              ${(state.placed[i] || []).map(t => `<span class="assignment-placed" data-tag="${this.esc(t)}" data-ci="${i}" title="Klicke zum Zuruecknehmen">${this.esc(t)}</span>`).join('')}
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1054,32 +1478,37 @@ li { margin: 6px 0; color: #e2e8f0; }
     `;
   }
 
-  renderTrueFalseMission(m) {
+  renderTrueFalseMission(m, mi) {
+    const state = this.missionState[mi] || {};
     return `
       <div class="tf-statements">
-        ${m.data.statements.map((s, i) => `
+        ${m.data.statements.map((s, i) => {
+          const answered = state['answered_' + i];
+          return `
           <div class="tf-statement" data-si="${i}">
             <p>${this.esc(s.text)}</p>
             <div class="tf-buttons">
-              <button class="tf-btn" data-si="${i}" data-answer="true" type="button">Stimmt</button>
-              <button class="tf-btn" data-si="${i}" data-answer="false" type="button">Stimmt nicht</button>
+              <button class="tf-btn${answered === 'true' ? (s.correct ? ' selected-true correct' : ' selected-true wrong') : ''}" data-si="${i}" data-answer="true" type="button" ${answered ? 'disabled' : ''}>Stimmt</button>
+              <button class="tf-btn${answered === 'false' ? (!s.correct ? ' selected-false correct' : ' selected-false wrong') : ''}" data-si="${i}" data-answer="false" type="button" ${answered ? 'disabled' : ''}>Stimmt nicht</button>
             </div>
-            <div class="tf-feedback" id="tf-fb-${i}"></div>
+            <div class="tf-feedback" id="tf-fb-${i}" ${answered ? `style="color:${(answered === 'true') === s.correct ? 'var(--accent-green)' : 'var(--accent-red)'}"` : ''}>${answered ? this.esc(s.explanation) : ''}</div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
       <div class="mission-feedback" id="mission-feedback"></div>
     `;
   }
 
-  renderClozeMission(m) {
+  renderClozeMission(m, mi) {
+    const state = this.missionState[mi] || {};
     let html = '<div class="cloze-text">';
     m.data.segments.forEach((seg, i) => {
       if (seg.type === 'text') {
         html += this.esc(seg.value);
       } else {
         const shuffled = [...seg.options].sort(() => Math.random() - 0.5);
-        html += `<select data-gi="${i}" data-correct="${this.esc(seg.correct)}"><option value="">???</option>${shuffled.map(o => `<option value="${this.esc(o)}">${this.esc(o)}</option>`).join('')}</select>`;
+        const savedVal = state['gap_' + i] || '';
+        html += `<select data-gi="${i}" data-correct="${this.esc(seg.correct)}"><option value="">???</option>${shuffled.map(o => `<option value="${this.esc(o)}"${o === savedVal ? ' selected' : ''}>${this.esc(o)}</option>`).join('')}</select>`;
       }
     });
     html += '</div>';
@@ -1088,18 +1517,71 @@ li { margin: 6px 0; color: #e2e8f0; }
     return html;
   }
 
-  renderCodeWriteMission(m) {
+  renderCodeWriteMission(m, mi) {
+    const savedCode = this.missionState[mi]?.code ?? m.data.starterCode;
     return `
-      <div class="code-write-area">
-        <div class="code-write-editor">
-          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Schreibe dein CSS hier:</p>
-          <textarea id="code-write-input">${this.esc(m.data.starterCode)}</textarea>
-          <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="html-css-write-area">
+        <div class="html-css-editors">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <textarea id="code-write-html-display" spellcheck="false" readonly>${this.esc(m.data.htmlTemplate)}</textarea>
+          </div>
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <textarea id="code-write-input" spellcheck="false">${this.esc(savedCode)}</textarea>
+          </div>
         </div>
-        <div class="code-write-preview">
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
           <iframe id="code-write-preview-frame" sandbox="allow-same-origin" title="Code Vorschau"></iframe>
         </div>
       </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="mission-feedback" id="mission-feedback"></div>
+    `;
+  }
+
+  renderHtmlCssWriteMission(m, mi) {
+    const savedHtml = this.missionState[mi]?.html ?? m.data.starterHtml;
+    const savedCss = this.missionState[mi]?.css ?? m.data.starterCss;
+    return `
+      <div class="html-css-write-area">
+        <div class="html-css-editors">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <textarea id="html-write-input" spellcheck="false">${this.esc(savedHtml)}</textarea>
+          </div>
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">style.css</div>
+            <textarea id="css-write-input" spellcheck="false">${this.esc(savedCss)}</textarea>
+          </div>
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-css-preview-frame" sandbox="allow-same-origin" title="Vorschau"></iframe>
+        </div>
+      </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="mission-feedback" id="mission-feedback"></div>
+    `;
+  }
+
+  renderHtmlWriteMission(m, mi) {
+    const savedHtml = this.missionState[mi]?.html ?? m.data.starterHtml;
+    return `
+      <div class="html-css-write-area">
+        <div class="html-css-editors" style="grid-template-columns:1fr;">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">index.html</div>
+            <textarea id="html-only-input" spellcheck="false">${this.esc(savedHtml)}</textarea>
+          </div>
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-only-preview-frame" sandbox="allow-same-origin" title="Vorschau"></iframe>
+        </div>
+      </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
       <div class="mission-feedback" id="mission-feedback"></div>
     `;
   }
@@ -1109,43 +1591,43 @@ li { margin: 6px 0; color: #e2e8f0; }
     const area = document.getElementById('mission-area');
     if (!area) return;
     const m = this.missions[mi];
+    const signal = this._missionAbort.signal;
 
     switch (format) {
       case 'exploration':
-        area.querySelector('#mission-check')?.addEventListener('click', () => this.showMissionSuccess(m.success));
+        area.querySelector('#mission-check')?.addEventListener('click', () => this.showMissionSuccess(m.success), { signal });
         break;
-
       case 'matching':
-        this.bindMatchingMission(area, m, mi);
+        this.bindMatchingMission(area, m, mi, signal);
         break;
-
       case 'sorting':
-        this.bindSortingMission(area, m, mi);
+        this.bindSortingMission(area, m, mi, signal);
         break;
-
       case 'single-choice':
-        this.bindSingleChoiceMission(area, m, mi);
+        this.bindSingleChoiceMission(area, m, mi, signal);
         break;
-
       case 'assignment':
-        this.bindAssignmentMission(area, m, mi);
+        this.bindAssignmentMission(area, m, mi, signal);
         break;
-
       case 'true-false':
-        this.bindTrueFalseMission(area, m, mi);
+        this.bindTrueFalseMission(area, m, mi, signal);
         break;
-
       case 'cloze':
-        area.querySelector('#mission-check')?.addEventListener('click', () => this.checkClozeMission(area, m, mi));
+        area.querySelector('#mission-check')?.addEventListener('click', () => this.checkClozeMission(area, m, mi), { signal });
         break;
-
       case 'code-write':
-        this.bindCodeWriteMission(area, m, mi);
+        this.bindCodeWriteMission(area, m, mi, signal);
+        break;
+      case 'html-css-write':
+        this.bindHtmlCssWriteMission(area, m, mi, signal);
+        break;
+      case 'html-write':
+        this.bindHtmlWriteMission(area, m, mi, signal);
         break;
     }
   }
 
-  bindMatchingMission(area, m, mi) {
+  bindMatchingMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     let selectedLeft = null;
 
@@ -1159,7 +1641,6 @@ li { margin: 6px 0; color: #e2e8f0; }
         selectedLeft = parseInt(item.dataset.idx, 10);
       } else if (item.classList.contains('matching-right-item') && selectedLeft !== null) {
         const ri = parseInt(item.dataset.idx, 10);
-        const leftText = m.data.pairs[selectedLeft].left;
         const correctRight = m.data.pairs[selectedLeft].right;
         const clickedRight = state.shuffledRight[ri];
 
@@ -1179,10 +1660,10 @@ li { margin: 6px 0; color: #e2e8f0; }
           if (fb) { fb.textContent = 'Das passt nicht zusammen. Probiere es nochmal!'; fb.className = 'mission-feedback error'; }
         }
       }
-    });
+    }, { signal });
   }
 
-  bindSortingMission(area, m, mi) {
+  bindSortingMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     area.addEventListener('click', (e) => {
       const btn = e.target.closest('.sort-btn');
@@ -1195,7 +1676,7 @@ li { margin: 6px 0; color: #e2e8f0; }
         [state.items[idx], state.items[idx + 1]] = [state.items[idx + 1], state.items[idx]];
       }
       this.updateMission();
-    });
+    }, { signal });
     area.querySelector('#mission-check')?.addEventListener('click', () => {
       const isCorrect = JSON.stringify(state.items) === JSON.stringify(m.data.correct);
       const fb = document.getElementById('mission-feedback');
@@ -1205,11 +1686,12 @@ li { margin: 6px 0; color: #e2e8f0; }
         fb.textContent = 'Die Reihenfolge stimmt noch nicht. Verschiebe die Eintraege mit den Pfeilen!';
         fb.className = 'mission-feedback error';
       }
-    });
+    }, { signal });
   }
 
-  bindSingleChoiceMission(area, m, mi) {
+  bindSingleChoiceMission(area, m, mi, signal) {
     const state = this.missionState[mi];
+    if (!state.answers) state.answers = {};
     area.querySelector('#choice-options')?.addEventListener('click', (e) => {
       const opt = e.target.closest('.choice-option');
       if (!opt || opt.classList.contains('correct') || opt.classList.contains('wrong')) return;
@@ -1219,6 +1701,8 @@ li { margin: 6px 0; color: #e2e8f0; }
       const allOpts = area.querySelectorAll('.choice-option');
 
       allOpts.forEach(o => o.classList.add('disabled'));
+      state.answers[state.currentQ] = oi;
+
       if (oi === q.correct) {
         opt.classList.add('correct');
         state.correct++;
@@ -1237,35 +1721,55 @@ li { margin: 6px 0; color: #e2e8f0; }
           this.showMissionSuccess(m.success);
         }
       }, 1200);
-    });
+    }, { signal });
   }
 
-  bindAssignmentMission(area, m, mi) {
+  bindAssignmentMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     let selectedTag = null;
 
     area.addEventListener('click', (e) => {
+      const placedItem = e.target.closest('.assignment-placed');
+      if (placedItem) {
+        const tag = placedItem.dataset.tag;
+        const ci = parseInt(placedItem.dataset.ci, 10);
+        const idx = state.placed[ci].indexOf(tag);
+        if (idx !== -1) state.placed[ci].splice(idx, 1);
+        placedItem.remove();
+        const tagEl = area.querySelector(`.assignment-tag[data-tag="${CSS.escape(tag)}"]`);
+        if (tagEl) tagEl.classList.remove('placed');
+        const fb = document.getElementById('mission-feedback');
+        if (fb) { fb.textContent = ''; fb.className = 'mission-feedback'; }
+        return;
+      }
+
       const tag = e.target.closest('.assignment-tag');
       const cat = e.target.closest('.assignment-category');
 
       if (tag && !tag.classList.contains('placed')) {
-        area.querySelectorAll('.assignment-tag').forEach(t => t.style.outline = 'none');
-        tag.style.outline = '2px solid white';
+        area.querySelectorAll('.assignment-tag').forEach(t => t.classList.remove('selected-tag'));
+        tag.classList.add('selected-tag');
         selectedTag = tag.dataset.tag;
-      } else if (cat && selectedTag) {
+      } else if (cat && selectedTag && !e.target.closest('.assignment-placed')) {
         const ci = parseInt(cat.dataset.ci, 10);
         state.placed[ci].push(selectedTag);
         const placedDiv = cat.querySelector('.placed-items');
         const span = document.createElement('span');
         span.className = 'assignment-placed';
         span.textContent = selectedTag;
+        span.dataset.tag = selectedTag;
+        span.dataset.ci = ci;
+        span.title = 'Klicke zum Zuruecknehmen';
         placedDiv.appendChild(span);
         const tagEl = area.querySelector(`.assignment-tag[data-tag="${CSS.escape(selectedTag)}"]`);
-        if (tagEl) tagEl.classList.add('placed');
+        if (tagEl) {
+          tagEl.classList.add('placed');
+          tagEl.classList.remove('selected-tag');
+        }
         selectedTag = null;
-        area.querySelectorAll('.assignment-tag').forEach(t => t.style.outline = 'none');
+        area.querySelectorAll('.assignment-tag').forEach(t => t.classList.remove('selected-tag'));
       }
-    });
+    }, { signal });
 
     area.querySelector('#mission-check')?.addEventListener('click', () => {
       let allCorrect = true;
@@ -1276,8 +1780,10 @@ li { margin: 6px 0; color: #e2e8f0; }
         placedItems.forEach(item => {
           if (cat.correct.includes(item.textContent)) {
             item.classList.remove('wrong');
+            item.classList.add('correct-placed');
           } else {
             item.classList.add('wrong');
+            item.classList.remove('correct-placed');
             allCorrect = false;
           }
         });
@@ -1288,25 +1794,28 @@ li { margin: 6px 0; color: #e2e8f0; }
       if (allCorrect) {
         this.showMissionSuccess(m.success);
       } else if (fb) {
-        fb.textContent = 'Einige sind noch falsch markiert. Probiere es nochmal!';
+        fb.textContent = 'Einige sind noch falsch. Klicke auf falsche Zuordnungen, um sie zurueckzunehmen!';
         fb.className = 'mission-feedback error';
       }
-    });
+    }, { signal });
   }
 
-  bindTrueFalseMission(area, m, mi) {
-    let answered = 0;
+  bindTrueFalseMission(area, m, mi, signal) {
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+    const state = this.missionState[mi];
     const total = m.data.statements.length;
 
     area.addEventListener('click', (e) => {
       const btn = e.target.closest('.tf-btn');
-      if (!btn || btn.classList.contains('selected-true') || btn.classList.contains('selected-false')) return;
+      if (!btn || btn.disabled) return;
       const si = parseInt(btn.dataset.si, 10);
       const answer = btn.dataset.answer === 'true';
       const statement = m.data.statements[si];
       const fb = document.getElementById('tf-fb-' + si);
       const allbtns = area.querySelectorAll(`.tf-btn[data-si="${si}"]`);
       allbtns.forEach(b => b.disabled = true);
+
+      state['answered_' + si] = btn.dataset.answer;
 
       const correct = answer === statement.correct;
       btn.classList.add(answer ? 'selected-true' : 'selected-false');
@@ -1317,18 +1826,21 @@ li { margin: 6px 0; color: #e2e8f0; }
         fb.style.color = correct ? 'var(--accent-green)' : 'var(--accent-red)';
       }
 
-      answered++;
-      if (answered === total) {
+      const answeredCount = m.data.statements.filter((_, i) => state['answered_' + i] !== undefined).length;
+      if (answeredCount === total) {
         setTimeout(() => this.showMissionSuccess(m.success), 800);
       }
-    });
+    }, { signal });
   }
 
-  checkClozeMission(area, m) {
+  checkClozeMission(area, m, mi) {
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+    const state = this.missionState[mi];
     const selects = area.querySelectorAll('.cloze-text select');
     let allCorrect = true;
     selects.forEach(sel => {
       const correct = sel.dataset.correct;
+      state['gap_' + sel.dataset.gi] = sel.value;
       if (sel.value === correct) {
         sel.classList.add('correct');
         sel.classList.remove('wrong');
@@ -1347,10 +1859,12 @@ li { margin: 6px 0; color: #e2e8f0; }
     }
   }
 
-  bindCodeWriteMission(area, m, mi) {
+  bindCodeWriteMission(area, m, mi, signal) {
     const textarea = area.querySelector('#code-write-input');
     const iframe = area.querySelector('#code-write-preview-frame');
     const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
 
     const updatePreview = () => {
       if (!textarea || !iframe) return;
@@ -1359,7 +1873,10 @@ li { margin: 6px 0; color: #e2e8f0; }
     };
 
     if (textarea) {
-      textarea.addEventListener('input', updatePreview);
+      textarea.addEventListener('input', () => {
+        this.missionState[mi].code = textarea.value;
+        updatePreview();
+      }, { signal });
       updatePreview();
     }
 
@@ -1372,10 +1889,9 @@ li { margin: 6px 0; color: #e2e8f0; }
         const results = [];
         m.data.checks.forEach(check => {
           const el = doc.querySelector(check.element);
-          if (!el) { allPass = false; results.push('Element ' + check.element + ' nicht gefunden.'); return; }
+          if (!el) { allPass = false; results.push(check.desc + ' ✗'); return; }
           const computed = iframe.contentWindow.getComputedStyle(el);
           const val = computed.getPropertyValue(check.property);
-          // Loose check
           const expected = check.value.toLowerCase().trim();
           const actual = val.toLowerCase().trim();
           if (actual.includes(expected) || this.colorMatch(actual, expected) || this.fontWeightMatch(actual, expected)) {
@@ -1396,7 +1912,182 @@ li { margin: 6px 0; color: #e2e8f0; }
       } catch (err) {
         if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein CSS korrekt?'; fb.className = 'mission-feedback error'; }
       }
-    });
+    }, { signal });
+  }
+
+  bindHtmlCssWriteMission(area, m, mi, signal) {
+    const htmlInput = area.querySelector('#html-write-input');
+    const cssInput = area.querySelector('#css-write-input');
+    const iframe = area.querySelector('#html-css-preview-frame');
+    const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+
+    const updatePreview = () => {
+      if (!htmlInput || !cssInput || !iframe) return;
+      iframe.srcdoc = '<style>' + cssInput.value + '</style>' + htmlInput.value;
+    };
+
+    if (htmlInput) {
+      htmlInput.addEventListener('input', () => {
+        this.missionState[mi].html = htmlInput.value;
+        updatePreview();
+      }, { signal });
+    }
+    if (cssInput) {
+      cssInput.addEventListener('input', () => {
+        this.missionState[mi].css = cssInput.value;
+        updatePreview();
+      }, { signal });
+    }
+    updatePreview();
+
+    checkBtn?.addEventListener('click', () => {
+      if (!iframe) return;
+      const fb = document.getElementById('mission-feedback');
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        let allPass = true;
+        const results = [];
+
+        if (m.data.htmlChecks) {
+          m.data.htmlChecks.forEach(check => {
+            const elements = doc.querySelectorAll(check.selector);
+            if (check.minCount && elements.length < check.minCount) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (gefunden: ' + elements.length + ')');
+            } else if (elements.length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          });
+        }
+
+        if (m.data.cssChecks) {
+          m.data.cssChecks.forEach(check => {
+            const el = doc.querySelector(check.element);
+            if (!el) { allPass = false; results.push(check.desc + ' ✗ (Element nicht gefunden)'); return; }
+            const computed = iframe.contentWindow.getComputedStyle(el);
+            const val = computed.getPropertyValue(check.property);
+            const expected = check.value.toLowerCase().trim();
+            const actual = val.toLowerCase().trim();
+            if (actual.includes(expected) || this.colorMatch(actual, expected) || this.fontWeightMatch(actual, expected)) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗ (aktuell: ' + val + ')');
+            }
+          });
+        }
+
+        if (fb) {
+          if (allPass) {
+            this.showMissionSuccess(m.success);
+          } else {
+            fb.innerHTML = results.map(r => '<div>' + this.esc(r) + '</div>').join('');
+            fb.className = 'mission-feedback error';
+          }
+        }
+      } catch (err) {
+        if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein Code korrekt?'; fb.className = 'mission-feedback error'; }
+      }
+    }, { signal });
+  }
+
+  bindHtmlWriteMission(area, m, mi, signal) {
+    const htmlInput = area.querySelector('#html-only-input');
+    const iframe = area.querySelector('#html-only-preview-frame');
+    const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+
+    const updatePreview = () => {
+      if (!htmlInput || !iframe) return;
+      iframe.srcdoc = htmlInput.value;
+    };
+
+    if (htmlInput) {
+      htmlInput.addEventListener('input', () => {
+        this.missionState[mi].html = htmlInput.value;
+        updatePreview();
+      }, { signal });
+      updatePreview();
+    }
+
+    checkBtn?.addEventListener('click', () => {
+      if (!iframe) return;
+      const fb = document.getElementById('mission-feedback');
+      const htmlSrc = htmlInput ? htmlInput.value : '';
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        let allPass = true;
+        const results = [];
+
+        m.data.checks.forEach(check => {
+          if (check.type === 'text') {
+            if (htmlSrc.toLowerCase().includes(check.pattern.toLowerCase())) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          } else if (check.type === 'dom') {
+            const elements = doc.querySelectorAll(check.selector);
+            if (check.minCount && elements.length < check.minCount) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (gefunden: ' + elements.length + ')');
+            } else if (elements.length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          } else if (check.type === 'content') {
+            const el = doc.querySelector(check.selector);
+            if (el && el.textContent.trim().length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗ (Element leer)');
+            }
+          } else if (check.type === 'attr') {
+            const el = doc.querySelector(check.selector);
+            if (!el) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (Element nicht gefunden)');
+            } else if (check.notEmpty) {
+              const val = el.getAttribute(check.attr);
+              if (val && val.trim().length > 0) {
+                results.push(check.desc + ' ✓');
+              } else {
+                allPass = false;
+                results.push(check.desc + ' ✗ (Attribut leer)');
+              }
+            } else if (check.exists) {
+              if (el.hasAttribute(check.attr)) {
+                results.push(check.desc + ' ✓');
+              } else {
+                allPass = false;
+                results.push(check.desc + ' ✗ (Attribut fehlt)');
+              }
+            }
+          }
+        });
+
+        if (fb) {
+          if (allPass) {
+            this.showMissionSuccess(m.success);
+          } else {
+            fb.innerHTML = results.map(r => '<div>' + this.esc(r) + '</div>').join('');
+            fb.className = 'mission-feedback error';
+          }
+        }
+      } catch (err) {
+        if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein HTML korrekt?'; fb.className = 'mission-feedback error'; }
+      }
+    }, { signal });
   }
 
   colorMatch(actual, expected) {
@@ -1433,6 +2124,11 @@ li { margin: 6px 0; color: #e2e8f0; }
     const div = document.createElement('div');
     div.textContent = String(str);
     return div.innerHTML;
+  }
+
+  colorizeHtml(code) {
+    let escaped = this.esc(code);
+    return escaped.replace(/(&lt;\/?\w[\s\S]*?&gt;)/g, '<span class="hl-tag">$1</span>');
   }
 }
 
