@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS-Einstieg - Informatik 7. Klasse</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <h1>Einstieg in CSS</h1>
+    <p class="subtitle">Informatik · 7. Klasse Gymnasium</p>
+  </header>
+
+  <!-- ===== TAB-NAVIGATION ===== -->
+  <nav class="tab-nav" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="grundlagen" data-tab="grundlagen">
+      📖 Grundlagen
+    </button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="sandkasten" data-tab="sandkasten">
+      🏖️ Sandkasten
+    </button>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- GRUNDLAGEN-BEREICH                                           -->
+  <!-- ============================================================ -->
+  <main id="grundlagen" class="tab-content active" role="tabpanel">
+
+    <!-- Abschnitt 1: Wozu CSS da ist -->
+    <section class="lernsection">
+      <h2>1. Wozu ist CSS da?</h2>
+      <p>
+        Webseiten bestehen aus zwei Teilen: <strong>HTML</strong> beschreibt die <em>Struktur</em> und den <em>Inhalt</em>
+        (Überschriften, Absätze, Bilder …), und <strong>CSS</strong> beschreibt das <em>Aussehen</em>
+        (Farben, Schriftgrößen, Abstände …).
+      </p>
+      <p>
+        Ohne CSS sieht jede Webseite gleich aus - schwarzer Text auf weißem Hintergrund.
+        Mit CSS kannst du alles nach deinen Wünschen gestalten!
+      </p>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <button class="demo-toggle-btn" id="toggleCssBtn">CSS einschalten</button>
+        <div class="demo-preview" id="cssTogglePreview">
+          <div class="demo-html-unstyled" id="cssToggleContent">
+            <h4>Meine Webseite</h4>
+            <p>Das ist ein Absatz mit etwas Text.</p>
+            <p>Und hier ist noch ein Absatz.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abschnitt 2: Grundaufbau einer CSS-Regel -->
+    <section class="lernsection">
+      <h2>2. Grundaufbau einer CSS-Regel</h2>
+      <p>Eine CSS-Regel besteht aus einem <strong>Selektor</strong> und einem <strong>Deklarationsblock</strong>:</p>
+
+      <div class="rule-anatomy">
+        <div class="rule-line">
+          <span class="anatomy-selector">p</span>
+          <span class="anatomy-brace">{</span>
+        </div>
+        <div class="rule-line rule-indent">
+          <span class="anatomy-property">color</span><span class="anatomy-colon">:</span>
+          <span class="anatomy-value">blue</span><span class="anatomy-semicolon">;</span>
+        </div>
+        <div class="rule-line">
+          <span class="anatomy-brace">}</span>
+        </div>
+      </div>
+
+      <div class="anatomy-legend">
+        <span class="legend-item"><span class="legend-color" style="background: var(--color-selector)"></span> Selektor - <em>Was</em> wird gestaltet?</span>
+        <span class="legend-item"><span class="legend-color" style="background: var(--color-property)"></span> Property (Eigenschaft) - <em>Welche</em> Eigenschaft?</span>
+        <span class="legend-item"><span class="legend-color" style="background: var(--color-value)"></span> Value (Wert) - <em>Wie</em> soll es aussehen?</span>
+      </div>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <p>Ändere den CSS-Code und beobachte, was passiert:</p>
+        <div class="demo-editor-row">
+          <div class="demo-editor-col">
+            <label for="regelEditor">Dein CSS:</label>
+            <textarea class="demo-textarea" id="regelEditor" rows="3" spellcheck="false">p { color: blue; }</textarea>
+          </div>
+          <div class="demo-preview-col">
+            <p class="demo-label">Vorschau:</p>
+            <div class="demo-preview" id="regelPreview">
+              <p>Dieser Absatz wird von deiner Regel gestaltet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abschnitt 3: Selektoren auf Einstiegsniveau -->
+    <section class="lernsection">
+      <h2>3. Selektoren - Elemente auswählen</h2>
+      <p>Ein <strong>Selektor</strong> bestimmt, welche HTML-Elemente von einer CSS-Regel betroffen sind.</p>
+
+      <h3>Element-Selektor</h3>
+      <p>
+        Der Element-Selektor wählt <em>alle</em> Elemente eines bestimmten Typs aus.
+        Zum Beispiel wählt <code>p</code> alle Absätze (<code>&lt;p&gt;</code>) aus.
+      </p>
+
+      <h3>Klassen-Selektor</h3>
+      <p>
+        Mit dem Klassen-Selektor wählst du nur Elemente aus, die eine bestimmte <strong>class</strong> haben.
+        Im HTML schreibst du <code>class="wichtig"</code>, im CSS wählst du mit <code>.wichtig</code> (mit Punkt!) aus.
+      </p>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <p>Klicke auf die Buttons, um zu sehen, welche Elemente der jeweilige Selektor auswählt:</p>
+        <div class="demo-btn-group">
+          <button class="demo-toggle-btn" data-selector-demo="p">Selektor: <code>p</code></button>
+          <button class="demo-toggle-btn" data-selector-demo=".wichtig">Selektor: <code>.wichtig</code></button>
+          <button class="demo-toggle-btn" data-selector-demo="none">Zurücksetzen</button>
+        </div>
+        <p class="demo-label" style="margin-top: 0.75rem;">HTML-Code:</p>
+        <pre class="selector-code-display" id="selectorCode"><code><span data-line-tag="h4">&lt;h4&gt;Eine Überschrift&lt;/h4&gt;</span>
+<span data-line-tag="p">&lt;p&gt;Erster Absatz ohne Klasse.&lt;/p&gt;</span>
+<span data-line-tag="p" data-line-class="wichtig">&lt;p class="wichtig"&gt;Zweiter Absatz mit class="wichtig".&lt;/p&gt;</span>
+<span data-line-tag="p">&lt;p&gt;Dritter Absatz ohne Klasse.&lt;/p&gt;</span>
+<span data-line-tag="p" data-line-class="wichtig">&lt;p class="wichtig"&gt;Vierter Absatz mit class="wichtig".&lt;/p&gt;</span></code></pre>
+        <p class="demo-label" style="margin-top: 0.75rem;">Vorschau:</p>
+        <div class="demo-preview" id="selectorPreview">
+          <h4>Eine Überschrift</h4>
+          <p>Erster Absatz ohne Klasse.</p>
+          <p class="wichtig">Zweiter Absatz mit <code>class="wichtig"</code>.</p>
+          <p>Dritter Absatz ohne Klasse.</p>
+          <p class="wichtig">Vierter Absatz mit <code>class="wichtig"</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abschnitt 4: CSS wirkt auf viele Elemente gleichzeitig -->
+    <section class="lernsection">
+      <h2>4. CSS wirkt auf viele Elemente gleichzeitig</h2>
+      <p>
+        Eine einzelne CSS-Regel kann <strong>mehrere Elemente</strong> auf einmal verändern.
+        Wenn du zum Beispiel <code>p { color: green; }</code> schreibst, werden <em>alle</em>
+        <code>&lt;p&gt;</code>-Elemente auf der Seite grün - nicht nur eins!
+      </p>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <p>Klicke den Button und beobachte, wie <em>alle</em> Absätze gleichzeitig ihre Farbe ändern:</p>
+        <button class="demo-toggle-btn" id="multiBtn">Alle Absätze einfärben</button>
+        <div class="demo-preview" id="multiPreview">
+          <p>Absatz 1: Hallo!</p>
+          <p>Absatz 2: Wie geht's?</p>
+          <p>Absatz 3: Mir geht's gut!</p>
+          <p>Absatz 4: CSS ist cool!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abschnitt 5: Wichtige CSS-Eigenschaften -->
+    <section class="lernsection">
+      <h2>5. Wichtige CSS-Eigenschaften</h2>
+      <p>Hier sind einige wichtige Eigenschaften (Properties), die du kennen solltest:</p>
+
+      <div class="property-table-wrapper">
+        <table class="property-table">
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Beschreibung</th>
+              <th>Beispiel</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>color</code></td>
+              <td>Textfarbe</td>
+              <td><span class="prop-preview" style="color: red;">Roter Text</span></td>
+            </tr>
+            <tr>
+              <td><code>background-color</code></td>
+              <td>Hintergrundfarbe</td>
+              <td><span class="prop-preview" style="background-color: yellow; padding: 2px 6px;">Gelber Hintergrund</span></td>
+            </tr>
+            <tr>
+              <td><code>font-size</code></td>
+              <td>Schriftgröße</td>
+              <td><span class="prop-preview" style="font-size: 20px;">Größerer Text</span></td>
+            </tr>
+            <tr>
+              <td><code>text-align</code></td>
+              <td>Textausrichtung</td>
+              <td><span class="prop-preview" style="display: block; text-align: center;">Zentriert</span></td>
+            </tr>
+            <tr>
+              <td><code>border</code></td>
+              <td>Rahmen</td>
+              <td><span class="prop-preview" style="border: 2px solid blue; padding: 2px 6px;">Mit Rahmen</span></td>
+            </tr>
+            <tr>
+              <td><code>padding</code></td>
+              <td>Innenabstand</td>
+              <td><span class="prop-preview" style="background-color: #dbeafe; padding: 12px;">Mit Innenabstand</span></td>
+            </tr>
+            <tr>
+              <td><code>margin</code></td>
+              <td>Außenabstand</td>
+              <td><span class="prop-preview" style="display: inline-block; background-color: #dbeafe; margin: 10px; padding: 2px 6px;">Mit Außenabstand</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <p>Probiere verschiedene Eigenschaften aus! Ändere den CSS-Code:</p>
+        <div class="demo-editor-row">
+          <div class="demo-editor-col">
+            <label for="propEditor">Dein CSS:</label>
+            <textarea class="demo-textarea" id="propEditor" rows="7" spellcheck="false">p {
+  color: red;
+  background-color: lightyellow;
+  font-size: 20px;
+  text-align: center;
+  border: 2px solid blue;
+  padding: 10px;
+  margin: 15px;
+}</textarea>
+          </div>
+          <div class="demo-preview-col">
+            <p class="demo-label">Vorschau:</p>
+            <div class="demo-preview" id="propPreview">
+              <p>Dieser Text wird gestaltet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <h3>Farbmixer</h3>
+        <p>Mische deine eigene Farbe aus <strong>Rot</strong>, <strong>Grün</strong> und <strong>Blau</strong> (RGB):</p>
+        <div class="color-mixer">
+          <div class="color-sliders">
+            <div class="slider-row">
+              <label for="sliderR" class="slider-label slider-label-r">R</label>
+              <input type="range" id="sliderR" min="0" max="255" value="37" class="slider slider-r">
+              <span class="slider-value" id="valR">37</span>
+            </div>
+            <div class="slider-row">
+              <label for="sliderG" class="slider-label slider-label-g">G</label>
+              <input type="range" id="sliderG" min="0" max="255" value="99" class="slider slider-g">
+              <span class="slider-value" id="valG">99</span>
+            </div>
+            <div class="slider-row">
+              <label for="sliderB" class="slider-label slider-label-b">B</label>
+              <input type="range" id="sliderB" min="0" max="255" value="235" class="slider slider-b">
+              <span class="slider-value" id="valB">235</span>
+            </div>
+          </div>
+          <div class="color-result">
+            <div class="color-preview-box" id="colorPreviewBox"></div>
+            <div class="color-hex-row">
+              <code class="color-hex-value" id="colorHexValue">#2563eb</code>
+              <button class="color-copy-btn" id="colorCopyBtn" aria-label="Farbwert kopieren" title="Kopieren">📋</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abschnitt 6: Trennung von Inhalt und Design -->
+    <section class="lernsection">
+      <h2>6. Trennung von Inhalt und Design</h2>
+      <p>
+        Ein <strong>Kernprinzip</strong> der Webentwicklung: <em>Inhalt</em> (HTML) und <em>Design</em> (CSS)
+        sind <strong>technisch getrennt</strong>.
+      </p>
+      <p>
+        Stell dir einen Brief vor: Der <strong>Inhalt</strong> (was du schreibst) ist unabhängig vom
+        <strong>Briefpapier</strong> (Farbe, Schriftart, Layout). Du kannst denselben Text auf
+        verschiedenem Papier drucken - der Inhalt bleibt gleich, nur das Aussehen ändert sich.
+      </p>
+      <p>
+        Genauso funktioniert es bei Webseiten: Du änderst <em>nicht</em> das HTML, um das Aussehen zu ändern.
+        Stattdessen schreibst du CSS-Regeln in einer <strong>eigenen CSS-Datei</strong>, die per
+        <code>&lt;link&gt;</code> eingebunden wird.
+      </p>
+
+      <div class="demo-box">
+        <h3>Ausprobieren</h3>
+        <p>Derselbe HTML-Inhalt - zwei verschiedene CSS-Stile. Klicke zum Umschalten:</p>
+        <div class="demo-btn-group">
+          <button class="demo-toggle-btn active" data-style-demo="a">Stil A: Schlicht</button>
+          <button class="demo-toggle-btn" data-style-demo="b">Stil B: Bunt</button>
+        </div>
+        <div class="demo-preview" id="stylePreview">
+          <div id="styleContent">
+            <h4>Nachrichten des Tages</h4>
+            <p>Heute scheint die Sonne und es wird <strong>warm</strong>.</p>
+            <p class="wichtig">Morgen gibt es einen Informatik-Test!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- SANDKASTEN-BEREICH                                           -->
+  <!-- ============================================================ -->
+  <div id="sandkasten" class="tab-content" role="tabpanel">
+
+    <!-- Aufgaben-Navigation -->
+    <nav class="aufgaben-nav" aria-label="Aufgaben-Navigation">
+      <span class="aufgaben-nav-label">Aufgaben:</span>
+      <div class="aufgaben-btns" id="aufgabenBtns">
+        <!-- Wird per JS gefüllt -->
+      </div>
+    </nav>
+
+    <!-- Aufgaben-Bereich -->
+    <div class="aufgabe-container">
+      <div class="aufgabe-header">
+        <h2 id="aufgabeTitle">Aufgabe 1</h2>
+        <p id="aufgabeDesc">Beschreibung der Aufgabe.</p>
+      </div>
+
+      <div class="editor-layout">
+        <!-- HTML-Codeblock (read-only) -->
+        <div class="editor-panel">
+          <div class="editor-panel-header">
+            <span class="editor-panel-label">HTML (vorgegeben - nicht veränderbar)</span>
+          </div>
+          <pre class="html-code-display" id="htmlDisplay"><code></code></pre>
+        </div>
+
+        <!-- CSS-Editor -->
+        <div class="editor-panel">
+          <div class="editor-panel-header">
+            <span class="editor-panel-label">Dein CSS</span>
+          </div>
+          <textarea class="css-editor" id="cssEditor" spellcheck="false" placeholder="Schreibe hier dein CSS …"></textarea>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-section">
+        <div class="preview-header">
+          <span class="preview-label">Vorschau</span>
+        </div>
+        <iframe id="previewFrame" class="preview-iframe" sandbox="allow-same-origin" title="Vorschau deiner gestalteten Seite"></iframe>
+      </div>
+
+      <!-- Buttons -->
+      <div class="action-btns">
+        <button class="btn btn-check" id="checkBtn">✔ Überprüfen</button>
+        <button class="btn btn-reset" id="resetBtn">↺ Erneut versuchen</button>
+      </div>
+
+      <!-- Feedback -->
+      <div class="feedback-area" id="feedbackArea">
+        <!-- Wird per JS gefüllt -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site-footer">
+    <p>© Dominik Bechinie | Martin-Andersen-Nexö-Gymnasium | 2026</p>
+  </footer>
+
+  <script src="js/grundlagen.js"></script>
+  <script src="js/sandkasten.js"></script>
+</body>
+</html>

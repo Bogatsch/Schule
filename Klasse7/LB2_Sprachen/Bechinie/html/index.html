@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <title>Grundlagen HTML</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Grundlagen HTML</h1>
+            <nav class="header-nav">
+                <button class="glossary-btn" id="open-glossary">Glossar - Wichtigste HTML-Tags</button>
+            </nav>
+        </header>
+
+        <div class="main-content">
+            <section class="bridge-section" aria-label="Einfuehrung in HTML">
+                <div class="card bridge-hero-card">
+                    <div class="bridge-hero">
+                        <div class="bridge-hero-text">
+                            <h2>Was ist HTML?</h2>
+                            <div class="bridge-analogy">
+                                <div class="analogy-item">
+                                    <span class="analogy-badge analogy-html">HTML</span>
+                                    <span>= Bauplan deiner Webseite</span>
+                                </div>
+                                <div class="analogy-arrow">↔</div>
+                                <div class="analogy-item">
+                                    <span class="analogy-badge analogy-text">Reiner Text</span>
+                                    <span>= Nur Buchstaben</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bridge-hero-mascot">
+                            <img src="Byte_mascot/Byte_Happy.png" alt="Maskottchen Byte" class="mascot-img">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bridge-compare-card">
+                    <h3>Vorher &amp; Nachher</h3>
+                    <div class="bridge-toggle-wrap">
+                        <button id="bridge-toggle" class="bridge-toggle-btn" aria-pressed="false">
+                            <span class="toggle-label-off">Ohne HTML</span>
+                            <span class="toggle-switch"></span>
+                            <span class="toggle-label-on">Mit HTML</span>
+                        </button>
+                    </div>
+                    <div class="bridge-preview-frame">
+                        <iframe id="bridge-preview" class="bridge-iframe" sandbox="allow-same-origin" title="Vorher-Nachher Vorschau"></iframe>
+                    </div>
+                </div>
+
+                <div class="card bridge-quiz-card">
+                    <h3>Was weisst du schon?</h3>
+                    <div id="bridge-quiz-area"></div>
+                </div>
+            </section>
+
+            <section class="lerninsel" id="lerninsel-1" aria-label="HTML-Grundgeruest">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">1</span>
+                    <h2>HTML-Grundgeruest</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Wichtige Begriffe</h3>
+                    <div id="flip-cards-container" class="flip-cards-grid" role="list" aria-label="HTML-Begriffe Flip-Cards"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>HTML-Grundgeruest</h3>
+                    <div class="workshop-area" id="workshop-einbinden">
+                        <div class="workshop-steps" id="workshop-steps-einbinden"></div>
+                        <div class="workshop-content" id="workshop-content-einbinden"></div>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>HTML-Struktur erkunden</h3>
+                    <div class="selector-playground" id="selector-playground"></div>
+                </div>
+            </section>
+
+            <section class="lerninsel" id="lerninsel-2" aria-label="Text und Struktur">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">2</span>
+                    <h2>Text &amp; Struktur</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Text-Formatierung</h3>
+                    <div class="typo-workshop" id="typo-workshop"></div>
+                </div>
+            </section>
+
+            <section class="lerninsel" id="lerninsel-3" aria-label="Medien und Verknuepfungen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">3</span>
+                    <h2>Medien &amp; Verknuepfungen</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Links, Bilder &amp; Listen</h3>
+                    <p>Eine Webseite nur mit Text wäre langweilig. Schaue hier nach, wie du Links erstellst, Bilder einbindest und Listen anlegst.</p>
+                    <div class="box-model-interactive" id="box-model-visual"></div>
+                    <div id="box-model-detail" class="box-model-detail" aria-live="polite"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Ausprobieren</h3>
+                    <div class="box-workshop" id="box-workshop"></div>
+                </div>
+            </section>
+
+            <section class="missions" aria-label="Missionen">
+                <h2>Missionen</h2>
+                <div class="mission-nav" id="mission-nav" role="tablist" aria-label="Missionsauswahl"></div>
+                <div class="mission-area" id="mission-area" aria-live="polite"></div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="glossary-modal" role="dialog" aria-modal="true" aria-label="Glossar">
+        <div class="modal-content">
+            <button class="modal-close" id="close-glossary" aria-label="Glossar schliessen">&times;</button>
+            <h2>HTML-Glossar</h2>
+            <div id="glossary-list"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="mission-success-modal" role="dialog" aria-modal="true" aria-label="Mission geschafft">
+        <div class="modal-content mission-success">
+            <img id="mission-success-byte" src="Byte_mascot/Byte_Happy.png" alt="Byte feiert" class="success-mascot">
+            <p id="mission-success-text"></p>
+            <button id="mission-success-close" class="btn-primary">Weiter</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Dominik Bechinie</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
