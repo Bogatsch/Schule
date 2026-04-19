@@ -20,6 +20,7 @@
     --accent-pink: #ec4899;
     --accent-cyan: #06b6d4;
     --accent-html: rgb(106, 209, 246);
+    --accent-typo: rgb(220, 197, 114);
     --accent-green: #22c55e;
     --accent-red: #ef4444;
 
@@ -398,6 +399,35 @@ header p {
     align-items: center;
     gap: 16px;
     margin-bottom: 28px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lerninsel-header:hover {
+    opacity: 0.85;
+}
+
+.lerninsel-toggle {
+    margin-left: auto;
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+
+.lerninsel.collapsed .lerninsel-toggle {
+    transform: rotate(-90deg);
+}
+
+.lerninsel-body {
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    max-height: 8000px;
+    opacity: 1;
+}
+
+.lerninsel.collapsed .lerninsel-body {
+    max-height: 0;
+    opacity: 0;
 }
 
 .lerninsel-number {
@@ -2036,6 +2066,14 @@ code {
     background: var(--accent-html);
 }
 
+.lerninsel-number.typo-number {
+    background: var(--accent-typo);
+}
+
+#lerninsel-2 .subsection h3 {
+    color: var(--accent-typo);
+}
+
 /* --- HTML Flip Cards --- */
 .html-card-front {
     background: linear-gradient(135deg, rgb(106, 209, 246) 0%, rgb(70, 180, 220) 100%);
@@ -2185,7 +2223,7 @@ code {
 
 .html-elem-editor {
     resize: none;
-    min-height: 160px;
+    min-height: 300px;
     width: 100%;
 }
 
@@ -2197,7 +2235,7 @@ code {
 .html-elem-preview {
     width: 100%;
     flex: 1;
-    min-height: 160px;
+    min-height: 300px;
     border: 1px solid var(--border-default);
     border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
     background: #fff;

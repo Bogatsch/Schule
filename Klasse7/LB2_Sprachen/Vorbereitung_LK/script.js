@@ -14,7 +14,7 @@ class CSSExplorer {
       { term: 'Absatz (p)', definition: 'Mit <p> erstellst du einen Absatz (Paragraph). Text in einem p-Element bekommt automatisch Abstand.', example: '<p>Das ist ein Absatz.</p>' },
       { term: 'Liste', definition: 'Mit <ul> (ungeordnet) oder <ol> (geordnet) erstellst du Listen. Jeder Eintrag steht in einem <li>.', example: '<ul>\n  <li>Eintrag 1</li>\n  <li>Eintrag 2</li>\n</ul>' },
       { term: 'Link (a)', definition: 'Mit <a href="..."> erstellst du einen Link zu einer anderen Seite. href gibt das Ziel an.', example: '<a href="https://example.com">Klick mich</a>' },
-      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, alt einen Beschreibungstext.', example: '<img src="bild.jpg" alt="Mein Bild">' }
+      { term: 'Bild (img)', definition: 'Mit <img> fuegst du ein Bild ein. src gibt die Bildquelle an, width bestimmt die Breite.', example: '<img src="bild.jpg" width="200">' }
     ];
 
     // ---- GLOSSARY CSS ----
@@ -43,7 +43,7 @@ class CSSExplorer {
       { icon: '📝', title: 'Absatz (p)', definition: 'Mit dem <p>-Tag erstellst du Textabsaetze. Der Browser fuegt automatisch Abstand darueber und darunter ein.', example: '<p>Ein Absatz mit Text.</p>' },
       { icon: '📋', title: 'Listen', definition: 'Ungeordnete Listen (<ul>) zeigen Aufzaehlungspunkte. Geordnete Listen (<ol>) zeigen Nummern. Eintraege stehen in <li>.', example: '<ul>\n  <li>Punkt 1</li>\n  <li>Punkt 2</li>\n</ul>' },
       { icon: '🔗', title: 'Links (a)', definition: 'Mit <a href="URL"> erstellst du einen klickbaren Link. Das href-Attribut gibt an, wohin der Link fuehrt.', example: '<a href="https://example.com">\n  Klick mich!\n</a>' },
-      { icon: '🖼️', title: 'Bilder (img)', definition: 'Mit <img> fuegst du Bilder ein. src gibt die Bilddatei an, alt beschreibt das Bild fuer Screenreader.', example: '<img src="foto.jpg"\n     alt="Beschreibung">' }
+      { icon: '🖼️', title: 'Bilder (img)', definition: 'Mit <img> fuegst du Bilder ein. src gibt die Bilddatei an, width bestimmt die Breite des Bildes.', example: '<img src="foto.jpg"\n     width="200">' }
     ];
 
     // ---- HTML STRUCTURE PARTS ----
@@ -90,9 +90,9 @@ class CSSExplorer {
       },
       {
         title: 'Bilder',
-        code: '<img src="manos_logo.gif"\n     alt="MANOS Schullogo"\n     width="200">',
-        preview: '<img src="manos_logo.gif" alt="MANOS Schullogo" width="200">',
-        explanation: 'src gibt die Bilddatei an (z.B. "manos_logo.gif"). Du kannst auch einen Link zu einem Bild nutzen, z.B. src="https://example.com/bild.png". alt beschreibt das Bild (wichtig fuer Barrierefreiheit!).'
+        code: '<img src="manos_logo.gif"\n     width="200">',
+        preview: '<img src="manos_logo.gif" width="200">',
+        explanation: 'src gibt die Bilddatei an (z.B. "manos_logo.gif"). Mit width steuerst du die Breite des Bildes, z.B. width="200".'
       }
     ];
 
@@ -141,7 +141,7 @@ class CSSExplorer {
         { tag: 'p', text: 'Zweiter Absatz', attrs: '', id: '', cls: '' },
         { tag: 'h2', text: 'Unterueberschrift', attrs: ' id="sub"', id: 'sub', cls: '' },
         { tag: 'p', text: 'Dritter Absatz', attrs: '', id: '', cls: '' },
-        { tag: 'img', text: '', attrs: ' src="manos_logo.gif" alt="Schullogo"', id: '', cls: '', selfClosing: true }
+        { tag: 'img', text: '', attrs: ' src="manos_logo.gif" width="200"', id: '', cls: '', selfClosing: true }
       ],
       selectors: [
         { selector: 'h1', label: 'h1', desc: 'Waehlt alle h1-Ueberschriften aus.', matchFn: el => el.tag === 'h1' },
@@ -156,7 +156,7 @@ class CSSExplorer {
       // ==== HTML MISSIONEN ====
       {
         title: 'HTML-Grundgeruest',
-        section: 'HTML',
+        section: 'HTML-Grundlagen',
         text: 'Erstelle das Grundgeruest einer HTML-Seite! Du brauchst: <!DOCTYPE html>, dann <html> mit <head> (inkl. <title>) und <body>. Schreibe in den body eine h1-Ueberschrift.',
         format: 'html-write',
         data: {
@@ -206,16 +206,16 @@ class CSSExplorer {
       },
       {
         title: 'Links & Bilder',
-        text: 'Schau dir den Code an: Der Link fuehrt zur MANOS-Schulhomepage. Das Bild zeigt das Schullogo. Ergaenze einen passenden alt-Text fuer das Bild!',
+        text: 'Schau dir den Code an: Der Link fuehrt zur MANOS-Schulhomepage. Finde selbst einen passenden Text fuer die h1-Ueberschrift und fuege das Bild manos_logo.gif mit width="200" ein.',
         format: 'html-write',
         data: {
-          starterHtml: '<h1>Meine Seite</h1>\n\n<p>Besuche <a href="https://manos-dresden.de/">die MANOS-Homepage</a>!</p>\n\n<img src="manos_logo.gif" alt="" width="200">',
+          starterHtml: '<h1></h1>\n\n<p>Besuche <a href="https://manos-dresden.de/">die MANOS-Homepage</a>!</p>',
           checks: [
             { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
+            { type: 'content', selector: 'h1', desc: '<h1> hat einen passenden Text' },
             { type: 'dom', selector: 'a[href]', minCount: 1, desc: 'Link (<a>) mit href vorhanden' },
             { type: 'attr', selector: 'a', attr: 'href', notEmpty: true, desc: 'Link hat ein nicht-leeres href' },
-            { type: 'dom', selector: 'img[src]', minCount: 1, desc: 'Bild (<img>) mit src vorhanden' },
-            { type: 'attr', selector: 'img', attr: 'alt', notEmpty: true, desc: 'Bild hat einen alt-Text' }
+            { type: 'dom', selector: 'img[src="manos_logo.gif"][width="200"]', minCount: 1, desc: 'Bild manos_logo.gif mit width="200" ist eingefuegt' }
           ]
         },
         success: 'Toll! Du kannst Links und Bilder in HTML einbauen!'
@@ -223,7 +223,7 @@ class CSSExplorer {
       // ==== CSS GRUNDLAGEN ====
       {
         title: 'CSS-Begriffe zuordnen',
-        section: 'CSS',
+        section: 'CSS-Grundlagen',
         text: 'Ordne jeden CSS-Begriff der richtigen Beschreibung zu.',
         format: 'matching',
         data: {
@@ -261,20 +261,6 @@ class CSSExplorer {
         success: 'Super! Du verstehst, wie Selektoren HTML-Elemente ansprechen!'
       },
       {
-        title: 'Farb-Challenge',
-        text: 'Ordne die Farbwerte den richtigen Formaten zu. Klicke einen Wert an und dann auf die passende Kategorie. Zum Zuruecknehmen klicke auf einen platzierten Wert.',
-        format: 'assignment',
-        data: {
-          tags: ['red', '#ff0000', 'rgb(255,0,0)', 'blue', '#00f', 'rgb(0,0,255)'],
-          categories: [
-            { name: 'Farbname', correct: ['red', 'blue'] },
-            { name: 'Hex-Code', correct: ['#ff0000', '#00f'] },
-            { name: 'RGB-Wert', correct: ['rgb(255,0,0)', 'rgb(0,0,255)'] }
-          ]
-        },
-        success: 'Klasse! Du kennst die drei wichtigsten Farbformate in CSS!'
-      },
-      {
         title: 'CSS-Aussagen bewerten',
         text: 'Entscheide: Stimmt die Aussage oder nicht?',
         format: 'true-false',
@@ -289,10 +275,8 @@ class CSSExplorer {
         },
         success: 'Sehr gut! Du kannst wahre und falsche CSS-Aussagen unterscheiden!'
       },
-      // ==== CSS CODE ====
       {
         title: 'CSS selbst schreiben',
-        section: 'CSS Code',
         text: 'Schreibe CSS-Code, um die Ueberschrift blau und 24 Pixel gross zu machen. Verwende den Selektor h1.',
         format: 'code-write',
         data: {
@@ -304,6 +288,22 @@ class CSSExplorer {
           ]
         },
         success: 'Fantastisch! Du hast dein erstes CSS selbst geschrieben!'
+      },
+      // ==== FARBEN & TYPOGRAFIE ====
+      {
+        title: 'Farb-Challenge',
+        section: 'Farben & Typografie',
+        text: 'Ordne die Farbwerte den richtigen Formaten zu. Klicke einen Wert an und dann auf die passende Kategorie. Zum Zuruecknehmen klicke auf einen platzierten Wert.',
+        format: 'assignment',
+        data: {
+          tags: ['red', '#ff0000', 'rgb(255,0,0)', 'blue', '#00f', 'rgb(0,0,255)'],
+          categories: [
+            { name: 'Farbname', correct: ['red', 'blue'] },
+            { name: 'Hex-Code', correct: ['#ff0000', '#00f'] },
+            { name: 'RGB-Wert', correct: ['rgb(255,0,0)', 'rgb(0,0,255)'] }
+          ]
+        },
+        success: 'Klasse! Du kennst die drei wichtigsten Farbformate in CSS!'
       },
       {
         title: 'Hintergrund & Hex-Farben',
@@ -334,27 +334,27 @@ class CSSExplorer {
         },
         success: 'Perfekt! Typografie ist kein Problem fuer dich!'
       },
+      // ==== ALLES KOMBINIERT ====
       {
         title: 'Alles kombiniert',
-        text: 'Style #header: weisser Text auf dunklem Hintergrund (#2d2d44), 24px Schrift, zentriert, 20px Innenabstand.',
+        section: 'Alles kombiniert',
+        text: 'Style die h1: weisser Text auf dunklem Hintergrund (#2d2d44), 24px Schrift, zentriert, 20px Innenabstand (padding).',
         format: 'code-write',
         data: {
-          starterCode: '#header {\n  \n}',
-          htmlTemplate: '<div id="header">Meine Webseite</div>\n<p>Willkommen auf meiner Seite!</p>',
+          starterCode: 'h1 {\n  \n}',
+          htmlTemplate: '<h1>Meine Webseite</h1>\n<p>Willkommen auf meiner Seite!</p>',
           checks: [
-            { property: 'color', value: 'rgb(255, 255, 255)', element: '#header', desc: '#header soll weisse Schrift haben' },
-            { property: 'background-color', value: 'rgb(45, 45, 68)', element: '#header', desc: '#header soll Hintergrund #2d2d44 haben' },
-            { property: 'font-size', value: '24px', element: '#header', desc: '#header soll 24px gross sein' },
-            { property: 'text-align', value: 'center', element: '#header', desc: '#header soll zentriert sein' },
-            { property: 'padding', value: '20px', element: '#header', desc: '#header soll 20px padding haben' }
+            { property: 'color', value: 'rgb(255, 255, 255)', element: 'h1', desc: 'h1 soll weisse Schrift haben' },
+            { property: 'background-color', value: 'rgb(45, 45, 68)', element: 'h1', desc: 'h1 soll Hintergrund #2d2d44 haben' },
+            { property: 'font-size', value: '24px', element: 'h1', desc: 'h1 soll 24px gross sein' },
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'padding', value: '20px', element: 'h1', desc: 'h1 soll 20px padding haben' }
           ]
         },
         success: 'Meisterhaft! Du hast alle CSS-Grundlagen kombiniert!'
       },
-      // ==== HTML + CSS MISSIONEN ====
       {
         title: 'Mein Steckbrief',
-        section: 'HTML + CSS',
         text: 'Erstelle einen Steckbrief! Schreibe HTML links und CSS rechts. Du brauchst eine h1-Ueberschrift und mindestens 2 Absaetze (p). Die Ueberschrift soll lila (#8b5cf6) sein.',
         format: 'html-css-write',
         data: {
@@ -522,6 +522,18 @@ class CSSExplorer {
     this.updateMission();
     this.bindHtmlRefBadges();
     this.bindMissionSuccessModal();
+    this.bindLerninselToggle();
+  }
+
+  // ==========================
+  // LERNINSEL TOGGLE
+  // ==========================
+  bindLerninselToggle() {
+    document.querySelectorAll('.lerninsel-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.closest('.lerninsel').classList.toggle('collapsed');
+      });
+    });
   }
 
   // ==========================
