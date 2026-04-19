@@ -1838,4 +1838,163 @@ code {
         height: 36px;
         font-size: 0.85rem;
     }
+
+    .html-css-write-area {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .html-css-editors {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   HTML + CSS Write Mission
+   ========================================================================== */
+.html-css-write-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.html-css-editors {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.html-css-editor-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.html-css-editor-panel textarea {
+    width: 100%;
+    min-height: 140px;
+    padding: 12px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.html-css-editor-panel textarea:focus {
+    outline: none;
+    border-color: var(--accent-css);
+}
+
+.editor-label {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.editor-label.html-label {
+    background: var(--accent-html);
+    color: #000;
+}
+
+.editor-label.css-label {
+    background: var(--accent-css);
+    color: #fff;
+}
+
+.editor-label.preview-label {
+    background: var(--accent-green);
+    color: #000;
+}
+
+.html-css-preview-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.html-css-preview-panel iframe {
+    width: 100%;
+    flex: 1;
+    min-height: 280px;
+    border: 1px solid var(--border-default);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
+    background: #fff;
+}
+
+/* ==========================================================================
+   Profi Mission Buttons & Divider
+   ========================================================================== */
+.mission-divider {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #fbbf24;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 20px;
+    margin-left: 8px;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.mission-btn.profi {
+    border-color: rgba(251,191,36,0.4);
+    color: #fbbf24;
+}
+
+.mission-btn.profi:hover {
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+.mission-btn.profi.active {
+    background: #fbbf24;
+    border-color: #fbbf24;
+    color: #000;
+}
+
+.mission-btn.profi.completed {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+    color: white;
+}
+
+/* ==========================================================================
+   Assignment Undo & Selection
+   ========================================================================== */
+.assignment-tag.selected-tag {
+    outline: 2px solid white;
+    transform: scale(1.08);
+}
+
+.assignment-placed {
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.assignment-placed:hover {
+    transform: scale(1.08);
+    opacity: 0.8;
+}
+
+.assignment-placed.correct-placed {
+    background: var(--accent-green);
+}
+
+@media (max-width: 768px) {
+    .html-css-write-area {
+        grid-template-columns: 1fr;
+    }
 }

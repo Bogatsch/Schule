@@ -3,6 +3,7 @@ class CSSExplorer {
     this.currentMission = 0;
     this.completedMissions = new Set();
     this.missionState = {};
+    this._missionAbort = null;
 
     // ---- GLOSSARY ----
     this.glossary = [
@@ -10,32 +11,25 @@ class CSSExplorer {
       { term: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestaltet werden soll. Er steht vor den geschweiften Klammern.', analogy: '', example: 'h1 { ... }' },
       { term: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert werden soll (z.B. Farbe, Groesse, Schriftart).', analogy: '', example: 'color, font-size, background' },
       { term: 'Wert', definition: 'Der Wert sagt, WIE die Eigenschaft aussehen soll (z.B. rot, 16px, fett).', analogy: '', example: 'color: blue;  (blue ist der Wert)' },
-      { term: 'Klasse', definition: 'Eine Klasse ist ein Name, den du HTML-Elementen gibst. Mehrere Elemente koennen dieselbe Klasse haben.', analogy: '', example: '.wichtig { font-weight: bold; }' },
       { term: 'ID', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Jede ID darf nur einmal auf der Seite vorkommen.', analogy: '', example: '#titel { font-size: 2em; }' },
-      { term: 'Box-Modell', definition: 'Jedes HTML-Element ist eine rechteckige Box. Das Box-Modell beschreibt Content, Padding, Border und Margin.', analogy: '', example: 'margin: 10px; padding: 5px;' },
-      { term: 'Margin', definition: 'Margin ist der aeussere Abstand einer Box zu benachbarten Elementen.', analogy: '', example: 'margin: 20px;' },
-      { term: 'Padding', definition: 'Padding ist der innere Abstand zwischen dem Inhalt und dem Rand (Border) einer Box.', analogy: '', example: 'padding: 15px;' },
-      { term: 'Border', definition: 'Border ist der sichtbare Rand um ein Element herum.', analogy: '', example: 'border: 2px solid black;' },
       { term: 'Inline CSS', definition: 'CSS-Regeln direkt im style-Attribut eines HTML-Elements. Nur fuer Notfaelle!', analogy: '', example: '<p style="color:red">Text</p>' },
       { term: 'Internes CSS', definition: 'CSS-Regeln im style-Element im head-Bereich der HTML-Datei.', analogy: '', example: '<style> p { color: red; } </style>' },
       { term: 'Externes CSS', definition: 'CSS-Regeln in einer eigenen .css-Datei, die per link eingebunden wird. Die beste Methode!', analogy: '', example: '<link rel="stylesheet" href="style.css">' },
-      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', analogy: '', example: 'Inline > ID > Klasse > Element' },
+      { term: 'Kaskade', definition: 'Die Kaskade bestimmt, welche CSS-Regel gewinnt, wenn mehrere Regeln dasselbe Element betreffen.', analogy: '', example: 'Inline > ID > Element' },
       { term: 'Farbe (color)', definition: 'Mit color bestimmst du die Textfarbe. Mit background-color die Hintergrundfarbe.', analogy: '', example: 'color: #ff6600; background-color: yellow;' }
     ];
 
     // ---- HTML REFERENCES (for badges) ----
     this.htmlReferences = {
-      typo: 'In HTML legst du mit <h1> bis <h6> und <p> die Textstruktur fest. Die Ueberschriften-Tags bestimmen die Wichtigkeit, CSS bestimmt dann das Aussehen.',
-      box: 'In HTML sind alle Elemente (div, p, h1, img...) rechteckige Bloecke. HTML legt fest, WELCHE Elemente da sind – CSS bestimmt, wie gross sie sind und wie viel Platz sie haben.'
+      typo: 'In HTML legst du mit <h1> bis <h6> und <p> die Textstruktur fest. Die Ueberschriften-Tags bestimmen die Wichtigkeit, CSS bestimmt dann das Aussehen.'
     };
 
     // ---- FLIP CARDS ----
     this.flipCards = [
       { icon: '📝', title: 'CSS-Regel', definition: 'Eine CSS-Regel besteht aus einem Selektor und einem Deklarationsblock mit Eigenschaften und Werten.', example: 'h1 { color: blue; }', htmlRef: 'Der Selektor h1 waehlt alle <h1>-Ueberschriften aus dem HTML.' },
-      { icon: '🎯', title: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestylt wird. Es gibt Element-, Klassen- und ID-Selektoren.', example: 'p { }  .info { }  #titel { }', htmlRef: 'Selektoren beziehen sich immer auf HTML-Elemente oder deren Attribute.' },
+      { icon: '🎯', title: 'Selektor', definition: 'Der Selektor bestimmt, welches HTML-Element gestylt wird. Es gibt Element- und ID-Selektoren.', example: 'p { }  h1 { }  #titel { }', htmlRef: 'Selektoren beziehen sich immer auf HTML-Elemente oder deren Attribute.' },
       { icon: '🔧', title: 'Eigenschaft', definition: 'Die Eigenschaft sagt, WAS veraendert wird: Farbe, Groesse, Abstand und vieles mehr.', example: 'color  font-size  margin', htmlRef: 'Jedes HTML-Element hat viele CSS-Eigenschaften, die du veraendern kannst.' },
       { icon: '🎨', title: 'Wert', definition: 'Der Wert bestimmt, WIE die Eigenschaft aussieht: z.B. welche Farbe, wie gross, wie weit.', example: 'red  16px  bold  center', htmlRef: 'Werte passen zum jeweiligen HTML-Element und dessen Eigenschaft.' },
-      { icon: '👥', title: 'Klasse (.)', definition: 'Eine Klasse ist ein Name, den du mit class="..." im HTML vergibst. Mehrere Elemente koennen die gleiche Klasse haben.', example: '.wichtig { font-weight: bold; }', htmlRef: 'Im HTML: <p class="wichtig">Text</p>' },
       { icon: '🆔', title: 'ID (#)', definition: 'Eine ID ist ein einzigartiger Name fuer genau ein Element. Im CSS nutzt du das #-Zeichen.', example: '#haupttitel { font-size: 2em; }', htmlRef: 'Im HTML: <h1 id="haupttitel">Titel</h1>' }
     ];
 
@@ -65,28 +59,19 @@ class CSSExplorer {
     this.selectorPlayground = {
       html: [
         { tag: 'h1', text: 'Willkommen!', attrs: '', id: '', cls: '' },
-        { tag: 'p', text: 'Erster Absatz', attrs: ' class="info"', id: '', cls: 'info' },
+        { tag: 'p', text: 'Erster Absatz', attrs: '', id: '', cls: '' },
         { tag: 'p', text: 'Zweiter Absatz', attrs: '', id: '', cls: '' },
         { tag: 'h2', text: 'Unterueberschrift', attrs: ' id="sub"', id: 'sub', cls: '' },
-        { tag: 'p', text: 'Dritter Absatz', attrs: ' class="info"', id: '', cls: 'info' },
+        { tag: 'p', text: 'Dritter Absatz', attrs: '', id: '', cls: '' },
         { tag: 'img', text: '', attrs: ' src="bild.jpg" alt="Bild"', id: '', cls: '', selfClosing: true }
       ],
       selectors: [
         { selector: 'h1', label: 'h1', desc: 'Waehlt alle h1-Ueberschriften aus.', matchFn: el => el.tag === 'h1' },
         { selector: 'p', label: 'p', desc: 'Waehlt alle Absaetze (p-Elemente) aus.', matchFn: el => el.tag === 'p' },
-        { selector: '.info', label: '.info', desc: 'Waehlt alle Elemente mit class="info" aus.', matchFn: el => el.cls === 'info' },
         { selector: '#sub', label: '#sub', desc: 'Waehlt genau das Element mit id="sub" aus.', matchFn: el => el.id === 'sub' },
         { selector: 'img', label: 'img', desc: 'Waehlt alle Bilder aus.', matchFn: el => el.tag === 'img' }
       ]
     };
-
-    // ---- BOX MODEL ----
-    this.boxLayers = [
-      { name: 'Margin', cssClass: 'box-layer-margin', color: '#ef4444', analogy: 'Der Abstand zum naechsten Paket im Regal.', desc: 'Margin ist der aeussere Abstand. Er schafft Platz zwischen deinem Element und seinen Nachbarn.', code: 'margin: 20px;' },
-      { name: 'Border', cssClass: 'box-layer-border', color: '#fb8500', analogy: 'Der Karton um dein Paket.', desc: 'Border ist der sichtbare Rand um dein Element. Du kannst Dicke, Stil und Farbe bestimmen.', code: 'border: 3px solid orange;' },
-      { name: 'Padding', cssClass: 'box-layer-padding', color: '#22c55e', analogy: 'Die Polsterung im Paket, die den Inhalt schuetzt.', desc: 'Padding ist der innere Abstand zwischen dem Inhalt und dem Rand (Border).', code: 'padding: 15px;' },
-      { name: 'Content', cssClass: 'box-layer-content', color: '#8b5cf6', analogy: 'Der eigentliche Inhalt im Paket.', desc: 'Content ist der Bereich, in dem Text, Bilder oder andere Elemente stehen.', code: 'width: 200px; height: 100px;' }
-    ];
 
     // ---- MISSIONS ----
     this.missions = [
@@ -99,7 +84,6 @@ class CSSExplorer {
             { left: 'Selektor', right: 'Bestimmt, welches Element gestylt wird' },
             { left: 'Eigenschaft', right: 'Sagt, WAS veraendert wird' },
             { left: 'Wert', right: 'Sagt, WIE es aussehen soll' },
-            { left: 'Klasse (.)', right: 'Name fuer mehrere Elemente' },
             { left: 'ID (#)', right: 'Einzigartiger Name fuer ein Element' }
           ]
         },
@@ -121,17 +105,17 @@ class CSSExplorer {
         format: 'single-choice',
         data: {
           questions: [
-            { q: 'Welcher Selektor waehlt alle Absaetze aus?', options: ['#p', '.p', 'p', 'absatz'], correct: 2 },
-            { q: 'Wie selektierst du ein Element mit class="highlight"?', options: ['#highlight', '.highlight', 'highlight', '*highlight'], correct: 1 },
-            { q: 'Wie selektierst du ein Element mit id="logo"?', options: ['.logo', 'logo', '#logo', '@logo'], correct: 2 },
-            { q: 'Was bedeutet h1 { color: red; }?', options: ['Nur die erste h1 wird rot', 'Alle h1-Elemente werden rot', 'Die Seite wird rot', 'Nichts, das ist falsch'], correct: 1 }
+            { q: 'Welcher Selektor waehlt alle Absaetze aus?', options: ['#p', 'absatz', 'p', 'paragraph'], correct: 2 },
+            { q: 'Wie selektierst du ein Element mit id="logo"?', options: ['logo', '@logo', '#logo', '*logo'], correct: 2 },
+            { q: 'Was bedeutet h1 { color: red; }?', options: ['Nur die erste h1 wird rot', 'Alle h1-Elemente werden rot', 'Die Seite wird rot', 'Nichts, das ist falsch'], correct: 1 },
+            { q: 'Was macht der Selektor img?', options: ['Waehlt nur das erste Bild', 'Waehlt alle Bilder aus', 'Erstellt ein Bild', 'Loescht Bilder'], correct: 1 }
           ]
         },
         success: 'Super! Du verstehst, wie Selektoren HTML-Elemente ansprechen!'
       },
       {
         title: 'Farb-Challenge',
-        text: 'Ordne die Farbwerte den richtigen Formaten zu.',
+        text: 'Ordne die Farbwerte den richtigen Formaten zu. Klicke einen Wert an und dann auf die passende Kategorie. Zum Zuruecknehmen klicke auf einen platzierten Wert.',
         format: 'assignment',
         data: {
           tags: ['red', '#ff0000', 'rgb(255,0,0)', 'blue', '#00f', 'rgb(0,0,255)'],
@@ -152,31 +136,11 @@ class CSSExplorer {
             { text: 'CSS steht fuer "Cascading Style Sheets".', correct: true, explanation: 'Richtig! CSS = Cascading Style Sheets.' },
             { text: 'Mit CSS kann man den Inhalt einer Webseite aendern.', correct: false, explanation: 'Falsch! CSS aendert nur das Aussehen. Den Inhalt aenderst du mit HTML.' },
             { text: 'Eine ID darf auf einer Seite nur einmal vorkommen.', correct: true, explanation: 'Richtig! IDs sind einzigartig.' },
-            { text: 'Padding ist der aeussere Abstand eines Elements.', correct: false, explanation: 'Falsch! Padding ist der INNERE Abstand. Der aeussere heisst Margin.' },
             { text: 'Externes CSS ist besser als Inline-CSS fuer grosse Webseiten.', correct: true, explanation: 'Richtig! Externes CSS ist uebersichtlicher und wiederverwendbar.' },
-            { text: 'Der Selektor .name waehlt ein Element mit id="name".', correct: false, explanation: 'Falsch! Der Punkt (.) steht fuer Klassen. Fuer IDs nutzt man das Raute-Zeichen (#).' }
+            { text: 'Der Selektor #name waehlt ein Element mit id="name".', correct: true, explanation: 'Richtig! Das Raute-Zeichen (#) steht fuer IDs.' }
           ]
         },
         success: 'Sehr gut! Du kannst wahre und falsche CSS-Aussagen unterscheiden!'
-      },
-      {
-        title: 'Box-Modell Lueckentext',
-        text: 'Fuelle die Luecken mit den richtigen Box-Modell-Begriffen.',
-        format: 'cloze',
-        data: {
-          segments: [
-            { type: 'text', value: 'Jedes HTML-Element ist eine Box. Ganz aussen ist der ' },
-            { type: 'gap', correct: 'Margin', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der aeussere Abstand. Dann kommt der ' },
-            { type: 'gap', correct: 'Border', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der sichtbare Rand. Danach folgt das ' },
-            { type: 'gap', correct: 'Padding', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der innere Abstand. Und ganz innen ist der ' },
-            { type: 'gap', correct: 'Content', options: ['Margin', 'Border', 'Padding', 'Content'] },
-            { type: 'text', value: ' – der eigentliche Inhalt.' }
-          ]
-        },
-        success: 'Perfekt! Du kennst alle vier Schichten des Box-Modells!'
       },
       {
         title: 'CSS selbst schreiben',
@@ -205,35 +169,6 @@ class CSSExplorer {
           ]
         },
         success: 'Super! Du beherrschst Hex-Farbcodes!'
-      },
-      {
-        title: 'Klassen stylen',
-        text: 'Style die Klasse .highlight: Hintergrundfarbe gelb (yellow), Schrift fett (bold).',
-        format: 'code-write',
-        data: {
-          starterCode: '.highlight {\n  \n}',
-          htmlTemplate: '<p>Normaler Text.</p>\n<p class="highlight">Wichtiger Text!</p>\n<p>Noch mehr Text.</p>',
-          checks: [
-            { property: 'background-color', value: 'yellow', element: '.highlight', desc: '.highlight soll gelben Hintergrund haben' },
-            { property: 'font-weight', value: 'bold', element: '.highlight', desc: '.highlight soll fett sein' }
-          ]
-        },
-        success: 'Klasse! Du kannst Klassen-Selektoren einsetzen!'
-      },
-      {
-        title: 'Rahmen & Abstaende',
-        text: 'Gib dem Element .card einen 2px solid schwarzen Rahmen, 16px Innenabstand (padding) und 20px Aussenabstand (margin).',
-        format: 'code-write',
-        data: {
-          starterCode: '.card {\n  \n}',
-          htmlTemplate: '<div class="card">Ich bin eine Karte mit Rahmen und Abstaenden.</div>\n<div class="card">Noch eine Karte.</div>',
-          checks: [
-            { property: 'border', value: '2px solid', element: '.card', desc: '.card soll einen 2px solid Rahmen haben' },
-            { property: 'padding', value: '16px', element: '.card', desc: '.card soll 16px padding haben' },
-            { property: 'margin', value: '20px', element: '.card', desc: '.card soll 20px margin haben' }
-          ]
-        },
-        success: 'Toll! Das Box-Modell sitzt!'
       },
       {
         title: 'Text-Gestaltung',
@@ -266,6 +201,129 @@ class CSSExplorer {
           ]
         },
         success: 'Meisterhaft! Du hast alle CSS-Grundlagen kombiniert!'
+      },
+      // ---- HTML + CSS Missionen ----
+      {
+        title: 'Mein Steckbrief',
+        text: 'Erstelle einen Steckbrief! Schreibe HTML links und CSS rechts. Du brauchst eine h1-Ueberschrift und mindestens 2 Absaetze (p). Die Ueberschrift soll lila (#8b5cf6) sein.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Max Mustermann</h1>\n<p>Ich bin 12 Jahre alt.</p>\n<p>Mein Hobby ist Programmieren!</p>',
+          starterCss: 'h1 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'Eine h1-Ueberschrift ist vorhanden' },
+            { selector: 'p', minCount: 2, desc: 'Mindestens 2 Absaetze vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'rgb(139, 92, 246)', element: 'h1', desc: 'h1 soll lila (#8b5cf6) sein' }
+          ]
+        },
+        success: 'Toll! Dein Steckbrief sieht super aus!'
+      },
+      {
+        title: 'Bunte Seite gestalten',
+        text: 'Baue eine kleine Webseite mit h1, h2 und einem Absatz (p). Die h1 soll rot sein, die h2 blau und der Text soll Schriftgroesse 18px haben.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Willkommen</h1>\n<h2>Untertitel</h2>\n<p>Hier steht mein Text.</p>',
+          starterCss: 'h1 {\n  \n}\n\nh2 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1-Ueberschrift vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2-Ueberschrift vorhanden' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'red', element: 'h1', desc: 'h1 soll rot sein' },
+            { property: 'color', value: 'blue', element: 'h2', desc: 'h2 soll blau sein' },
+            { property: 'font-size', value: '18px', element: 'p', desc: 'p soll 18px gross sein' }
+          ]
+        },
+        success: 'Wunderbar! Deine bunte Seite sieht klasse aus!'
+      },
+      {
+        title: 'Meine Hobbys als Liste',
+        text: 'Erstelle eine Seite mit einer h1-Ueberschrift und einer Liste (ul mit mindestens 3 li-Eintraegen). Die h1 soll zentriert und gruen sein.',
+        format: 'html-css-write',
+        data: {
+          starterHtml: '<h1>Meine Hobbys</h1>\n<ul>\n  <li>Hobby 1</li>\n  <li>Hobby 2</li>\n  <li>Hobby 3</li>\n</ul>',
+          starterCss: 'h1 {\n  \n}\n\nul {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'ul', minCount: 1, desc: 'Liste (ul) vorhanden' },
+            { selector: 'li', minCount: 3, desc: 'Mindestens 3 Listeneintraege' }
+          ],
+          cssChecks: [
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'color', value: 'green', element: 'h1', desc: 'h1 soll gruen sein' }
+          ]
+        },
+        success: 'Super! Deine Hobby-Liste ist perfekt!'
+      },
+      // ---- PROFI-MISSIONEN ----
+      {
+        title: 'Dark-Mode Seite',
+        text: 'Baue eine coole Dark-Mode Webseite! body: Hintergrund #1a1a2e, Schrift #e0e0e0. Die h1 soll die Farbe #a78bfa haben. Erstelle h1, h2 und mindestens einen Absatz.',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Meine Dark-Mode Seite</h1>\n<h2>Ueber mich</h2>\n<p>Schreibe hier etwas ueber dich...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2 vorhanden' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'background-color', value: 'rgb(26, 26, 46)', element: 'body', desc: 'body Hintergrund #1a1a2e' },
+            { property: 'color', value: 'rgb(224, 224, 224)', element: 'body', desc: 'body Schriftfarbe #e0e0e0' },
+            { property: 'color', value: 'rgb(167, 139, 250)', element: 'h1', desc: 'h1 Farbe #a78bfa' }
+          ]
+        },
+        success: 'Wow! Deine Dark-Mode Seite sieht professionell aus!'
+      },
+      {
+        title: 'Rezept-Seite',
+        text: 'Baue eine Rezeptseite! Du brauchst: h1 (orange) fuer den Namen, 2x h2 (gruen) fuer "Zutaten" und "Zubereitung", eine Liste und einen Absatz. body soll Schriftart Arial haben.',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Mein Lieblingsrezept</h1>\n<h2>Zutaten</h2>\n<ul>\n  <li>Zutat 1</li>\n  <li>Zutat 2</li>\n</ul>\n<h2>Zubereitung</h2>\n<p>Beschreibe die Schritte...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}\n\nh2 {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 2, desc: 'Mindestens 2x h2 vorhanden' },
+            { selector: 'ul', minCount: 1, desc: 'Liste (ul) vorhanden' },
+            { selector: 'li', minCount: 2, desc: 'Mindestens 2 Listeneintraege' },
+            { selector: 'p', minCount: 1, desc: 'Absatz vorhanden' }
+          ],
+          cssChecks: [
+            { property: 'color', value: 'orange', element: 'h1', desc: 'h1 soll orange sein' },
+            { property: 'color', value: 'green', element: 'h2', desc: 'h2 soll gruen sein' },
+            { property: 'font-family', value: 'arial', element: 'body', desc: 'body soll Schriftart Arial haben' }
+          ]
+        },
+        success: 'Lecker! Deine Rezeptseite ist ein Meisterwerk!'
+      },
+      {
+        title: 'Kreativ-Challenge',
+        text: 'Zeig was du kannst! Baue eine Mini-Webseite: h1 (zentriert), h2, mindestens 3 Absaetze. body: Hintergrund #222233, Schrift #eeeeee. Mach sie so cool wie moeglich!',
+        format: 'html-css-write',
+        profi: true,
+        data: {
+          starterHtml: '<h1>Meine Webseite</h1>\n<h2>Abschnitt 1</h2>\n<p>Text...</p>\n<p>Mehr Text...</p>\n<p>Noch mehr...</p>',
+          starterCss: 'body {\n  \n}\n\nh1 {\n  \n}\n\nh2 {\n  \n}\n\np {\n  \n}',
+          htmlChecks: [
+            { selector: 'h1', minCount: 1, desc: 'h1 vorhanden' },
+            { selector: 'h2', minCount: 1, desc: 'h2 vorhanden' },
+            { selector: 'p', minCount: 3, desc: 'Mindestens 3 Absaetze' }
+          ],
+          cssChecks: [
+            { property: 'text-align', value: 'center', element: 'h1', desc: 'h1 soll zentriert sein' },
+            { property: 'background-color', value: 'rgb(34, 34, 51)', element: 'body', desc: 'body Hintergrund #222233' },
+            { property: 'color', value: 'rgb(238, 238, 238)', element: 'body', desc: 'body Schrift #eeeeee' }
+          ]
+        },
+        success: 'Unglaublich! Du bist ein echter Web-Profi!'
       }
     ];
 
@@ -304,8 +362,6 @@ class CSSExplorer {
     this.renderSelectorPlayground();
     this.renderColorExplorer();
     this.renderTypoWorkshop();
-    this.renderBoxModel();
-    this.renderBoxWorkshop();
     this.createMissionButtons();
     this.updateMission();
     this.bindHtmlRefBadges();
@@ -513,21 +569,6 @@ li { margin: 6px 0; color: #e2e8f0; }
       <pre class="selector-html-display" id="selector-html-display">&lt;body&gt;\n${htmlDisplay}\n&lt;/body&gt;</pre>
       <div class="selector-info" id="selector-info">Klicke auf einen Selektor links!</div>
     `;
-
-    /* const htmlDisplay = sp.html.map((el, i) => {
-      if (el.selfClosing) {
-        return `<span data-idx="${i}">&lt;${this.esc(el.tag)}${this.esc(el.attrs)} /&gt;</span>`;
-      }
-      return `<span data-idx="${i}">&lt;${this.esc(el.tag)}${this.esc(el.attrs)}&gt;${this.esc(el.text)}&lt;/${this.esc(el.tag)}&gt;</span>`;
-    }).join('\n');
-
-    container.innerHTML = `
-      <div class="selector-buttons">
-        ${sp.selectors.map((s, i) => `<button class="selector-btn" data-si="${i}" type="button">${this.esc(s.label)}</button>`).join('')}
-      </div>
-      <div class="selector-html-display" id="selector-html-display">${htmlDisplay}</div>
-      <div class="selector-info" id="selector-info">Klicke auf einen Selektor links!</div>
-    `; */
 
     container.addEventListener('click', (e) => {
       const btn = e.target.closest('.selector-btn');
@@ -748,108 +789,6 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   // ==========================
-  // BOX MODEL
-  // ==========================
-  renderBoxModel() {
-    const container = document.getElementById('box-model-visual');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="box-model-diagram">
-        <div class="box-layer box-layer-margin" data-layer="0">
-          <span class="box-layer-label">Margin</span>
-          <div class="box-layer box-layer-border" data-layer="1">
-            <span class="box-layer-label">Border</span>
-            <div class="box-layer box-layer-padding" data-layer="2">
-              <span class="box-layer-label">Padding</span>
-              <div class="box-layer box-layer-content" data-layer="3">
-                <span class="box-layer-label">Content</span>
-                Inhalt
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-    container.addEventListener('click', (e) => {
-      const layer = e.target.closest('.box-layer');
-      if (!layer) return;
-      e.stopPropagation();
-      const idx = parseInt(layer.dataset.layer, 10);
-      container.querySelectorAll('.box-layer').forEach(l => l.classList.remove('active'));
-      layer.classList.add('active');
-      this.showBoxDetail(idx);
-    });
-    this.showBoxDetail(null);
-  }
-
-  showBoxDetail(idx) {
-    const detail = document.getElementById('box-model-detail');
-    if (!detail) return;
-    if (idx === null || idx === undefined) {
-      detail.innerHTML = '<em>Klicke auf eine Schicht im Box-Modell!</em>';
-      return;
-    }
-    const layer = this.boxLayers[idx];
-    detail.innerHTML = `
-      <div class="detail-title">${this.esc(layer.name)}</div>
-      <div class="detail-analogy">${this.esc(layer.analogy)}</div>
-      <p>${this.esc(layer.desc)}</p>
-      <div class="detail-code">${this.esc(layer.code)}</div>
-    `;
-  }
-
-  // ==========================
-  // BOX WORKSHOP (Sliders)
-  // ==========================
-  renderBoxWorkshop() {
-    const container = document.getElementById('box-workshop');
-    if (!container) return;
-    container.innerHTML = `
-      <div class="box-sliders">
-        <div class="box-slider-group">
-          <label class="margin-label">Margin: <span class="slider-value" id="bw-margin-val">20px</span></label>
-          <input type="range" id="bw-margin" min="0" max="60" value="20" style="accent-color:var(--box-margin)">
-        </div>
-        <div class="box-slider-group">
-          <label class="border-label">Border: <span class="slider-value" id="bw-border-val">3px</span></label>
-          <input type="range" id="bw-border" min="0" max="20" value="3" style="accent-color:var(--box-border)">
-        </div>
-        <div class="box-slider-group">
-          <label class="padding-label">Padding: <span class="slider-value" id="bw-padding-val">15px</span></label>
-          <input type="range" id="bw-padding" min="0" max="60" value="15" style="accent-color:var(--box-padding)">
-        </div>
-      </div>
-      <div class="box-live-preview" id="bw-preview">
-        <div class="box-preview-element" id="bw-element">Mein Element</div>
-      </div>
-      <div class="box-css-output" id="bw-css-output"></div>
-    `;
-    this.updateBoxWorkshop();
-    container.querySelectorAll('input[type="range"]').forEach(inp => inp.addEventListener('input', () => this.updateBoxWorkshop()));
-  }
-
-  updateBoxWorkshop() {
-    const margin = document.getElementById('bw-margin')?.value || '20';
-    const border = document.getElementById('bw-border')?.value || '3';
-    const padding = document.getElementById('bw-padding')?.value || '15';
-    const el = document.getElementById('bw-element');
-    const output = document.getElementById('bw-css-output');
-
-    document.getElementById('bw-margin-val').textContent = margin + 'px';
-    document.getElementById('bw-border-val').textContent = border + 'px';
-    document.getElementById('bw-padding-val').textContent = padding + 'px';
-
-    if (el) {
-      el.style.margin = margin + 'px';
-      el.style.border = border + 'px solid #fb8500';
-      el.style.padding = padding + 'px';
-    }
-    if (output) {
-      output.textContent = `.element {\n  margin: ${margin}px;\n  border: ${border}px solid orange;\n  padding: ${padding}px;\n}`;
-    }
-  }
-
-  // ==========================
   // HTML REF BADGES
   // ==========================
   bindHtmlRefBadges() {
@@ -885,9 +824,16 @@ li { margin: 6px 0; color: #e2e8f0; }
   createMissionButtons() {
     const nav = document.getElementById('mission-nav');
     if (!nav) return;
-    nav.innerHTML = this.missions.map((m, i) => `
-      <button class="mission-btn${i === 0 ? ' active' : ''}" data-mi="${i}" type="button" role="tab" aria-label="Mission ${i + 1}: ${this.esc(m.title)}">${i + 1}</button>
-    `).join('');
+    const profiStart = this.missions.findIndex(m => m.profi);
+    let html = '';
+    this.missions.forEach((m, i) => {
+      if (i === profiStart) {
+        html += '<span class="mission-divider">Profi</span>';
+      }
+      const profiClass = m.profi ? ' profi' : '';
+      html += `<button class="mission-btn${i === 0 ? ' active' : ''}${profiClass}" data-mi="${i}" type="button" role="tab" aria-label="Mission ${i + 1}: ${this.esc(m.title)}">${i + 1}</button>`;
+    });
+    nav.innerHTML = html;
     nav.addEventListener('click', (e) => {
       const btn = e.target.closest('.mission-btn');
       if (!btn) return;
@@ -913,6 +859,7 @@ li { margin: 6px 0; color: #e2e8f0; }
     if (modal && closeBtn) {
       closeBtn.addEventListener('click', () => {
         modal.classList.remove('active');
+        // Advance to next mission if available
         if (this.currentMission < this.missions.length - 1) {
           this.currentMission++;
           this.updateMissionNav();
@@ -942,12 +889,20 @@ li { margin: 6px 0; color: #e2e8f0; }
   updateMission() {
     const area = document.getElementById('mission-area');
     if (!area) return;
+
+    // Abort previous mission event listeners
+    if (this._missionAbort) this._missionAbort.abort();
+    this._missionAbort = new AbortController();
+
     const m = this.missions[this.currentMission];
     const mi = this.currentMission;
 
+    const mascotImg = this.completedMissions.has(mi) ? 'Byte_mascot/Byte_Happy.png' : 'Byte_mascot/Byte_Thinking.png';
+    const mascotAlt = this.completedMissions.has(mi) ? 'Byte ist gluecklich' : 'Byte denkt nach';
+
     let content = `
-      <img src="Byte_mascot/Byte_Thinking.png" alt="Byte denkt nach" class="mission-mascot">
-      <h3>Mission ${mi + 1}: ${this.esc(m.title)}</h3>
+      <img src="${mascotImg}" alt="${mascotAlt}" class="mission-mascot">
+      <h3>Mission ${mi + 1}: ${this.esc(m.title)}${m.profi ? ' ⭐' : ''}</h3>
       <p class="mission-text">${this.esc(m.text)}</p>
     `;
 
@@ -960,6 +915,7 @@ li { margin: 6px 0; color: #e2e8f0; }
       case 'true-false': content += this.renderTrueFalseMission(m, mi); break;
       case 'cloze': content += this.renderClozeMission(m, mi); break;
       case 'code-write': content += this.renderCodeWriteMission(m, mi); break;
+      case 'html-css-write': content += this.renderHtmlCssWriteMission(m, mi); break;
     }
 
     area.innerHTML = content;
@@ -972,17 +928,21 @@ li { margin: 6px 0; color: #e2e8f0; }
   }
 
   renderMatchingMission(m, mi) {
-    const state = this.missionState[mi] || { selected: null, matched: [] };
-    this.missionState[mi] = state;
-    const shuffledRight = m.data.pairs.map(p => p.right).sort(() => Math.random() - 0.5);
-    this.missionState[mi].shuffledRight = shuffledRight;
+    if (!this.missionState[mi]) {
+      this.missionState[mi] = { selected: null, matched: [] };
+    }
+    const state = this.missionState[mi];
+    if (!state.shuffledRight) {
+      state.shuffledRight = [...m.data.pairs.map(p => p.right)].sort(() => Math.random() - 0.5);
+    }
+    const matchedRightTexts = new Set(state.matched.map(li => m.data.pairs[li].right));
     return `
       <div class="matching-container">
         <div class="matching-left">
-          ${m.data.pairs.map((p, i) => `<div class="matching-item matching-left-item" data-idx="${i}">${this.esc(p.left)}</div>`).join('')}
+          ${m.data.pairs.map((p, i) => `<div class="matching-item matching-left-item${state.matched.includes(i) ? ' matched' : ''}" data-idx="${i}">${this.esc(p.left)}</div>`).join('')}
         </div>
         <div class="matching-right">
-          ${shuffledRight.map((r, i) => `<div class="matching-item matching-right-item" data-idx="${i}">${this.esc(r)}</div>`).join('')}
+          ${state.shuffledRight.map((r, i) => `<div class="matching-item matching-right-item${matchedRightTexts.has(r) ? ' matched' : ''}" data-idx="${i}">${this.esc(r)}</div>`).join('')}
         </div>
       </div>
       <div class="mission-feedback" id="mission-feedback"></div>
@@ -1014,6 +974,9 @@ li { margin: 6px 0; color: #e2e8f0; }
   renderSingleChoiceMission(m, mi) {
     if (!this.missionState[mi]) this.missionState[mi] = { currentQ: 0, correct: 0 };
     const state = this.missionState[mi];
+    if (state.currentQ >= m.data.questions.length) {
+      return `<p style="color:var(--accent-green);font-weight:700;">Alle Fragen beantwortet!</p>`;
+    }
     const q = m.data.questions[state.currentQ];
     return `
       <p style="color:var(--text-muted);font-size:0.85rem;">Frage ${state.currentQ + 1} von ${m.data.questions.length}</p>
@@ -1032,20 +995,29 @@ li { margin: 6px 0; color: #e2e8f0; }
 
   renderAssignmentMission(m, mi) {
     if (!this.missionState[mi]) {
-      this.missionState[mi] = { placed: {}, selectedTag: null };
+      this.missionState[mi] = { placed: {} };
       m.data.categories.forEach((_, i) => { this.missionState[mi].placed[i] = []; });
     }
-    const tags = m.data.tags.sort(() => Math.random() - 0.5);
-    this.missionState[mi].shuffledTags = tags;
+    const state = this.missionState[mi];
+    if (!state.shuffledTags) {
+      state.shuffledTags = [...m.data.tags].sort(() => Math.random() - 0.5);
+    }
+    const tags = state.shuffledTags;
+    // Determine which tags are already placed
+    const placedTags = new Set();
+    Object.values(state.placed).forEach(arr => arr.forEach(t => placedTags.add(t)));
+
     return `
       <div class="assignment-container">
         <div class="assignment-pool" id="assignment-pool">
-          ${tags.map(t => `<span class="assignment-tag" data-tag="${this.esc(t)}">${this.esc(t)}</span>`).join('')}
+          ${tags.map(t => `<span class="assignment-tag${placedTags.has(t) ? ' placed' : ''}" data-tag="${this.esc(t)}">${this.esc(t)}</span>`).join('')}
         </div>
         ${m.data.categories.map((cat, i) => `
           <div class="assignment-category" data-ci="${i}">
             <h4>${this.esc(cat.name)}</h4>
-            <div class="placed-items" data-ci="${i}"></div>
+            <div class="placed-items" data-ci="${i}">
+              ${(state.placed[i] || []).map(t => `<span class="assignment-placed" data-tag="${this.esc(t)}" data-ci="${i}" title="Klicke zum Zuruecknehmen">${this.esc(t)}</span>`).join('')}
+            </div>
           </div>
         `).join('')}
       </div>
@@ -1054,32 +1026,37 @@ li { margin: 6px 0; color: #e2e8f0; }
     `;
   }
 
-  renderTrueFalseMission(m) {
+  renderTrueFalseMission(m, mi) {
+    const state = this.missionState[mi] || {};
     return `
       <div class="tf-statements">
-        ${m.data.statements.map((s, i) => `
+        ${m.data.statements.map((s, i) => {
+          const answered = state['answered_' + i];
+          return `
           <div class="tf-statement" data-si="${i}">
             <p>${this.esc(s.text)}</p>
             <div class="tf-buttons">
-              <button class="tf-btn" data-si="${i}" data-answer="true" type="button">Stimmt</button>
-              <button class="tf-btn" data-si="${i}" data-answer="false" type="button">Stimmt nicht</button>
+              <button class="tf-btn${answered === 'true' ? (s.correct ? ' selected-true correct' : ' selected-true wrong') : ''}" data-si="${i}" data-answer="true" type="button" ${answered ? 'disabled' : ''}>Stimmt</button>
+              <button class="tf-btn${answered === 'false' ? (!s.correct ? ' selected-false correct' : ' selected-false wrong') : ''}" data-si="${i}" data-answer="false" type="button" ${answered ? 'disabled' : ''}>Stimmt nicht</button>
             </div>
-            <div class="tf-feedback" id="tf-fb-${i}"></div>
+            <div class="tf-feedback" id="tf-fb-${i}" ${answered ? `style="color:${(answered === 'true') === s.correct ? 'var(--accent-green)' : 'var(--accent-red)'}"` : ''}>${answered ? this.esc(s.explanation) : ''}</div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
       <div class="mission-feedback" id="mission-feedback"></div>
     `;
   }
 
-  renderClozeMission(m) {
+  renderClozeMission(m, mi) {
+    const state = this.missionState[mi] || {};
     let html = '<div class="cloze-text">';
     m.data.segments.forEach((seg, i) => {
       if (seg.type === 'text') {
         html += this.esc(seg.value);
       } else {
         const shuffled = [...seg.options].sort(() => Math.random() - 0.5);
-        html += `<select data-gi="${i}" data-correct="${this.esc(seg.correct)}"><option value="">???</option>${shuffled.map(o => `<option value="${this.esc(o)}">${this.esc(o)}</option>`).join('')}</select>`;
+        const savedVal = state['gap_' + i] || '';
+        html += `<select data-gi="${i}" data-correct="${this.esc(seg.correct)}"><option value="">???</option>${shuffled.map(o => `<option value="${this.esc(o)}"${o === savedVal ? ' selected' : ''}>${this.esc(o)}</option>`).join('')}</select>`;
       }
     });
     html += '</div>';
@@ -1088,12 +1065,13 @@ li { margin: 6px 0; color: #e2e8f0; }
     return html;
   }
 
-  renderCodeWriteMission(m) {
+  renderCodeWriteMission(m, mi) {
+    const savedCode = this.missionState[mi]?.code ?? m.data.starterCode;
     return `
       <div class="code-write-area">
         <div class="code-write-editor">
           <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:4px;">Schreibe dein CSS hier:</p>
-          <textarea id="code-write-input">${this.esc(m.data.starterCode)}</textarea>
+          <textarea id="code-write-input" spellcheck="false">${this.esc(savedCode)}</textarea>
           <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
         </div>
         <div class="code-write-preview">
@@ -1104,48 +1082,78 @@ li { margin: 6px 0; color: #e2e8f0; }
     `;
   }
 
+  renderHtmlCssWriteMission(m, mi) {
+    const savedHtml = this.missionState[mi]?.html ?? m.data.starterHtml;
+    const savedCss = this.missionState[mi]?.css ?? m.data.starterCss;
+    return `
+      <div class="html-css-write-area">
+        <div class="html-css-editors">
+          <div class="html-css-editor-panel">
+            <div class="editor-label html-label">HTML</div>
+            <textarea id="html-write-input" spellcheck="false">${this.esc(savedHtml)}</textarea>
+          </div>
+          <div class="html-css-editor-panel">
+            <div class="editor-label css-label">CSS</div>
+            <textarea id="css-write-input" spellcheck="false">${this.esc(savedCss)}</textarea>
+          </div>
+        </div>
+        <div class="html-css-preview-panel">
+          <div class="editor-label preview-label">Vorschau</div>
+          <iframe id="html-css-preview-frame" sandbox="allow-same-origin" title="Vorschau"></iframe>
+        </div>
+      </div>
+      <button class="mission-check-btn" id="mission-check" type="button">Testen</button>
+      <div class="mission-feedback" id="mission-feedback"></div>
+    `;
+  }
+
   // --- Mission Interaction Bindings ---
   bindMissionInteractions(format, mi) {
     const area = document.getElementById('mission-area');
     if (!area) return;
     const m = this.missions[mi];
+    const signal = this._missionAbort.signal;
 
     switch (format) {
       case 'exploration':
-        area.querySelector('#mission-check')?.addEventListener('click', () => this.showMissionSuccess(m.success));
+        area.querySelector('#mission-check')?.addEventListener('click', () => this.showMissionSuccess(m.success), { signal });
         break;
 
       case 'matching':
-        this.bindMatchingMission(area, m, mi);
+        this.bindMatchingMission(area, m, mi, signal);
         break;
 
       case 'sorting':
-        this.bindSortingMission(area, m, mi);
+        this.bindSortingMission(area, m, mi, signal);
         break;
 
       case 'single-choice':
-        this.bindSingleChoiceMission(area, m, mi);
+        this.bindSingleChoiceMission(area, m, mi, signal);
         break;
 
       case 'assignment':
-        this.bindAssignmentMission(area, m, mi);
+        this.bindAssignmentMission(area, m, mi, signal);
         break;
 
       case 'true-false':
-        this.bindTrueFalseMission(area, m, mi);
+        this.bindTrueFalseMission(area, m, mi, signal);
         break;
 
       case 'cloze':
-        area.querySelector('#mission-check')?.addEventListener('click', () => this.checkClozeMission(area, m, mi));
+        area.querySelector('#mission-check')?.addEventListener('click', () => this.checkClozeMission(area, m, mi), { signal });
         break;
 
       case 'code-write':
-        this.bindCodeWriteMission(area, m, mi);
+        this.bindCodeWriteMission(area, m, mi, signal);
+        break;
+
+      case 'html-css-write':
+        this.bindHtmlCssWriteMission(area, m, mi, signal);
         break;
     }
   }
 
-  bindMatchingMission(area, m, mi) {
+  bindMatchingMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     let selectedLeft = null;
 
@@ -1159,7 +1167,6 @@ li { margin: 6px 0; color: #e2e8f0; }
         selectedLeft = parseInt(item.dataset.idx, 10);
       } else if (item.classList.contains('matching-right-item') && selectedLeft !== null) {
         const ri = parseInt(item.dataset.idx, 10);
-        const leftText = m.data.pairs[selectedLeft].left;
         const correctRight = m.data.pairs[selectedLeft].right;
         const clickedRight = state.shuffledRight[ri];
 
@@ -1179,10 +1186,10 @@ li { margin: 6px 0; color: #e2e8f0; }
           if (fb) { fb.textContent = 'Das passt nicht zusammen. Probiere es nochmal!'; fb.className = 'mission-feedback error'; }
         }
       }
-    });
+    }, { signal });
   }
 
-  bindSortingMission(area, m, mi) {
+  bindSortingMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     area.addEventListener('click', (e) => {
       const btn = e.target.closest('.sort-btn');
@@ -1195,7 +1202,7 @@ li { margin: 6px 0; color: #e2e8f0; }
         [state.items[idx], state.items[idx + 1]] = [state.items[idx + 1], state.items[idx]];
       }
       this.updateMission();
-    });
+    }, { signal });
     area.querySelector('#mission-check')?.addEventListener('click', () => {
       const isCorrect = JSON.stringify(state.items) === JSON.stringify(m.data.correct);
       const fb = document.getElementById('mission-feedback');
@@ -1205,10 +1212,10 @@ li { margin: 6px 0; color: #e2e8f0; }
         fb.textContent = 'Die Reihenfolge stimmt noch nicht. Verschiebe die Eintraege mit den Pfeilen!';
         fb.className = 'mission-feedback error';
       }
-    });
+    }, { signal });
   }
 
-  bindSingleChoiceMission(area, m, mi) {
+  bindSingleChoiceMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     area.querySelector('#choice-options')?.addEventListener('click', (e) => {
       const opt = e.target.closest('.choice-option');
@@ -1237,35 +1244,57 @@ li { margin: 6px 0; color: #e2e8f0; }
           this.showMissionSuccess(m.success);
         }
       }, 1200);
-    });
+    }, { signal });
   }
 
-  bindAssignmentMission(area, m, mi) {
+  bindAssignmentMission(area, m, mi, signal) {
     const state = this.missionState[mi];
     let selectedTag = null;
 
     area.addEventListener('click', (e) => {
+      // Undo: click on a placed item to return it to the pool
+      const placedItem = e.target.closest('.assignment-placed');
+      if (placedItem) {
+        const tag = placedItem.dataset.tag;
+        const ci = parseInt(placedItem.dataset.ci, 10);
+        const idx = state.placed[ci].indexOf(tag);
+        if (idx !== -1) state.placed[ci].splice(idx, 1);
+        placedItem.remove();
+        const tagEl = area.querySelector(`.assignment-tag[data-tag="${CSS.escape(tag)}"]`);
+        if (tagEl) tagEl.classList.remove('placed');
+        // Clear feedback
+        const fb = document.getElementById('mission-feedback');
+        if (fb) { fb.textContent = ''; fb.className = 'mission-feedback'; }
+        return;
+      }
+
       const tag = e.target.closest('.assignment-tag');
       const cat = e.target.closest('.assignment-category');
 
       if (tag && !tag.classList.contains('placed')) {
-        area.querySelectorAll('.assignment-tag').forEach(t => t.style.outline = 'none');
-        tag.style.outline = '2px solid white';
+        area.querySelectorAll('.assignment-tag').forEach(t => t.classList.remove('selected-tag'));
+        tag.classList.add('selected-tag');
         selectedTag = tag.dataset.tag;
-      } else if (cat && selectedTag) {
+      } else if (cat && selectedTag && !e.target.closest('.assignment-placed')) {
         const ci = parseInt(cat.dataset.ci, 10);
         state.placed[ci].push(selectedTag);
         const placedDiv = cat.querySelector('.placed-items');
         const span = document.createElement('span');
         span.className = 'assignment-placed';
         span.textContent = selectedTag;
+        span.dataset.tag = selectedTag;
+        span.dataset.ci = ci;
+        span.title = 'Klicke zum Zuruecknehmen';
         placedDiv.appendChild(span);
         const tagEl = area.querySelector(`.assignment-tag[data-tag="${CSS.escape(selectedTag)}"]`);
-        if (tagEl) tagEl.classList.add('placed');
+        if (tagEl) {
+          tagEl.classList.add('placed');
+          tagEl.classList.remove('selected-tag');
+        }
         selectedTag = null;
-        area.querySelectorAll('.assignment-tag').forEach(t => t.style.outline = 'none');
+        area.querySelectorAll('.assignment-tag').forEach(t => t.classList.remove('selected-tag'));
       }
-    });
+    }, { signal });
 
     area.querySelector('#mission-check')?.addEventListener('click', () => {
       let allCorrect = true;
@@ -1276,8 +1305,10 @@ li { margin: 6px 0; color: #e2e8f0; }
         placedItems.forEach(item => {
           if (cat.correct.includes(item.textContent)) {
             item.classList.remove('wrong');
+            item.classList.add('correct-placed');
           } else {
             item.classList.add('wrong');
+            item.classList.remove('correct-placed');
             allCorrect = false;
           }
         });
@@ -1288,25 +1319,28 @@ li { margin: 6px 0; color: #e2e8f0; }
       if (allCorrect) {
         this.showMissionSuccess(m.success);
       } else if (fb) {
-        fb.textContent = 'Einige sind noch falsch markiert. Probiere es nochmal!';
+        fb.textContent = 'Einige sind noch falsch. Klicke auf falsche Zuordnungen, um sie zurueckzunehmen!';
         fb.className = 'mission-feedback error';
       }
-    });
+    }, { signal });
   }
 
-  bindTrueFalseMission(area, m, mi) {
-    let answered = 0;
+  bindTrueFalseMission(area, m, mi, signal) {
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+    const state = this.missionState[mi];
     const total = m.data.statements.length;
 
     area.addEventListener('click', (e) => {
       const btn = e.target.closest('.tf-btn');
-      if (!btn || btn.classList.contains('selected-true') || btn.classList.contains('selected-false')) return;
+      if (!btn || btn.disabled) return;
       const si = parseInt(btn.dataset.si, 10);
       const answer = btn.dataset.answer === 'true';
       const statement = m.data.statements[si];
       const fb = document.getElementById('tf-fb-' + si);
       const allbtns = area.querySelectorAll(`.tf-btn[data-si="${si}"]`);
       allbtns.forEach(b => b.disabled = true);
+
+      state['answered_' + si] = btn.dataset.answer;
 
       const correct = answer === statement.correct;
       btn.classList.add(answer ? 'selected-true' : 'selected-false');
@@ -1317,18 +1351,21 @@ li { margin: 6px 0; color: #e2e8f0; }
         fb.style.color = correct ? 'var(--accent-green)' : 'var(--accent-red)';
       }
 
-      answered++;
-      if (answered === total) {
+      const answeredCount = m.data.statements.filter((_, i) => state['answered_' + i] !== undefined).length;
+      if (answeredCount === total) {
         setTimeout(() => this.showMissionSuccess(m.success), 800);
       }
-    });
+    }, { signal });
   }
 
-  checkClozeMission(area, m) {
+  checkClozeMission(area, m, mi) {
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+    const state = this.missionState[mi];
     const selects = area.querySelectorAll('.cloze-text select');
     let allCorrect = true;
     selects.forEach(sel => {
       const correct = sel.dataset.correct;
+      state['gap_' + sel.dataset.gi] = sel.value;
       if (sel.value === correct) {
         sel.classList.add('correct');
         sel.classList.remove('wrong');
@@ -1347,10 +1384,12 @@ li { margin: 6px 0; color: #e2e8f0; }
     }
   }
 
-  bindCodeWriteMission(area, m, mi) {
+  bindCodeWriteMission(area, m, mi, signal) {
     const textarea = area.querySelector('#code-write-input');
     const iframe = area.querySelector('#code-write-preview-frame');
     const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
 
     const updatePreview = () => {
       if (!textarea || !iframe) return;
@@ -1359,7 +1398,10 @@ li { margin: 6px 0; color: #e2e8f0; }
     };
 
     if (textarea) {
-      textarea.addEventListener('input', updatePreview);
+      textarea.addEventListener('input', () => {
+        this.missionState[mi].code = textarea.value;
+        updatePreview();
+      }, { signal });
       updatePreview();
     }
 
@@ -1372,10 +1414,9 @@ li { margin: 6px 0; color: #e2e8f0; }
         const results = [];
         m.data.checks.forEach(check => {
           const el = doc.querySelector(check.element);
-          if (!el) { allPass = false; results.push('Element ' + check.element + ' nicht gefunden.'); return; }
+          if (!el) { allPass = false; results.push(check.desc + ' ✗'); return; }
           const computed = iframe.contentWindow.getComputedStyle(el);
           const val = computed.getPropertyValue(check.property);
-          // Loose check
           const expected = check.value.toLowerCase().trim();
           const actual = val.toLowerCase().trim();
           if (actual.includes(expected) || this.colorMatch(actual, expected) || this.fontWeightMatch(actual, expected)) {
@@ -1396,7 +1437,90 @@ li { margin: 6px 0; color: #e2e8f0; }
       } catch (err) {
         if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein CSS korrekt?'; fb.className = 'mission-feedback error'; }
       }
-    });
+    }, { signal });
+  }
+
+  bindHtmlCssWriteMission(area, m, mi, signal) {
+    const htmlInput = area.querySelector('#html-write-input');
+    const cssInput = area.querySelector('#css-write-input');
+    const iframe = area.querySelector('#html-css-preview-frame');
+    const checkBtn = area.querySelector('#mission-check');
+
+    if (!this.missionState[mi]) this.missionState[mi] = {};
+
+    const updatePreview = () => {
+      if (!htmlInput || !cssInput || !iframe) return;
+      iframe.srcdoc = '<style>' + cssInput.value + '</style>' + htmlInput.value;
+    };
+
+    if (htmlInput) {
+      htmlInput.addEventListener('input', () => {
+        this.missionState[mi].html = htmlInput.value;
+        updatePreview();
+      }, { signal });
+    }
+    if (cssInput) {
+      cssInput.addEventListener('input', () => {
+        this.missionState[mi].css = cssInput.value;
+        updatePreview();
+      }, { signal });
+    }
+    updatePreview();
+
+    checkBtn?.addEventListener('click', () => {
+      if (!iframe) return;
+      const fb = document.getElementById('mission-feedback');
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        let allPass = true;
+        const results = [];
+
+        // Check HTML requirements
+        if (m.data.htmlChecks) {
+          m.data.htmlChecks.forEach(check => {
+            const elements = doc.querySelectorAll(check.selector);
+            if (check.minCount && elements.length < check.minCount) {
+              allPass = false;
+              results.push(check.desc + ' ✗ (gefunden: ' + elements.length + ')');
+            } else if (elements.length > 0) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗');
+            }
+          });
+        }
+
+        // Check CSS requirements
+        if (m.data.cssChecks) {
+          m.data.cssChecks.forEach(check => {
+            const el = doc.querySelector(check.element);
+            if (!el) { allPass = false; results.push(check.desc + ' ✗ (Element nicht gefunden)'); return; }
+            const computed = iframe.contentWindow.getComputedStyle(el);
+            const val = computed.getPropertyValue(check.property);
+            const expected = check.value.toLowerCase().trim();
+            const actual = val.toLowerCase().trim();
+            if (actual.includes(expected) || this.colorMatch(actual, expected) || this.fontWeightMatch(actual, expected)) {
+              results.push(check.desc + ' ✓');
+            } else {
+              allPass = false;
+              results.push(check.desc + ' ✗ (aktuell: ' + val + ')');
+            }
+          });
+        }
+
+        if (fb) {
+          if (allPass) {
+            this.showMissionSuccess(m.success);
+          } else {
+            fb.innerHTML = results.map(r => '<div>' + this.esc(r) + '</div>').join('');
+            fb.className = 'mission-feedback error';
+          }
+        }
+      } catch (err) {
+        if (fb) { fb.textContent = 'Fehler beim Pruefen. Ist dein Code korrekt?'; fb.className = 'mission-feedback error'; }
+      }
+    }, { signal });
   }
 
   colorMatch(actual, expected) {
