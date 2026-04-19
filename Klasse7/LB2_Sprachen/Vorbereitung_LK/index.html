@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS - Mach deine Webseite schoen!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CSS - Mach deine Webseite schoen!</h1>
+            <p>Hier wiederholen und vertiefen wir dein Wissen zu CSS.</p>
+            <nav class="header-nav">
+                <button class="glossary-btn" id="open-glossary">Glossar: Wichtige CSS-Befehle</button>
+            </nav>
+        </header>
+
+        <div class="main-content">
+            <!-- Lerninsel 1: CSS-Grundlagen -->
+            <section class="lerninsel" id="lerninsel-1" aria-label="CSS-Grundlagen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">1</span>
+                    <h2>CSS-Grundlagen</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Wichtige Begriffe</h3>
+                    <div id="flip-cards-container" class="flip-cards-grid" role="list" aria-label="CSS-Begriffe Flip-Cards"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>CSS einbinden</h3>
+                    <div class="workshop-area" id="workshop-einbinden">
+                        <div class="workshop-steps" id="workshop-steps-einbinden"></div>
+                        <div class="workshop-content" id="workshop-content-einbinden"></div>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Selektoren</h3>
+                    <p>Klicke auf einen Selektor und sieh, welche HTML-Elemente er auswaehlt!</p>
+                    <div class="selector-playground" id="selector-playground"></div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 2: Farben & Typografie -->
+            <section class="lerninsel" id="lerninsel-2" aria-label="Farben und Typografie">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">2</span>
+                    <h2>Farben &amp; Typografie</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Farben in CSS</h3>
+                    <div class="color-explorer" id="color-explorer"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Typografie</h3>
+                    <div class="typo-workshop" id="typo-workshop"></div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 3: Box-Modell -->
+            <section class="lerninsel" id="lerninsel-3" aria-label="Box-Modell">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number">3</span>
+                    <h2>Das Box-Modell</h2>
+                </div>
+
+                <div class="subsection">
+                    <h3>Jedes HTML-Element ist eine Box!</h3>
+                    <div class="box-model-interactive" id="box-model-visual"></div>
+                    <div id="box-model-detail" class="box-model-detail" aria-live="polite"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Box-Modell ausprobieren</h3>
+                    <div class="box-workshop" id="box-workshop"></div>
+                </div>
+            </section>
+
+            <!-- Phase 3: Missionen -->
+            <section class="missions" aria-label="Missionen">
+                <h2>Missionen</h2>
+                <div class="mission-nav" id="mission-nav" role="tablist" aria-label="Missionsauswahl"></div>
+                <div class="mission-area" id="mission-area" aria-live="polite"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Glossar Modal -->
+    <div class="modal-overlay" id="glossary-modal" role="dialog" aria-modal="true" aria-label="Glossar">
+        <div class="modal-content">
+            <button class="modal-close" id="close-glossary" aria-label="Glossar schliessen">&times;</button>
+            <h2>Glossar: Wichtige CSS-Befehle</h2>
+            <div id="glossary-list"></div>
+        </div>
+    </div>
+
+    <!-- Mission Success Modal -->
+    <div class="modal-overlay" id="mission-success-modal" role="dialog" aria-modal="true" aria-label="Mission geschafft">
+        <div class="modal-content mission-success">
+            <img id="mission-success-byte" src="Byte_mascot/Byte_Happy.png" alt="Byte feiert" class="success-mascot">
+            <h2 id="mission-success-title">Geschafft!</h2>
+            <p id="mission-success-text"></p>
+            <button id="mission-success-close" class="btn-primary">Weiter</button>
+        </div>
+    </div>
+
+    <!-- HTML-Referenz Popup -->
+    <div class="html-ref-popup" id="html-ref-popup" role="tooltip" aria-hidden="true">
+        <div class="html-ref-popup-content">
+            <strong>Aus dem HTML-Kurs:</strong>
+            <p id="html-ref-popup-text"></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Dominik Bechinie - Erstellt fuer den Informatikunterricht</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
