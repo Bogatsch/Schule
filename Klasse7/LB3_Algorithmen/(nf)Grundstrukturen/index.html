@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithmen - Grundstrukturen</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Algorithmen &amp; Grundstrukturen</h1>
+            <p>Lerne Schritt fuer Schritt, wie Algorithmen aufgebaut sind &ndash; und sieh live, wie sie als Struktogramm aussehen!</p>
+        </header>
+
+        <div class="main-content">
+
+            <!-- Lerninsel 1: Variablen & Datentypen -->
+            <section class="lerninsel collapsed" id="lerninsel-variablen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n1">1</span>
+                    <h2>Variablen &amp; Datentypen</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Was sind Variablen?</h3>
+                        <p>Eine Variable ist wie eine <strong>beschriftete Box</strong>, in der du einen Wert speichern kannst. Jede Box hat einen <em>Namen</em> und einen <em>Typ</em> (welche Art von Inhalt hineinpasst).</p>
+                        <div class="box-metaphor" id="box-metaphor">
+                            <div class="variable-boxes"></div>
+                            <div class="box-controls">
+                                <select id="box-type-select">
+                                    <option value="int">int (Ganzzahl)</option>
+                                    <option value="double">double (Kommazahl)</option>
+                                    <option value="boolean">boolean (Wahrheitswert)</option>
+                                    <option value="String">String (Text)</option>
+                                </select>
+                                <input type="text" id="box-name-input" placeholder="Variablenname" maxlength="15">
+                                <input type="text" id="box-value-input" placeholder="Wert">
+                                <button class="btn-primary" id="box-add-btn">Box erstellen</button>
+                            </div>
+                            <div class="box-feedback" id="box-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Datentypen im Ueberblick</h3>
+                        <div class="datatype-cards" id="datatype-cards"></div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Ausprobieren: Variablen erstellen</h3>
+                        <div class="dual-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="var-code-editor" class="code-editor" rows="6" spellcheck="false">int alter = 13;
+double note = 1.5;
+boolean istSchoen = true;
+String name = "Max";</textarea>
+                                <button class="btn-primary" id="var-run-btn">&#9654; Ausfuehren</button>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="var-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="var-state">
+                            <h4>Speicher (aktuelle Variablen):</h4>
+                            <div class="state-boxes" id="var-state-boxes"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 2: Anweisungen -->
+            <section class="lerninsel collapsed" id="lerninsel-anweisungen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n2">2</span>
+                    <h2>Anweisungen</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Was ist eine Anweisung?</h3>
+                        <p>Eine Anweisung ist ein <strong>einzelner Befehl</strong> an den Computer. Anweisungen werden <em>nacheinander</em> von oben nach unten ausgefuehrt &ndash; genau wie einzelne Schritte in einem Kochrezept.</p>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Schritt-fuer-Schritt-Simulation</h3>
+                        <div class="dual-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="seq-code-editor" class="code-editor" rows="8" spellcheck="false">int a = 5;
+int b = 3;
+int summe = a + b;
+int differenz = a - b;
+int produkt = a * b;</textarea>
+                                <div class="sim-controls">
+                                    <button class="btn-primary" id="seq-step-btn">&#9654; Naechster Schritt</button>
+                                    <button class="btn-secondary" id="seq-reset-btn">&#8634; Zuruecksetzen</button>
+                                    <button class="btn-primary" id="seq-auto-btn">&#9654;&#9654; Automatisch</button>
+                                </div>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="seq-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="seq-state">
+                            <h4>Speicher:</h4>
+                            <div class="state-boxes" id="seq-state-boxes"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 3: Verzweigungen -->
+            <section class="lerninsel collapsed" id="lerninsel-verzweigungen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n3">3</span>
+                    <h2>Verzweigungen</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Was sind Verzweigungen?</h3>
+                        <p>Mit einer Verzweigung kann dein Programm <strong>Entscheidungen treffen</strong>: Wenn eine Bedingung wahr ist, passiert etwas Bestimmtes &ndash; sonst etwas anderes. Wie an einer Weggabelung!</p>
+                        <div class="operator-reference">
+                            <h4>Vergleichsoperatoren:</h4>
+                            <div class="operator-grid" id="operator-grid"></div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Interaktive Verzweigung</h3>
+                        <div class="branch-playground">
+                            <div class="branch-setup">
+                                <label>Welchen Wert hat <code>zahl</code>?</label>
+                                <input type="range" id="branch-slider" min="0" max="20" value="10">
+                                <span class="slider-value" id="branch-slider-value">10</span>
+                            </div>
+                            <div class="dual-view">
+                                <div class="code-side">
+                                    <div class="code-side-header">Java-Code</div>
+                                    <pre class="code-display" id="branch-code-display"></pre>
+                                </div>
+                                <div class="struktogramm-side">
+                                    <div class="struktogramm-side-header">Struktogramm</div>
+                                    <div class="struktogramm-container" id="branch-struktogramm"></div>
+                                </div>
+                            </div>
+                            <div class="branch-result" id="branch-result"></div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Selber bauen: Eigene Verzweigung</h3>
+                        <div class="dual-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="branch-code-editor" class="code-editor" rows="10" spellcheck="false">int temperatur = 25;
+
+if (temperatur > 30) {
+    String ergebnis = "Sehr heiss!";
+} else if (temperatur > 20) {
+    String ergebnis = "Angenehm warm";
+} else {
+    String ergebnis = "Eher kuehl";
+}</textarea>
+                                <button class="btn-primary" id="branch-run-btn">&#9654; Ausfuehren</button>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="branch-custom-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="branch-state">
+                            <h4>Ergebnis:</h4>
+                            <div class="state-boxes" id="branch-state-boxes"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 4: Schleifen -->
+            <section class="lerninsel collapsed" id="lerninsel-schleifen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n4">4</span>
+                    <h2>Schleifen</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Was sind Schleifen?</h3>
+                        <p>Schleifen wiederholen Anweisungen, <strong>solange eine Bedingung wahr ist</strong>. Bei einer <em>kopfgesteuerten Schleife</em> (while) wird die Bedingung <strong>vor</strong> jedem Durchlauf geprueft.</p>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>While-Schleife simulieren</h3>
+                        <div class="loop-playground">
+                            <div class="loop-config">
+                                <label>Startwert von <code>i</code>:</label>
+                                <input type="number" id="loop-start" value="0" min="0" max="20">
+                                <label>Schleife laeuft solange <code>i &lt;</code></label>
+                                <input type="number" id="loop-end" value="5" min="1" max="20">
+                            </div>
+                            <div class="dual-view">
+                                <div class="code-side">
+                                    <div class="code-side-header">Java-Code</div>
+                                    <pre class="code-display" id="loop-code-display"></pre>
+                                </div>
+                                <div class="struktogramm-side">
+                                    <div class="struktogramm-side-header">Struktogramm</div>
+                                    <div class="struktogramm-container" id="loop-struktogramm"></div>
+                                </div>
+                            </div>
+                            <div class="sim-controls">
+                                <button class="btn-primary" id="loop-step-btn">&#9654; Naechster Schritt</button>
+                                <button class="btn-secondary" id="loop-reset-btn">&#8634; Zuruecksetzen</button>
+                                <button class="btn-primary" id="loop-auto-btn">&#9654;&#9654; Automatisch</button>
+                            </div>
+                            <div class="loop-visualization" id="loop-visualization">
+                                <div class="loop-counter">
+                                    <span class="loop-label">i = </span>
+                                    <span class="loop-value" id="loop-i-value">0</span>
+                                    <span class="loop-iteration">Durchlauf: <span id="loop-iteration-count">0</span></span>
+                                </div>
+                                <div class="loop-output" id="loop-output"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Eigene Schleife bauen</h3>
+                        <div class="dual-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="loop-code-editor" class="code-editor" rows="8" spellcheck="false">int summe = 0;
+int i = 1;
+
+while (i <= 5) {
+    summe = summe + i;
+    i = i + 1;
+}</textarea>
+                                <div class="sim-controls">
+                                    <button class="btn-primary" id="loop-custom-step-btn">&#9654; Naechster Schritt</button>
+                                    <button class="btn-secondary" id="loop-custom-reset-btn">&#8634; Zuruecksetzen</button>
+                                </div>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="loop-custom-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="loop-custom-state">
+                            <h4>Speicher:</h4>
+                            <div class="state-boxes" id="loop-custom-state-boxes"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 5: Funktionen -->
+            <section class="lerninsel collapsed" id="lerninsel-funktionen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n5">5</span>
+                    <h2>Funktionen</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Was sind Funktionen?</h3>
+                        <p>Eine Funktion ist ein <strong>benannter Block von Anweisungen</strong>, den du immer wieder aufrufen kannst. Sie hilft dir, deinen Code uebersichtlich zu halten und Wiederholungen zu vermeiden.</p>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Funktion verstehen</h3>
+                        <div class="function-demo">
+                            <div class="dual-view">
+                                <div class="code-side">
+                                    <div class="code-side-header">Java-Code</div>
+                                    <pre class="code-display" id="func-code-display"></pre>
+                                </div>
+                                <div class="struktogramm-side">
+                                    <div class="struktogramm-side-header">Struktogramm</div>
+                                    <div class="struktogramm-container" id="func-struktogramm"></div>
+                                </div>
+                            </div>
+                            <div class="func-call-area">
+                                <h4>Funktion aufrufen:</h4>
+                                <div class="func-inputs">
+                                    <label>Zahl a:</label>
+                                    <input type="number" id="func-input-a" value="4">
+                                    <label>Zahl b:</label>
+                                    <input type="number" id="func-input-b" value="7">
+                                    <button class="btn-primary" id="func-call-btn">berechneMax(a, b) aufrufen</button>
+                                </div>
+                                <div class="func-result" id="func-result"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Eigene Funktion schreiben</h3>
+                        <div class="dual-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="func-code-editor" class="code-editor" rows="10" spellcheck="false">int verdopple(int x) {
+    int ergebnis = x * 2;
+    return ergebnis;
+}
+
+int wert = verdopple(5);</textarea>
+                                <button class="btn-primary" id="func-run-btn">&#9654; Ausfuehren</button>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="func-custom-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="func-state">
+                            <h4>Ergebnis:</h4>
+                            <div class="state-boxes" id="func-state-boxes"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lerninsel 6: Sandbox -->
+            <section class="lerninsel collapsed" id="lerninsel-sandbox">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number n6">6</span>
+                    <h2>Freie Uebungsflaeche</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="subsection">
+                        <h3>Code &hArr; Struktogramm</h3>
+                        <p>Schreibe eigenen Code und sieh live, wie das Struktogramm dazu aussieht. Oder aendere Werte und beobachte die Ausfuehrung!</p>
+                        <div class="sandbox-templates">
+                            <span>Vorlagen:</span>
+                            <button class="btn-template" data-template="sequence">Sequenz</button>
+                            <button class="btn-template" data-template="branch">Verzweigung</button>
+                            <button class="btn-template" data-template="loop">Schleife</button>
+                            <button class="btn-template" data-template="combined">Kombiniert</button>
+                        </div>
+                        <div class="dual-view sandbox-view">
+                            <div class="code-side">
+                                <div class="code-side-header">Java-Code</div>
+                                <textarea id="sandbox-code-editor" class="code-editor" rows="14" spellcheck="false">int summe = 0;
+int i = 1;
+
+while (i <= 10) {
+    if (i % 2 == 0) {
+        summe = summe + i;
+    }
+    i = i + 1;
+}
+</textarea>
+                                <div class="sim-controls">
+                                    <button class="btn-primary" id="sandbox-step-btn">&#9654; Schritt</button>
+                                    <button class="btn-primary" id="sandbox-auto-btn">&#9654;&#9654; Auto</button>
+                                    <button class="btn-secondary" id="sandbox-reset-btn">&#8634; Reset</button>
+                                </div>
+                            </div>
+                            <div class="struktogramm-side">
+                                <div class="struktogramm-side-header">Struktogramm</div>
+                                <div class="struktogramm-container" id="sandbox-struktogramm"></div>
+                            </div>
+                        </div>
+                        <div class="variable-state" id="sandbox-state">
+                            <h4>Speicher:</h4>
+                            <div class="state-boxes" id="sandbox-state-boxes"></div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Externer Struktogramm-Editor</h3>
+                        <p>Fuer noch komplexere Struktogramme kannst du den externen Editor nutzen:</p>
+                        <a href="https://struktog.openpatch.org/" target="_blank" rel="noopener" class="btn-primary external-link-btn">&#8599; struktog.openpatch.org oeffnen</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>Lernbereich 3 &ndash; Algorithmen | Klasse 7</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

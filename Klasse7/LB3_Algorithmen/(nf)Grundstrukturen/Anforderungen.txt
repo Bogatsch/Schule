@@ -1,0 +1,11 @@
+Auf Basis von Java
+
+Einfache Datentypen
+Variablen 
+Anweisungen
+Verzweigungen (<,>,<=,>=,==, +, -, TRUE, FALSE)
+Schleifen (Fokus auf Kopfgesteuert)
+Funktion
+
+Webseiten für Strukogram
+- https://struktog.openpatch.org/#pako:eNotj9FuwjAMRf_FzykUUdqRVwTSXqZJfEFonDYixJ3jDg3Uf5-ReLOuzrm6fgJxHGIGC6PIVOx6XYTnq9Cwognz5KQfV8QDGPhFLpEU3Ri4kccE9gnRq3rxu8Z3rqvayw6rfttg1XQffRXqrXOh3assfxMq-ZkLsnyprVmglOh-THjDLK-yN_SdXI8jJY8My2KgoEjMQ3khgbKc40OxTWvgHr2MYPd1_b5Pc9JZwaWCBhh_5sh4EE7HLFpm9TVcln8h2VKX
