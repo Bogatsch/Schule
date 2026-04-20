@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment files / secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# VoiceAssistant runtime artifacts
+Klasse11/LB6_AuS/VoiceAssistant/voice_temp.mp3
