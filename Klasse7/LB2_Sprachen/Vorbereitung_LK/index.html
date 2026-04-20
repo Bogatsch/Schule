@@ -9,6 +9,11 @@
 <body>
     <div class="container">
         <header>
+            <div class="progress-actions">
+                <button class="glossary-btn progress-save-btn" id="progress-save">&#8593; Fortschritt speichern</button>
+                <button class="glossary-btn progress-load-btn" id="progress-load-btn">&#8595; Fortschritt laden</button>
+                <input type="file" id="progress-load-input" accept=".json" style="display:none">
+            </div>
             <h1>HTML &amp; CSS - Mach deine Webseite schoen!</h1>
             <p>Hier wiederholen und vertiefen wir dein Wissen zu HTML und CSS.</p>
             <nav class="header-nav">
@@ -98,9 +103,19 @@
                         <h3>Typografie</h3>
                         <div class="typo-workshop" id="typo-workshop"></div>
                     </div>
+                </div>
+            </section>
 
+            <!-- Lerninsel 4: Übungsfläche -->
+            <section class="lerninsel collapsed" id="lerninsel-uebung" aria-label="Uebungsflaeche">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number uebung-number">4</span>
+                    <h2>Uebungsflaeche</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
                     <div class="subsection">
-                        <h3>Uebungsflaeche: HTML &amp; CSS</h3>
+                        <h3>HTML &amp; CSS ausprobieren</h3>
                         <p>Schreibe HTML und CSS und sieh live das Ergebnis!</p>
                         <div id="html-css-playground"></div>
                     </div>

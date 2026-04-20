@@ -92,6 +92,14 @@ header p {
     gap: 12px;
 }
 
+.progress-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
 /* --- Buttons --- */
 .glossary-btn, .btn-primary {
     background: var(--accent-css);
@@ -126,6 +134,101 @@ header p {
 }
 .glossary-btn-css:hover {
     background: var(--accent-css-light);
+}
+
+.progress-save-btn,
+.progress-load-btn {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+}
+.progress-save-btn:hover,
+.progress-load-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+}
+
+.hex-only-swatch {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    font-size: 0;
+}
+
+.hex-only-swatch:hover {
+    border-color: rgba(255,255,255,0.6);
+    transform: scale(1.1);
+}
+
+.hex-only-swatch.selected {
+    border-color: white;
+    box-shadow: 0 0 0 2px var(--accent-css);
+}
+
+.hex-palette-grid {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+}
+
+.hex-text-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    transition: border-color 0.2s;
+}
+
+.hex-text-input:focus {
+    outline: none;
+    border-color: var(--accent-css);
+}
+
+.hex-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.hex-input-wrapper:focus-within {
+    border-color: var(--accent-css);
+}
+
+.hex-prefix {
+    padding: 8px 10px 8px 12px;
+    color: var(--accent-css-light);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    user-select: none;
+    pointer-events: none;
+}
+
+.hex-digits-input {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 8px 12px 8px 0 !important;
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 700px) {
+    .progress-actions {
+        flex-direction: column;
+        align-items: center;
+    }
 }
 
 /* --- Cards --- */
@@ -949,6 +1052,63 @@ header p {
     font-size: 0.85rem;
     color: var(--accent-css-light);
     white-space: pre-wrap;
+}
+
+.typo-color-group {
+    grid-column: span 2;
+}
+
+.typo-format-select {
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.typo-color-input-area select,
+.typo-color-input-area input[type="color"] {
+    padding: 4px 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.typo-color-input-area input[type="color"] {
+    width: 52px;
+    height: 36px;
+    border: none;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.typo-rgb-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.typo-rgb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.typo-rgb-row span {
+    min-width: 60px;
+}
+
+.typo-rgb-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent-typo);
 }
 
 /* --- Box Model --- */
@@ -2070,8 +2230,24 @@ code {
     background: var(--accent-typo);
 }
 
+.lerninsel-number.uebung-number {
+    background: var(--accent-green);
+}
+
 #lerninsel-2 .subsection h3 {
     color: var(--accent-typo);
+}
+
+#lerninsel-uebung .subsection h3 {
+    color: var(--accent-green);
+}
+
+#lerninsel-uebung .playground-textarea {
+    min-height: 380px;
+}
+
+#lerninsel-uebung .playground-preview-panel iframe {
+    min-height: 380px;
 }
 
 /* --- HTML Flip Cards --- */

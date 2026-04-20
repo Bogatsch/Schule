@@ -177,7 +177,7 @@ class CSSExplorer {
         text: 'Erstelle eine Seite mit einer h1-Ueberschrift, einer h2-Unterueberschrift und mindestens 2 Absaetzen (p).',
         format: 'html-write',
         data: {
-          starterHtml: '<h1></h1>\n<h2></h2>\n<p></p>\n<p></p>',
+          starterHtml: '',
           checks: [
             { type: 'dom', selector: 'h1', minCount: 1, desc: '<h1>-Ueberschrift vorhanden' },
             { type: 'dom', selector: 'h2', minCount: 1, desc: '<h2>-Ueberschrift vorhanden' },
@@ -500,6 +500,19 @@ class CSSExplorer {
       { name: 'cyan', hex: '#00ffff', textColor: '#000' },
       { name: 'magenta', hex: '#ff00ff', textColor: '#fff' }
     ];
+
+    this.hexPalette = [
+      { name: 'violett', hex: '#8b5cf6', textColor: '#fff' },
+      { name: 'orange', hex: '#f59e0b', textColor: '#000' },
+      { name: 'rot', hex: '#ef4444', textColor: '#fff' },
+      { name: 'gruen', hex: '#22c55e', textColor: '#000' },
+      { name: 'blau', hex: '#3b82f6', textColor: '#fff' },
+      { name: 'tuerkis', hex: '#06b6d4', textColor: '#000' },
+      { name: 'pink', hex: '#ec4899', textColor: '#fff' },
+      { name: 'gelb', hex: '#eab308', textColor: '#000' },
+      { name: 'schwarz', hex: '#111827', textColor: '#fff' },
+      { name: 'weiss', hex: '#ffffff', textColor: '#000' }
+    ];
   }
 
   // ==========================
@@ -523,6 +536,7 @@ class CSSExplorer {
     this.bindHtmlRefBadges();
     this.bindMissionSuccessModal();
     this.bindLerninselToggle();
+    this.bindProgressButtons();
   }
 
   // ==========================
@@ -534,6 +548,148 @@ class CSSExplorer {
         header.closest('.lerninsel').classList.toggle('collapsed');
       });
     });
+  }
+
+  // ==========================
+  // SAVE / LOAD PROGRESS
+  // ==========================
+  bindProgressButtons() {
+    const saveBtn = document.getElementById('progress-save');
+    const loadBtn = document.getElementById('progress-load-btn');
+    const loadInput = document.getElementById('progress-load-input');
+    if (saveBtn) saveBtn.addEventListener('click', () => this.saveProgress());
+    if (loadBtn) loadBtn.addEventListener('click', () => loadInput && loadInput.click());
+    if (loadInput) loadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          this.loadProgress(data);
+        } catch {
+          alert('Fehler: Die Datei konnte nicht gelesen werden. Bitte waehle eine gueltige Fortschrittsdatei.');
+        }
+        loadInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  saveProgress() {
+    const state = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      currentMission: this.currentMission,
+      completedMissions: [...this.completedMissions],
+      missionState: JSON.parse(JSON.stringify(this.missionState, (key, val) => val instanceof Set ? [...val] : val)),
+      playgrounds: {
+        html: document.getElementById('html-playground-input')?.value ?? '',
+        htmlcssHtml: document.getElementById('htmlcss-playground-html')?.value ?? '',
+        htmlcssCss: document.getElementById('htmlcss-playground-css')?.value ?? ''
+      },
+      typo: {
+        font: document.getElementById('typo-font')?.value ?? '',
+        size: document.getElementById('typo-size')?.value ?? '18',
+        weight: document.getElementById('typo-weight')?.value ?? 'normal',
+        align: document.getElementById('typo-align')?.value ?? 'left',
+        colorFormat: document.getElementById('typo-color-format')?.value ?? 'name',
+        colorName: document.getElementById('typo-color-name')?.value ?? 'black',
+        colorHex: document.getElementById('typo-color-hex')?.value ?? '#000000',
+        colorR: document.getElementById('typo-color-r')?.value ?? '0',
+        colorG: document.getElementById('typo-color-g')?.value ?? '0',
+        colorB: document.getElementById('typo-color-b')?.value ?? '0',
+        bgFormat: document.getElementById('typo-bg-format')?.value ?? 'name',
+        bgName: document.getElementById('typo-bg-name')?.value ?? 'white',
+        bgHex: document.getElementById('typo-bg-hex')?.value ?? '#ffffff',
+        bgR: document.getElementById('typo-bg-r')?.value ?? '255',
+        bgG: document.getElementById('typo-bg-g')?.value ?? '255',
+        bgB: document.getElementById('typo-bg-b')?.value ?? '255'
+      },
+      lerninselCollapsed: {}
+    };
+    document.querySelectorAll('.lerninsel[id]').forEach(s => {
+      state.lerninselCollapsed[s.id] = s.classList.contains('collapsed');
+    });
+
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mein-fortschritt.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  loadProgress(data) {
+    if (!data || data.version !== 1) {
+      alert('Diese Datei passt nicht zur Webseite (falsche Version).');
+      return;
+    }
+    // Missions
+    if (typeof data.currentMission === 'number') this.currentMission = data.currentMission;
+    if (Array.isArray(data.completedMissions)) this.completedMissions = new Set(data.completedMissions);
+    if (data.missionState) this.missionState = data.missionState;
+
+    // Lerninsel collapsed state
+    if (data.lerninselCollapsed) {
+      Object.entries(data.lerninselCollapsed).forEach(([id, collapsed]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('collapsed', !!collapsed);
+      });
+    }
+
+    // Playgrounds - restore textarea values if they exist
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) { el.value = val; el.dispatchEvent(new Event('input')); } };
+    if (data.playgrounds) {
+      setVal('html-playground-input', data.playgrounds.html);
+      setVal('htmlcss-playground-html', data.playgrounds.htmlcssHtml);
+      setVal('htmlcss-playground-css', data.playgrounds.htmlcssCss);
+    }
+
+    // Typography
+    if (data.typo) {
+      const t = data.typo;
+      setVal('typo-font', t.font);
+      setVal('typo-size', t.size);
+      setVal('typo-weight', t.weight);
+      setVal('typo-align', t.align);
+      // Color format + sub-inputs
+      const colorFmt = document.getElementById('typo-color-format');
+      if (colorFmt && t.colorFormat) {
+        colorFmt.value = t.colorFormat;
+        colorFmt.dispatchEvent(new Event('change'));
+      }
+      setVal('typo-color-name', t.colorName);
+      setVal('typo-color-hex', t.colorHex);
+      if (document.getElementById('typo-color-hex-val') && t.colorHex) document.getElementById('typo-color-hex-val').textContent = t.colorHex;
+      setVal('typo-color-r', t.colorR); setVal('typo-color-g', t.colorG); setVal('typo-color-b', t.colorB);
+      if (t.colorR) document.getElementById('typo-color-r-val') && (document.getElementById('typo-color-r-val').textContent = t.colorR);
+      if (t.colorG) document.getElementById('typo-color-g-val') && (document.getElementById('typo-color-g-val').textContent = t.colorG);
+      if (t.colorB) document.getElementById('typo-color-b-val') && (document.getElementById('typo-color-b-val').textContent = t.colorB);
+      // BG format + sub-inputs
+      const bgFmt = document.getElementById('typo-bg-format');
+      if (bgFmt && t.bgFormat) {
+        bgFmt.value = t.bgFormat;
+        bgFmt.dispatchEvent(new Event('change'));
+      }
+      setVal('typo-bg-name', t.bgName);
+      setVal('typo-bg-hex', t.bgHex);
+      if (document.getElementById('typo-bg-hex-val') && t.bgHex) document.getElementById('typo-bg-hex-val').textContent = t.bgHex;
+      setVal('typo-bg-r', t.bgR); setVal('typo-bg-g', t.bgG); setVal('typo-bg-b', t.bgB);
+      if (t.bgR) document.getElementById('typo-bg-r-val') && (document.getElementById('typo-bg-r-val').textContent = t.bgR);
+      if (t.bgG) document.getElementById('typo-bg-g-val') && (document.getElementById('typo-bg-g-val').textContent = t.bgG);
+      if (t.bgB) document.getElementById('typo-bg-b-val') && (document.getElementById('typo-bg-b-val').textContent = t.bgB);
+      this.updateTypoPreview();
+    }
+
+    // Refresh mission UI
+    this.updateMissionNav();
+    this.updateMission();
+    alert('Fortschritt erfolgreich geladen! ✓');
   }
 
   // ==========================
@@ -1053,6 +1209,10 @@ li { margin: 6px 0; color: #e2e8f0; }
       container.querySelectorAll('.color-mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       this.renderColorMode(btn.dataset.mode);
+      // immediately show a default preview for the new mode
+      const defaults = { names: ['red', 'rot'], hex: ['#ef4444', '#ef4444'], rgb: ['rgb(255, 0, 0)', 'rgb(255, 0, 0)'] };
+      const d = defaults[btn.dataset.mode];
+      if (d) this.updateColorPreview(d[0], d[1]);
     });
   }
 
@@ -1076,37 +1236,69 @@ li { margin: 6px 0; color: #e2e8f0; }
         swatch.classList.add('selected');
         this.updateColorPreview(swatch.dataset.hex, swatch.dataset.name);
       });
+      // pre-select red
+      const redSwatch = content.querySelector('.color-name-swatch[data-name="red"]');
+      if (redSwatch) {
+        redSwatch.classList.add('selected');
+        this.updateColorPreview(redSwatch.dataset.hex, redSwatch.dataset.name);
+      }
     } else if (mode === 'hex') {
-      content.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">Gib einen Hex-Farbcode ein (z.B. #ff6600):</p>';
+      content.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">Waehle eine Farbe aus der Palette oder tippe selbst einen Hex-Code ein:</p>';
       controls.innerHTML = `
         <div class="color-control-group">
-          <label for="hex-input">Hex-Code:</label>
-          <input type="text" id="hex-input" value="#8b5cf6" maxlength="7" placeholder="#rrggbb">
+          <label>Farb-Palette:</label>
+          <div class="color-names-grid hex-palette-grid" id="hex-swatch-grid">
+            ${this.hexPalette.map(c => `<div class="color-name-swatch hex-only-swatch" style="background:${c.hex}" data-hex="${c.hex}" data-name="${c.name}" title="${c.name} (${c.hex})"></div>`).join('')}
+          </div>
         </div>
         <div class="color-control-group">
-          <label for="color-wheel">Oder waehle:</label>
-          <input type="color" id="color-wheel" value="#8b5cf6">
+          <label for="hex-digits">Aktueller Hex-Code:</label>
+          <div class="hex-input-wrapper">
+            <span class="hex-prefix">#</span>
+            <input type="text" id="hex-digits" value="8b5cf6" maxlength="6" class="hex-text-input hex-digits-input" spellcheck="false">
+          </div>
         </div>
       `;
-      const hexInput = document.getElementById('hex-input');
-      const colorWheel = document.getElementById('color-wheel');
-      hexInput.addEventListener('input', () => {
-        const v = hexInput.value;
-        if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-          colorWheel.value = v;
-          this.updateColorPreview(v, v);
+      const hexDigits = document.getElementById('hex-digits');
+      const hexSwatchGrid = document.getElementById('hex-swatch-grid');
+      const getHexColor = () => '#' + (hexDigits ? hexDigits.value.replace(/[^0-9a-fA-F]/g, '').padEnd(6, '0').slice(0, 6) : '8b5cf6');
+      if (hexSwatchGrid && hexDigits) {
+        hexSwatchGrid.addEventListener('click', (e) => {
+          const swatch = e.target.closest('.color-name-swatch');
+          if (!swatch) return;
+          hexSwatchGrid.querySelectorAll('.color-name-swatch').forEach(s => s.classList.remove('selected'));
+          swatch.classList.add('selected');
+          hexDigits.value = swatch.dataset.hex.slice(1);
+          this.updateColorPreview(swatch.dataset.hex, swatch.dataset.hex);
+        });
+        // pre-select rot (#ef4444)
+        const redHexSwatch = hexSwatchGrid.querySelector('.color-name-swatch[data-name="rot"]');
+        const initSwatch = redHexSwatch || hexSwatchGrid.querySelector('.color-name-swatch');
+        if (initSwatch) {
+          initSwatch.classList.add('selected');
+          hexDigits.value = initSwatch.dataset.hex.slice(1);
+          this.updateColorPreview(initSwatch.dataset.hex, initSwatch.dataset.hex);
         }
-      });
-      colorWheel.addEventListener('input', () => {
-        hexInput.value = colorWheel.value;
-        this.updateColorPreview(colorWheel.value, colorWheel.value);
-      });
+      }
+      if (hexDigits) {
+        hexDigits.addEventListener('input', () => {
+          // strip non-hex chars as user types
+          const clean = hexDigits.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+          if (clean !== hexDigits.value) hexDigits.value = clean;
+          if (clean.length === 6) {
+            const hex = '#' + clean;
+            if (hexSwatchGrid) hexSwatchGrid.querySelectorAll('.color-name-swatch').forEach(s => s.classList.remove('selected'));
+            this.updateColorPreview(hex, hex);
+          }
+        });
+        hexDigits.addEventListener('click', () => hexDigits.select());
+      }
     } else if (mode === 'rgb') {
       content.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">Stelle RGB-Werte mit den Reglern ein:</p>';
       controls.innerHTML = `
-        <div class="color-control-group"><label>Rot: <span id="r-val">139</span></label><input type="range" id="r-range" min="0" max="255" value="139"></div>
-        <div class="color-control-group"><label>Gruen: <span id="g-val">92</span></label><input type="range" id="g-range" min="0" max="255" value="92"></div>
-        <div class="color-control-group"><label>Blau: <span id="b-val">246</span></label><input type="range" id="b-range" min="0" max="255" value="246"></div>
+        <div class="color-control-group"><label>Rot: <span id="r-val">255</span></label><input type="range" id="r-range" min="0" max="255" value="255"></div>
+        <div class="color-control-group"><label>Gruen: <span id="g-val">0</span></label><input type="range" id="g-range" min="0" max="255" value="0"></div>
+        <div class="color-control-group"><label>Blau: <span id="b-val">0</span></label><input type="range" id="b-range" min="0" max="255" value="0"></div>
       `;
       const update = () => {
         const r = document.getElementById('r-range').value;
@@ -1119,6 +1311,7 @@ li { margin: 6px 0; color: #e2e8f0; }
         this.updateColorPreview(rgb, rgb);
       };
       controls.querySelectorAll('input[type="range"]').forEach(inp => inp.addEventListener('input', update));
+      update(); // show initial red preview
     }
   }
 
@@ -1153,6 +1346,9 @@ li { margin: 6px 0; color: #e2e8f0; }
   renderTypoWorkshop() {
     const container = document.getElementById('typo-workshop');
     if (!container) return;
+    const colorNames = ['black','white','red','blue','green','yellow','orange','purple','pink','gray','cyan','magenta','darkblue','darkgreen','darkred','lightblue','lightgreen','lightyellow','navy','teal'];
+    const colorNameOptions = colorNames.map(n => `<option value="${n}">${n}</option>`).join('');
+    const hexOptions = this.hexPalette.map(c => `<option value="${c.hex}">${c.hex} (${c.name})</option>`).join('');
     container.innerHTML = `
       <div class="typo-controls">
         <div class="typo-control-group">
@@ -1185,14 +1381,97 @@ li { margin: 6px 0; color: #e2e8f0; }
             <option value="right">right</option>
           </select>
         </div>
+        <div class="typo-control-group typo-color-group">
+          <label>color (Schriftfarbe):</label>
+          <select id="typo-color-format" class="typo-format-select">
+            <option value="name">Farbname</option>
+            <option value="hex">Hex-Code</option>
+            <option value="rgb">RGB</option>
+          </select>
+          <div id="typo-color-area-name" class="typo-color-input-area">
+            <select id="typo-color-name">${colorNameOptions}</select>
+          </div>
+          <div id="typo-color-area-hex" class="typo-color-input-area" style="display:none">
+            <select id="typo-color-hex">${hexOptions}</select>
+          </div>
+          <div id="typo-color-area-rgb" class="typo-color-input-area typo-rgb-inputs" style="display:none">
+            <div class="typo-rgb-row"><span>R: <span class="range-value" id="typo-color-r-val">0</span></span><input type="range" id="typo-color-r" min="0" max="255" value="0"></div>
+            <div class="typo-rgb-row"><span>G: <span class="range-value" id="typo-color-g-val">0</span></span><input type="range" id="typo-color-g" min="0" max="255" value="0"></div>
+            <div class="typo-rgb-row"><span>B: <span class="range-value" id="typo-color-b-val">0</span></span><input type="range" id="typo-color-b" min="0" max="255" value="0"></div>
+          </div>
+        </div>
+        <div class="typo-control-group typo-color-group">
+          <label>background-color (Hintergrund):</label>
+          <select id="typo-bg-format" class="typo-format-select">
+            <option value="name">Farbname</option>
+            <option value="hex">Hex-Code</option>
+            <option value="rgb">RGB</option>
+          </select>
+          <div id="typo-bg-area-name" class="typo-color-input-area">
+            <select id="typo-bg-name"><option value="white" selected>white</option>${colorNameOptions}</select>
+          </div>
+          <div id="typo-bg-area-hex" class="typo-color-input-area" style="display:none">
+            <select id="typo-bg-hex">${hexOptions}</select>
+          </div>
+          <div id="typo-bg-area-rgb" class="typo-color-input-area typo-rgb-inputs" style="display:none">
+            <div class="typo-rgb-row"><span>R: <span class="range-value" id="typo-bg-r-val">255</span></span><input type="range" id="typo-bg-r" min="0" max="255" value="255"></div>
+            <div class="typo-rgb-row"><span>G: <span class="range-value" id="typo-bg-g-val">255</span></span><input type="range" id="typo-bg-g" min="0" max="255" value="255"></div>
+            <div class="typo-rgb-row"><span>B: <span class="range-value" id="typo-bg-b-val">255</span></span><input type="range" id="typo-bg-b" min="0" max="255" value="255"></div>
+          </div>
+        </div>
       </div>
       <div class="typo-preview" id="typo-preview">
         <p>Das ist ein Beispieltext. Aendere die Einstellungen oben und sieh, wie sich die Schrift veraendert!</p>
       </div>
       <div class="typo-css-output" id="typo-css-output"></div>
     `;
+    this._bindTypoColorFormat('color');
+    this._bindTypoColorFormat('bg');
+    const colorHex = document.getElementById('typo-color-hex');
+    const bgHex = document.getElementById('typo-bg-hex');
+    if (colorHex) colorHex.value = '#111827';
+    if (bgHex) bgHex.value = '#ffffff';
+    const colorHexVal = document.getElementById('typo-color-hex-val');
+    const bgHexVal = document.getElementById('typo-bg-hex-val');
+    // hex-val spans removed – select already shows the chosen value
     this.updateTypoPreview();
     container.querySelectorAll('select, input').forEach(el => el.addEventListener('input', () => this.updateTypoPreview()));
+  }
+
+  _bindTypoColorFormat(type) {
+    const fmt = document.getElementById(`typo-${type}-format`);
+    if (!fmt) return;
+    fmt.addEventListener('change', () => {
+      const val = fmt.value;
+      ['name','hex','rgb'].forEach(f => {
+        const area = document.getElementById(`typo-${type}-area-${f}`);
+        if (area) area.style.display = f === val ? '' : 'none';
+      });
+      this.updateTypoPreview();
+    });
+    // sync hex text display
+    const hexInput = document.getElementById(`typo-${type}-hex`);
+    const hexVal = document.getElementById(`typo-${type}-hex-val`);
+    // hex select: no separate label span needed – value visible in dropdown
+    // sync rgb labels
+    ['r','g','b'].forEach(ch => {
+      const slider = document.getElementById(`typo-${type}-${ch}`);
+      const label = document.getElementById(`typo-${type}-${ch}-val`);
+      if (slider && label) slider.addEventListener('input', () => { label.textContent = slider.value; });
+    });
+  }
+
+  _getTypoColorValue(type) {
+    const format = document.getElementById(`typo-${type}-format`)?.value || 'name';
+    if (format === 'name') return document.getElementById(`typo-${type}-name`)?.value || (type === 'bg' ? 'white' : 'black');
+    if (format === 'hex') return document.getElementById(`typo-${type}-hex`)?.value || (type === 'bg' ? '#ffffff' : '#000000');
+    if (format === 'rgb') {
+      const r = document.getElementById(`typo-${type}-r`)?.value || '0';
+      const g = document.getElementById(`typo-${type}-g`)?.value || '0';
+      const b = document.getElementById(`typo-${type}-b`)?.value || (type === 'bg' ? '255' : '0');
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+    return type === 'bg' ? 'white' : 'black';
   }
 
   updateTypoPreview() {
@@ -1200,6 +1479,8 @@ li { margin: 6px 0; color: #e2e8f0; }
     const size = document.getElementById('typo-size')?.value || '18';
     const weight = document.getElementById('typo-weight')?.value || 'normal';
     const align = document.getElementById('typo-align')?.value || 'left';
+    const color = this._getTypoColorValue('color');
+    const bg = this._getTypoColorValue('bg');
     const preview = document.getElementById('typo-preview');
     const output = document.getElementById('typo-css-output');
     const sizeLabel = document.getElementById('typo-size-val');
@@ -1210,9 +1491,11 @@ li { margin: 6px 0; color: #e2e8f0; }
       preview.style.fontSize = size + 'px';
       preview.style.fontWeight = weight;
       preview.style.textAlign = align;
+      preview.style.color = color;
+      preview.style.backgroundColor = bg;
     }
     if (output) {
-      output.textContent = `p {\n  font-family: ${font};\n  font-size: ${size}px;\n  font-weight: ${weight};\n  text-align: ${align};\n}`;
+      output.textContent = `p {\n  font-family: ${font};\n  font-size: ${size}px;\n  font-weight: ${weight};\n  text-align: ${align};\n  color: ${color};\n  background-color: ${bg};\n}`;
     }
   }
 
