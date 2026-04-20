@@ -1,3 +1,43 @@
+# VoiceAssistant - requirements + setup tutorial
+#
+# This file can be installed with:
+#   pip3 install -r requirements.txt
+#
+# -------------------------------
+# 1) SYSTEM PAKETE INSTALLIEREN
+# -------------------------------
+# Ubuntu / Debian:
+#   sudo apt update
+#   sudo apt install -y python3 python3-pip python3-dev portaudio19-dev mpg123
+#
+# Fedora:
+#   sudo dnf install -y python3 python3-pip python3-devel portaudio-devel mpg123
+#
+# Arch Linux:
+#   sudo pacman -S --needed python python-pip portaudio mpg123
+#
+# Warum diese Pakete?
+# - portaudio* + python3-dev: noetig, damit PyAudio gebaut/installiert werden kann
+# - mpg123: spielt die erzeugte MP3-Sprachausgabe ab (wird in main.py verwendet)
+#
+# ---------------------------------
+# 2) PYTHON-PAKETE MIT PIP INSTALL
+# ---------------------------------
+# Im Projektordner ausfuehren:
+#   cd /home/tom/Programme/VsCode/Schule/Klasse11/LB6_AuS/VoiceAssistant
+#   pip3 install -r requirements.txt
+#
+# Optional (wenn "externally-managed-environment" Fehler kommt):
+#   pip3 install --break-system-packages -r requirements.txt
+#
+# -----------------
+# 3) PROGRAMM START
+# -----------------
+#   ./start.sh
+#
+# Oder direkt:
+#   python3 main.py
+
 SpeechRecognition==3.14.3
 gTTS==2.5.4
 PyAudio==0.2.14
