@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theoretische Grundlagen der Informatik – Klasse 11</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Theoretische Grundlagen der Informatik</h1>
+            <p>Zahlensysteme, Kodierung, Boolesche Algebra &amp; Schaltnetze – interaktiv lernen und simulieren.</p>
+            <nav class="header-nav">
+                <a href="#sec-zahlensysteme" class="nav-pill">Zahlensysteme</a>
+                <a href="#sec-zahlenformate" class="nav-pill">Zahlenformate</a>
+                <a href="#sec-operationen" class="nav-pill">Operationen</a>
+                <a href="#sec-kodierung" class="nav-pill">Zeichenkodierung</a>
+                <a href="#sec-bool" class="nav-pill">Boolesche Algebra</a>
+                <a href="#sec-schaltnetze" class="nav-pill">Schaltnetze</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+
+            <!-- ====== 1. Zahlensysteme ====== -->
+            <section class="lerninsel collapsed" id="sec-zahlensysteme">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number num-color">1</span>
+                    <h2>Binär- und Hexadezimalsystem</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>Dezimal-, Binär- und Hexadezimalsystem</h3>
+                        <p>In der Informatik werden neben dem Dezimalsystem (Basis 10) vor allem das <strong>Binärsystem</strong> (Basis 2) und das <strong>Hexadezimalsystem</strong> (Basis 16) verwendet.</p>
+                        <table class="info-table">
+                            <thead><tr><th>System</th><th>Basis</th><th>Ziffern</th><th>Beispiel</th></tr></thead>
+                            <tbody>
+                                <tr><td>Dezimal</td><td>10</td><td>0–9</td><td>255</td></tr>
+                                <tr><td>Binär</td><td>2</td><td>0, 1</td><td>1111 1111</td></tr>
+                                <tr><td>Hexadezimal</td><td>16</td><td>0–9, A–F</td><td>FF</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="detail-box">
+                            <h4>Stellenwertsystem</h4>
+                            <p>Jede Stelle einer Zahl hat einen Wert, der sich aus <code>Ziffer × Basis<sup>Position</sup></code> ergibt.</p>
+                            <p><strong>Beispiel Binär:</strong> 1101<sub>2</sub> = 1×2³ + 1×2² + 0×2¹ + 1×2⁰ = 8 + 4 + 0 + 1 = 13<sub>10</sub></p>
+                            <p><strong>Beispiel Hex:</strong> 2A<sub>16</sub> = 2×16¹ + 10×16⁰ = 32 + 10 = 42<sub>10</sub></p>
+                        </div>
+                        <div class="detail-box">
+                            <h4>Umrechnung Dezimal → Binär</h4>
+                            <p>Teile die Dezimalzahl wiederholt durch 2 und notiere die Reste von unten nach oben.</p>
+                            <p><strong>Beispiel:</strong> 13 ÷ 2 = 6 R1, 6 ÷ 2 = 3 R0, 3 ÷ 2 = 1 R1, 1 ÷ 2 = 0 R1 → <code>1101</code></p>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: Zahlensystem-Umrechner</h3>
+                        <div class="converter-grid">
+                            <div class="converter-input-group">
+                                <label for="conv-dec">Dezimal</label>
+                                <input type="text" id="conv-dec" placeholder="z.B. 255" data-base="10">
+                            </div>
+                            <div class="converter-input-group">
+                                <label for="conv-bin">Binär</label>
+                                <input type="text" id="conv-bin" placeholder="z.B. 11111111" data-base="2">
+                            </div>
+                            <div class="converter-input-group">
+                                <label for="conv-hex">Hexadezimal</label>
+                                <input type="text" id="conv-hex" placeholder="z.B. FF" data-base="16">
+                            </div>
+                        </div>
+                        <p class="sim-hint">Gib einen Wert in ein beliebiges Feld ein – die anderen werden automatisch berechnet.</p>
+
+                        <h4 class="mt-24">Interaktives Bit-Feld (8 Bit)</h4>
+                        <div class="bit-field" id="bit-field">
+                            <div class="bit-labels">
+                                <span>128</span><span>64</span><span>32</span><span>16</span><span>8</span><span>4</span><span>2</span><span>1</span>
+                            </div>
+                            <div class="bit-buttons" id="bit-buttons"></div>
+                            <div class="bit-result">= <span id="bit-result-dec">0</span><sub>10</sub> = <span id="bit-result-hex">0</span><sub>16</sub></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 2. Zahlenformate ====== -->
+            <section class="lerninsel collapsed" id="sec-zahlenformate">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number fmt-color">2</span>
+                    <h2>Rechnerinterne Zahlenformate</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>Zweierkomplement</h3>
+                        <p>Das <strong>Zweierkomplement</strong> ist die Standarddarstellung für vorzeichenbehaftete Ganzzahlen. Das höchstwertige Bit (MSB) ist das Vorzeichenbit.</p>
+                        <div class="detail-box">
+                            <h4>Berechnung (n Bits)</h4>
+                            <ol>
+                                <li>Positive Zahl binär darstellen</li>
+                                <li>Alle Bits invertieren (Einerkomplement)</li>
+                                <li>1 addieren → Zweierkomplement</li>
+                            </ol>
+                            <p><strong>Beispiel (8 Bit):</strong> -5</p>
+                            <p>5 = <code>0000 0101</code> → invertiert: <code>1111 1010</code> → +1: <code>1111 1011</code></p>
+                            <p>Wertebereich (8 Bit): -128 bis +127</p>
+                        </div>
+
+                        <h3 class="mt-24">Festkommazahlen</h3>
+                        <p>Bei <strong>Festkommazahlen</strong> ist die Position des Kommas fest definiert. Ein Teil der Bits stellt den Ganzzahl-, der andere den Nachkommaanteil dar.</p>
+                        <div class="detail-box">
+                            <p><strong>Beispiel (4.4 Format):</strong> 0101.1100<sub>2</sub> = 5.75<sub>10</sub></p>
+                            <p>Nachkommastellen: 1×2⁻¹ + 1×2⁻² = 0.5 + 0.25 = 0.75</p>
+                        </div>
+
+                        <h3 class="mt-24">Gleitkommazahlen (IEEE 754)</h3>
+                        <p>Das <strong>IEEE-754-Format</strong> speichert Zahlen in der Form: (-1)<sup>Vorzeichen</sup> × 1.Mantisse × 2<sup>Exponent - Bias</sup></p>
+                        <div class="detail-box">
+                            <h4>Aufbau (32 Bit – Single Precision)</h4>
+                            <table class="info-table compact">
+                                <thead><tr><th>Vorzeichen</th><th>Exponent</th><th>Mantisse</th></tr></thead>
+                                <tbody><tr><td>1 Bit</td><td>8 Bit (Bias 127)</td><td>23 Bit</td></tr></tbody>
+                            </table>
+                            <p class="mt-8"><strong>Beispiel:</strong> -6.5<sub>10</sub></p>
+                            <p>6.5 = 110.1<sub>2</sub> = 1.101 × 2² → Vorzeichen: 1, Exponent: 127+2=129=10000001, Mantisse: 10100…0</p>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: Zweierkomplement</h3>
+                        <div class="sim-row">
+                            <label for="twos-input">Dezimalzahl (-128 bis 127):</label>
+                            <input type="number" id="twos-input" min="-128" max="127" value="0">
+                            <button class="btn-sim" id="twos-calc">Berechnen</button>
+                        </div>
+                        <div id="twos-result" class="sim-result"></div>
+
+                        <h3 class="mt-24">Simulation: IEEE 754 (32 Bit)</h3>
+                        <div class="sim-row">
+                            <label for="ieee-input">Dezimalzahl:</label>
+                            <input type="number" id="ieee-input" step="any" value="0">
+                            <button class="btn-sim" id="ieee-calc">Berechnen</button>
+                        </div>
+                        <div id="ieee-result" class="sim-result"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 3. Operationen ====== -->
+            <section class="lerninsel collapsed" id="sec-operationen">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number op-color">3</span>
+                    <h2>Addition und Subtraktion</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>Binäre Addition</h3>
+                        <p>Die Addition im Binärsystem funktioniert wie im Dezimalsystem – mit Überträgen (Carry).</p>
+                        <div class="detail-box">
+                            <h4>Additionsregeln</h4>
+                            <table class="info-table compact">
+                                <thead><tr><th>A</th><th>B</th><th>Carry in</th><th>Summe</th><th>Carry out</th></tr></thead>
+                                <tbody>
+                                    <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                                    <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+                                    <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+                                    <tr><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+                                    <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="mt-24">Binäre Subtraktion</h3>
+                        <p>Die Subtraktion A − B wird als <strong>Addition mit dem Zweierkomplement</strong> realisiert: A + (−B).</p>
+                        <div class="detail-box">
+                            <p><strong>Beispiel (8 Bit):</strong> 7 − 3 = 7 + (−3)</p>
+                            <p>7 = <code>0000 0111</code>, −3 = <code>1111 1101</code></p>
+                            <p>Summe: <code>0000 0100</code> = 4 ✓ (Übertrag wird ignoriert)</p>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: Binäre Addition / Subtraktion</h3>
+                        <div class="sim-row">
+                            <input type="number" id="op-a" placeholder="Zahl A" value="7" class="op-input">
+                            <select id="op-type" class="op-select">
+                                <option value="add">+</option>
+                                <option value="sub">−</option>
+                            </select>
+                            <input type="number" id="op-b" placeholder="Zahl B" value="3" class="op-input">
+                            <button class="btn-sim" id="op-calc">Berechnen</button>
+                        </div>
+                        <div id="op-result" class="sim-result"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 4. Zeichenkodierung ====== -->
+            <section class="lerninsel collapsed" id="sec-kodierung">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number enc-color">4</span>
+                    <h2>Zeichenkodierung</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>ASCII-Code</h3>
+                        <p><strong>ASCII</strong> (American Standard Code for Information Interchange) kodiert 128 Zeichen mit 7 Bit.</p>
+                        <div class="detail-box">
+                            <h4>Wichtige Bereiche</h4>
+                            <table class="info-table compact">
+                                <thead><tr><th>Bereich</th><th>Dezimal</th><th>Beschreibung</th></tr></thead>
+                                <tbody>
+                                    <tr><td>0–31</td><td>Steuerzeichen</td><td>z.B. Zeilenumbruch (10), Tab (9)</td></tr>
+                                    <tr><td>48–57</td><td>Ziffern</td><td>'0' bis '9'</td></tr>
+                                    <tr><td>65–90</td><td>Großbuchstaben</td><td>'A' bis 'Z'</td></tr>
+                                    <tr><td>97–122</td><td>Kleinbuchstaben</td><td>'a' bis 'z'</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="mt-24">Unicode</h3>
+                        <p><strong>Unicode</strong> ist der weltweite Standard, der über 140.000 Zeichen aus allen Schriftsystemen umfasst. <strong>UTF-8</strong> ist die verbreitetste Kodierung.</p>
+                        <div class="detail-box">
+                            <h4>UTF-8 Kodierung</h4>
+                            <table class="info-table compact">
+                                <thead><tr><th>Bytes</th><th>Bereich (Hex)</th><th>Beispiel</th></tr></thead>
+                                <tbody>
+                                    <tr><td>1</td><td>U+0000–U+007F</td><td>A, 5, ! (= ASCII)</td></tr>
+                                    <tr><td>2</td><td>U+0080–U+07FF</td><td>ä, ö, ü, é</td></tr>
+                                    <tr><td>3</td><td>U+0800–U+FFFF</td><td>中, €, ★</td></tr>
+                                    <tr><td>4</td><td>U+10000–U+10FFFF</td><td>🎉, 𝕳</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: ASCII / Unicode Explorer</h3>
+                        <div class="sim-row">
+                            <label for="char-input">Zeichen oder Text eingeben:</label>
+                            <input type="text" id="char-input" placeholder="z.B. Hallo" maxlength="20" class="wide-input">
+                        </div>
+                        <div id="char-result" class="sim-result"></div>
+
+                        <h4 class="mt-24">ASCII-Tabelle (druckbare Zeichen)</h4>
+                        <div id="ascii-table" class="ascii-table-grid"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 5. Boolesche Algebra ====== -->
+            <section class="lerninsel collapsed" id="sec-bool">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number bool-color">5</span>
+                    <h2>Boolesche Algebra</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>Grundverknüpfungen</h3>
+                        <div class="gates-overview">
+                            <div class="gate-card">
+                                <h4>NOT (Negation)</h4>
+                                <p>Invertiert den Eingabewert.</p>
+                                <table class="truth-table"><thead><tr><th>A</th><th>¬A</th></tr></thead>
+                                <tbody><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td></tr></tbody></table>
+                            </div>
+                            <div class="gate-card">
+                                <h4>AND (Konjunktion)</h4>
+                                <p>Ergebnis ist 1, wenn <em>beide</em> Eingaben 1 sind.</p>
+                                <table class="truth-table"><thead><tr><th>A</th><th>B</th><th>A ∧ B</th></tr></thead>
+                                <tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+                            </div>
+                            <div class="gate-card">
+                                <h4>OR (Disjunktion)</h4>
+                                <p>Ergebnis ist 1, wenn <em>mindestens eine</em> Eingabe 1 ist.</p>
+                                <table class="truth-table"><thead><tr><th>A</th><th>B</th><th>A ∨ B</th></tr></thead>
+                                <tbody><tr><td>0</td><td>0</td><td>0</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td>1</td></tr></tbody></table>
+                            </div>
+                        </div>
+
+                        <div class="detail-box mt-24">
+                            <h4>Weitere Verknüpfungen</h4>
+                            <table class="info-table compact">
+                                <thead><tr><th>Name</th><th>Symbol</th><th>Beschreibung</th></tr></thead>
+                                <tbody>
+                                    <tr><td>NAND</td><td>¬(A ∧ B)</td><td>Negiertes AND</td></tr>
+                                    <tr><td>NOR</td><td>¬(A ∨ B)</td><td>Negiertes OR</td></tr>
+                                    <tr><td>XOR</td><td>A ⊕ B</td><td>Exklusiv-ODER (genau eine 1)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="detail-box mt-24">
+                            <h4>Wichtige Gesetze</h4>
+                            <ul class="law-list">
+                                <li><strong>Kommutativgesetz:</strong> A ∧ B = B ∧ A &nbsp;|&nbsp; A ∨ B = B ∨ A</li>
+                                <li><strong>Assoziativgesetz:</strong> (A ∧ B) ∧ C = A ∧ (B ∧ C)</li>
+                                <li><strong>Distributivgesetz:</strong> A ∧ (B ∨ C) = (A ∧ B) ∨ (A ∧ C)</li>
+                                <li><strong>De Morgan:</strong> ¬(A ∧ B) = ¬A ∨ ¬B &nbsp;|&nbsp; ¬(A ∨ B) = ¬A ∧ ¬B</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: Boolescher Ausdruck-Evaluator</h3>
+                        <div class="sim-row">
+                            <label for="bool-expr">Ausdruck eingeben:</label>
+                            <input type="text" id="bool-expr" placeholder="z.B. (A AND B) OR NOT C" class="wide-input">
+                            <button class="btn-sim" id="bool-calc">Wahrheitstabelle</button>
+                        </div>
+                        <p class="sim-hint">Verwende: AND, OR, NOT, XOR, NAND, NOR sowie Klammern. Variablen: A–Z</p>
+                        <div id="bool-result" class="sim-result"></div>
+
+                        <h3 class="mt-24">Interaktive Gatter</h3>
+                        <div class="interactive-gates">
+                            <div class="gate-sim" data-gate="NOT">
+                                <h4>NOT</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">1</span></div>
+                            </div>
+                            <div class="gate-sim" data-gate="AND">
+                                <h4>AND</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                    <button class="gate-input-btn" data-state="0">B: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">0</span></div>
+                            </div>
+                            <div class="gate-sim" data-gate="OR">
+                                <h4>OR</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                    <button class="gate-input-btn" data-state="0">B: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">0</span></div>
+                            </div>
+                            <div class="gate-sim" data-gate="XOR">
+                                <h4>XOR</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                    <button class="gate-input-btn" data-state="0">B: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">0</span></div>
+                            </div>
+                            <div class="gate-sim" data-gate="NAND">
+                                <h4>NAND</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                    <button class="gate-input-btn" data-state="0">B: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">1</span></div>
+                            </div>
+                            <div class="gate-sim" data-gate="NOR">
+                                <h4>NOR</h4>
+                                <div class="gate-inputs">
+                                    <button class="gate-input-btn" data-state="0">A: 0</button>
+                                    <button class="gate-input-btn" data-state="0">B: 0</button>
+                                </div>
+                                <div class="gate-output">Ergebnis: <span class="gate-out">1</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== 6. Schaltnetze ====== -->
+            <section class="lerninsel collapsed" id="sec-schaltnetze">
+                <div class="lerninsel-header">
+                    <span class="lerninsel-number circ-color">6</span>
+                    <h2>Schaltnetze</h2>
+                    <span class="lerninsel-toggle">&#9660;</span>
+                </div>
+                <div class="lerninsel-body">
+                    <div class="info-block">
+                        <h3>Schaltnetz-Analyse</h3>
+                        <p>Bei der <strong>Analyse</strong> wird aus einem gegebenen Schaltnetz die zugehörige Wahrheitstabelle und der Boolesche Ausdruck ermittelt.</p>
+                        <div class="detail-box">
+                            <h4>Vorgehensweise</h4>
+                            <ol>
+                                <li>Eingangsvariablen identifizieren</li>
+                                <li>Gatter und deren Verbindungen nachverfolgen</li>
+                                <li>Für jede Eingangskombination den Ausgang bestimmen</li>
+                                <li>Wahrheitstabelle und Booleschen Ausdruck aufstellen</li>
+                            </ol>
+                        </div>
+
+                        <h3 class="mt-24">Schaltnetz-Synthese</h3>
+                        <p>Bei der <strong>Synthese</strong> wird aus einer gegebenen Wahrheitstabelle ein Schaltnetz entworfen.</p>
+                        <div class="detail-box">
+                            <h4>Vorgehensweise (Disjunktive Normalform – DNF)</h4>
+                            <ol>
+                                <li>Wahrheitstabelle aufstellen</li>
+                                <li>Alle Zeilen mit Ausgang = 1 markieren</li>
+                                <li>Für jede markierte Zeile einen Minterm bilden (AND-Verknüpfung aller Variablen)</li>
+                                <li>Alle Minterme mit OR verknüpfen → DNF</li>
+                                <li>Optional: Vereinfachen (z.B. mit KV-Diagramm)</li>
+                            </ol>
+                        </div>
+
+                        <div class="detail-box mt-24">
+                            <h4>Beispiel: Schaltnetz-Synthese</h4>
+                            <p>Gewünscht: Ausgang Y = 1, wenn mindestens 2 von 3 Eingängen = 1 (Majoritätsfunktion)</p>
+                            <table class="info-table compact">
+                                <thead><tr><th>A</th><th>B</th><th>C</th><th>Y</th></tr></thead>
+                                <tbody>
+                                    <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+                                    <tr><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+                                    <tr><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+                                    <tr><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+                                    <tr><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+                                    <tr><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+                                    <tr><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+                                    <tr><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+                                </tbody>
+                            </table>
+                            <p class="mt-8"><strong>DNF:</strong> Y = (¬A ∧ B ∧ C) ∨ (A ∧ ¬B ∧ C) ∨ (A ∧ B ∧ ¬C) ∨ (A ∧ B ∧ C)</p>
+                            <p><strong>Vereinfacht:</strong> Y = (A ∧ B) ∨ (A ∧ C) ∨ (B ∧ C)</p>
+                        </div>
+                    </div>
+
+                    <div class="sim-block">
+                        <h3>Simulation: Schaltnetz erstellen</h3>
+                        <p>Definiere eine Wahrheitstabelle und lasse den Booleschen Ausdruck berechnen (DNF-Synthese).</p>
+                        <div class="sim-row">
+                            <label for="synth-vars">Anzahl Variablen:</label>
+                            <select id="synth-vars" class="op-select">
+                                <option value="2">2 (A, B)</option>
+                                <option value="3" selected>3 (A, B, C)</option>
+                                <option value="4">4 (A, B, C, D)</option>
+                            </select>
+                            <button class="btn-sim" id="synth-generate">Tabelle erzeugen</button>
+                        </div>
+                        <div id="synth-table" class="sim-result"></div>
+                        <button class="btn-sim mt-8" id="synth-solve" style="display:none;">DNF berechnen</button>
+                        <div id="synth-result" class="sim-result"></div>
+
+                        <h3 class="mt-24">Externe Simulationssoftware</h3>
+                        <div class="tool-links">
+                            <a href="https://logic.ly/demo/" target="_blank" rel="noopener" class="tool-link-card">
+                                <h4>Logic.ly</h4>
+                                <p>Visuelle Schaltkreis-Simulation im Browser</p>
+                            </a>
+                            <a href="https://simulator.io/" target="_blank" rel="noopener" class="tool-link-card">
+                                <h4>Simulator.io</h4>
+                                <p>Online-Simulator für digitale Logikschaltungen</p>
+                            </a>
+                            <a href="https://www.falstad.com/circuit/" target="_blank" rel="noopener" class="tool-link-card">
+                                <h4>Falstad Circuit Simulator</h4>
+                                <p>Umfangreicher Schaltkreissimulator</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer>
+            <p>Theoretische Grundlagen der Informatik – Klasse 11</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
