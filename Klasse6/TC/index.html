@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TC Klasse 6 - Lernhilfe</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">TC Klasse 6</p>
+        <h1>Lernhilfe Informatik</h1>
+        <p class="intro">
+          Wichtige Themen als interaktive Lernstationen: Binärzahlen, Algorithmen,
+          Von-Neumann-Rechner sowie Software und Hardware.
+        </p>
+      </div>
+      <div class="mascot-wrap" aria-hidden="true">
+        <img class="mascot" src="binary-ascii-visualizer/Byte_mascot/Byte_normal.png" alt="" />
+        <span class="speech">Hi! Ich bin Byte. Ich freue mich mit dir zu lernen</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section>
+      <h2>Themen</h2>
+      <p class="section-text">Drücke auf Jetzt Lernen, um zum passenden Lernbereich zu wechseln.</p>
+
+      <div class="grid">
+        <article class="card active" data-link="binary-ascii-visualizer/index.html" tabindex="0" role="link">
+          <h3>Binärzahlen</h3>
+          <p>
+            Interaktive Darstellung von Binärzahlen und ASCII-Zeichen.
+          </p>
+          <a class="btn" href="binary-ascii-visualizer/index.html">Jetzt lernen</a>
+        </article>
+
+        <article class="card locked" data-link="pages/algorithmen.html" tabindex="0" role="link">
+          <h3>Algorithmen</h3>
+          <p class="blurred">
+            Hier folgen interaktive Aufgaben zu Anweisungen, Wiederholungen,
+            Bedingungen und Flussdiagrammen. Inhalte werden aktuell vorbereitet.
+          </p>
+          <a class="btn ghost" href="pages/algorithmen.html">Coming soon</a>
+        </article>
+
+        <article class="card locked" data-link="pages/von-neumann.html" tabindex="0" role="link">
+          <h3>Von-Neumann + Software + Hardware</h3>
+          <p class="blurred">
+            Bald findest du hier Erklärungen zur Rechnerarchitektur,
+            zu Eingabe-Ausgabe-Speicher sowie Unterschiede zwischen Hardware und Software.
+          </p>
+          <a class="btn ghost" href="pages/von-neumann.html">Coming soon</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Erstellt für den TC-Unterricht der Klasse 6.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
