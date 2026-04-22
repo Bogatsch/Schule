@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binär-ASCII-Visualizer</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-page-key="binaerzahlen">
+    <div class="tc-progress-toolbar" aria-label="Fortschritt Aktionen">
+        <button class="tc-progress-btn" id="saveProgressBtn" type="button">Fortschritt speichern ↑</button>
+        <button class="tc-progress-btn" id="loadProgressBtn" type="button">Fortschritt laden ↓</button>
+        <a class="tc-progress-btn tc-home-btn" href="../index.html">Zur Startseite ←</a>
+        <input id="loadProgressFile" type="file" accept="application/json,.json" hidden>
+        <span class="tc-progress-message" id="progressMessage" aria-live="polite"></span>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Binär-ASCII-Dezimal</h1>
+            <div class="module-controls">
+            </div>
+        </header>
+        
+        <main>
+            <div class="bit-display">
+                <div class="section-header">
+                    <h2 class="section-title">⚙️ Eingabe</h2>
+                </div>
+                
+                <!-- Module Toggle für Values direkt über dem entsprechenden Bereich -->
+                <div class="values-controls">
+                    <label class="module-toggle">
+                        <input type="checkbox" id="decimal-values-toggle">
+                        <span>Dezimalwerte</span>
+                    </label>
+                    <label class="module-toggle">
+                        <input type="checkbox" id="power-values-toggle">
+                        <span>Zweierpotenzen</span>
+                    </label>
+                </div>
+                
+                <!-- LED-Anzeigen -->
+                <div class="leds">
+                    <div class="led" data-bit="7">0</div>
+                    <div class="led" data-bit="6">0</div>
+                    <div class="led" data-bit="5">0</div>
+                    <div class="led" data-bit="4">0</div>
+                    <div class="led" data-bit="3">0</div>
+                    <div class="led" data-bit="2">0</div>
+                    <div class="led" data-bit="1">0</div>
+                    <div class="led" data-bit="0">0</div>
+                </div>
+                
+                <!-- Bit-Position-Labels -->
+                <div class="bit-positions">
+                    <button class="hint-bulb" id="bits-hint" title="Was ist ein Bit?">💡</button>
+                    <div class="bit-position">Bit 7</div>
+                    <div class="bit-position">Bit 6</div>
+                    <div class="bit-position">Bit 5</div>
+                    <div class="bit-position">Bit 4</div>
+                    <div class="bit-position">Bit 3</div>
+                    <div class="bit-position">Bit 2</div>
+                    <div class="bit-position">Bit 1</div>
+                    <div class="bit-position">Bit 0</div>
+                </div>
+                
+                <!-- Toggle-Switches -->
+                <div class="switches">
+                    <button class="hint-bulb" id="switches-hint" title="Warum Schalter?">💡</button>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="7">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="6">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="5">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="4">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="3">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="2">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="1">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" data-bit="0">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Dezimalwerte unter Schaltern -->
+                <div class="decimal-values module hidden" id="decimal-values-module">
+                    <div class="value">128</div>
+                    <div class="value">64</div>
+                    <div class="value">32</div>
+                    <div class="value">16</div>
+                    <div class="value">8</div>
+                    <div class="value">4</div>
+                    <div class="value">2</div>
+                    <div class="value">1</div>
+                </div>
+                
+                <!-- Zweierpotenzen unter Schaltern -->
+                <div class="power-values module hidden" id="power-values-module">
+                    <div class="value">2⁷</div>
+                    <div class="value">2⁶</div>
+                    <div class="value">2⁵</div>
+                    <div class="value">2⁴</div>
+                    <div class="value">2³</div>
+                    <div class="value">2²</div>
+                    <div class="value">2¹</div>
+                    <div class="value">2⁰</div>
+                </div>
+                
+                <!-- Mission Box -->
+                <div class="mission-box">
+                    <h3>🎯 Mission</h3>
+                    <div class="mission-content" id="mission-content">
+                        Zeige den ASCII-Buchstaben 'y' an!
+                    </div>
+                    
+                    <!-- Mission Selector -->
+                    <div class="mission-selector">
+                        <div class="mission-buttons" id="mission-buttons">
+                            <!-- Wird dynamisch gefüllt -->
+                        </div>
+                        
+                        <!-- ASCII Table Button -->
+                        <div class="ascii-table-controls">
+                            <button class="ascii-table-btn" id="ascii-table-btn">📋 ASCII-Tabelle anzeigen</button>
+                            <button class="help-btn hidden" id="mission-help-btn">🆘 Hilfe</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="output-area">
+                <div class="section-header">
+                    <h2 class="section-title">📄 Ausgabe</h2>
+                </div>
+                
+                <!-- Module Controls für Output-Bereich -->
+                <div class="output-controls">
+                    <label class="module-toggle">
+                        <input type="checkbox" id="ascii-mode-toggle" checked>
+                        <span>ASCII-Modus</span>
+                    </label>
+                    <label class="module-toggle">
+                        <input type="checkbox" id="binary-output-toggle">
+                        <span>Binär</span>
+                    </label>
+                    <label class="module-toggle">
+                        <input type="checkbox" id="decimal-output-toggle">
+                        <span>Dezimal</span>
+                    </label>
+                    <label class="module-toggle">
+                        <input type="checkbox" id="grayscale-toggle">
+                        <span>Graustufe</span>
+                    </label>
+                </div>
+                
+                <div class="ascii-output">
+                    <div class="output-label">ASCII-Zeichen:</div>
+                    <div class="ascii-char" id="ascii-char">?</div>
+                </div>
+                
+                <div class="additional-outputs">
+                    <div class="binary-output module hidden" id="binary-output-module">
+                        <div class="output-label">Binär:</div>
+                        <div class="output-value" id="binary-value">00111111</div>
+                    </div>
+                    
+                    <div class="decimal-output module hidden" id="decimal-output-module">
+                        <div class="output-label">Dezimal:</div>
+                        <div class="output-value" id="decimal-value">63</div>
+                    </div>
+                    
+                    <div class="grayscale-output module hidden" id="grayscale-module">
+                        <div class="output-label">Graustufe:</div>
+                        <div class="grayscale-box" id="grayscale-box"></div>
+                        <div class="grayscale-info" id="grayscale-info">63/255</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+    <footer>
+        <div class="impressum">
+            <p>
+                Entwickelt für Lernende und Lehrende |
+                <a href="https://tinfo.space/teachers/Digitale_Tools/" target="_blank" rel="noopener">More apps and tools</a> |
+                <a href="http://contact.tinfo.space/" id="contact-link">Kontakt</a> |
+                <a href="https://linktr.ee/tinfo.space" target="_blank" rel="noopener">Links</a> |
+                <a href="https://github.com/HansTydecks/binary-ascii-visualizer" target="_blank" rel="noopener">GitHub</a> |
+                © 2025 Hans Tydecks
+            </p>
+        </div>
+    </footer>
+    </div>
+    
+    <!-- ASCII Table Modal -->
+    <div class="modal-overlay" id="ascii-table-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>ASCII-Tabelle</h3>
+                <button class="close-btn" id="close-ascii-table">&times;</button>
+            </div>
+            <div class="ascii-table-container">
+                <table class="ascii-table" id="ascii-table">
+                    <!-- Wird dynamisch gefüllt -->
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hint Modal -->
+    <div class="modal-overlay" id="hint-modal">
+        <div class="modal-content hint-modal">
+            <div class="modal-header">
+                <div class="modal-header-with-byte">
+                    <div class="byte-mascot" id="hint-byte">
+                        <img src="Byte_mascot/Byte_normal.png" alt="Byte erklärt">
+                    </div>
+                    <h3>💡 Hinweis</h3>
+                </div>
+                <button class="close-btn" id="close-hint">&times;</button>
+            </div>
+            <div class="hint-content" id="hint-content">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mission Success Modal -->
+    <div class="modal-overlay" id="mission-modal">
+        <div class="modal-content mission-modal">
+            <div class="mission-success">
+                <div class="modal-header-with-byte">
+                    <div class="byte-mascot celebrating" id="mission-byte">
+                        <img src="Byte_mascot/Byte_Happy.png" alt="Byte freut sich!">
+                    </div>
+                    <h3>🎉 Mission erfüllt!</h3>
+                </div>
+                <div class="mission-result" id="mission-result">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+                <button class="continue-btn" id="continue-mission">Weiter</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Request Modal -->
+    <div class="modal-overlay" id="help-request-modal">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <div class="modal-header-with-byte">
+                    <div class="byte-mascot" id="help-request-byte">
+                        <img src="Byte_mascot/Byte_normal.png" alt="Byte hilft">
+                    </div>
+                    <h3>🆘 Hilfe anfordern</h3>
+                </div>
+            </div>
+            <div class="help-content">
+                <p>Brauchst du Hilfe bei dieser Aufgabe?</p>
+                <p>Ich kann dir eine Erklärung geben, wie du die Schalter umlegst!</p>
+                <div id="help-progress-container" style="display: none;">
+                    <!-- Progress bar wird hier eingefügt -->
+                </div>
+                <div class="help-buttons">
+                    <button class="help-btn-yes" id="help-yes" style="display: block;">Ja, ich brauche Hilfe!</button>
+                    <button class="help-btn-no" id="help-no">Nein, ich versuche es noch mal selbst</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Help Explanation Modal -->
+    <div class="modal-overlay" id="help-explanation-modal">
+        <div class="modal-content help-modal">
+            <div class="modal-header">
+                <div class="modal-header-with-byte">
+                    <div class="byte-mascot" id="help-explanation-byte">
+                        <img src="Byte_mascot/Byte_normal.png" alt="Byte erklärt">
+                    </div>
+                    <h3>🎯 So geht's!</h3>
+                </div>
+                <button class="close-btn" id="close-help-explanation">&times;</button>
+            </div>
+            <div class="help-explanation" id="help-explanation-content">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../progress-shared.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
