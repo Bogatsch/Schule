@@ -517,7 +517,7 @@ class BinaryAsciiVisualizer {
         this.currentValue = value;
         this.updateOutputs();
         this.updateLEDs();
-        this.updateDecimalValues(); // Neue Funktion hinzufügen
+        this.updateBitValueHighlights();
         this.animateChange();
         this.checkMission();
         this.saveAppState();
@@ -528,7 +528,7 @@ class BinaryAsciiVisualizer {
         this.updateSwitches();
         this.updateOutputs();
         this.updateLEDs();
-        this.updateDecimalValues(); // Auch hier hinzufügen
+        this.updateBitValueHighlights();
         this.animateChange();
         this.checkMission();
         this.saveAppState();
@@ -625,27 +625,31 @@ class BinaryAsciiVisualizer {
         });
     }
 
-    updateDecimalValues() {
-        // Update decimal values visibility based on switch states
+    updateBitValueHighlights() {
+        // Highlight only the decimal values and powers that belong to selected bits.
         const switches = document.querySelectorAll('.switch input[type="checkbox"]');
         const decimalValues = document.querySelectorAll('.decimal-values .value');
+        const powerValues = document.querySelectorAll('.power-values .value');
         
         switches.forEach((switchEl, index) => {
             const bit = parseInt(switchEl.dataset.bit);
             // Find corresponding decimal value (bit 7 = index 0, bit 6 = index 1, etc.)
             const valueIndex = 7 - bit;
-            const valueElement = decimalValues[valueIndex];
+            const decimalValueElement = decimalValues[valueIndex];
+            const powerValueElement = powerValues[valueIndex];
             
-            if (valueElement) {
-                if (switchEl.checked) {
-                    valueElement.style.opacity = '1';
-                    valueElement.style.visibility = 'visible';
-                } else {
-                    valueElement.style.opacity = '0.15';
-                    valueElement.style.visibility = 'visible';
-                }
-            }
+            this.setBitValueHighlight(decimalValueElement, switchEl.checked);
+            this.setBitValueHighlight(powerValueElement, switchEl.checked);
         });
+    }
+
+    setBitValueHighlight(element, isActive) {
+        if (!element) {
+            return;
+        }
+
+        element.style.opacity = isActive ? '1' : '0.15';
+        element.style.visibility = 'visible';
     }
 
     toggleModule(toggle, options = {}) {
@@ -767,7 +771,7 @@ class BinaryAsciiVisualizer {
         this.updateSwitches();
         this.updateOutputs();
         this.updateLEDs();
-        this.updateDecimalValues(); // Auch hier hinzufügen
+        this.updateBitValueHighlights();
     }
 
     animateChange() {
