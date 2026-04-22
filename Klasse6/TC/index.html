@@ -6,8 +6,15 @@
   <title>TC Klasse 6 - Lernhilfe</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body data-page-key="landing">
   <header class="hero">
+    <div class="progress-toolbar" aria-label="Fortschritt Aktionen">
+      <button class="progress-btn" id="saveProgressBtn" type="button">Fortschritt speichern ↑</button>
+      <button class="progress-btn" id="loadProgressBtn" type="button">Fortschritt laden ↓</button>
+      <input id="loadProgressFile" type="file" accept="application/json,.json" hidden />
+      <span class="progress-message" id="progressMessage" aria-live="polite"></span>
+    </div>
+
     <div class="hero-inner">
       <div>
         <p class="eyebrow">TC Klasse 6</p>
@@ -27,7 +34,7 @@
   <main class="container">
     <section>
       <h2>Themen</h2>
-      <p class="section-text">Drücke auf Jetzt Lernen, um zum passenden Lernbereich zu wechseln.</p>
+      <p class="section-text">Drücke auf <span class="highlight-action">Jetzt Lernen</span>, um zum passenden Lernbereich zu wechseln.</p>
 
       <div class="grid">
         <article class="card active" data-link="binary-ascii-visualizer/index.html" tabindex="0" role="link">
@@ -63,6 +70,7 @@
     <p>Erstellt für den TC-Unterricht der Klasse 6.</p>
   </footer>
 
+  <script src="progress-shared.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

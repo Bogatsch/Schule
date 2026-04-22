@@ -44,6 +44,36 @@ body {
   margin: 0 auto;
 }
 
+.progress-toolbar {
+  width: min(1100px, 100% - 2rem);
+  margin: 0 auto 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.progress-btn {
+  border: 1px solid #4b5e7a;
+  background: linear-gradient(165deg, #1b2537, #2f4158);
+  color: #dcf4ff;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0.52rem 0.85rem;
+  cursor: pointer;
+  transition: filter 140ms ease, transform 140ms ease;
+}
+
+.progress-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.progress-message {
+  color: #9fbbd7;
+  font-size: 0.9rem;
+}
+
 .hero-inner {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
@@ -90,6 +120,15 @@ h3 {
   max-width: 68ch;
 }
 
+.highlight-action {
+  color: #05202e;
+  background: linear-gradient(165deg, #22d3ee, #17afc8);
+  border-radius: 999px;
+  padding: 0.08rem 0.55rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3);
+}
+
 .mascot-wrap {
   justify-self: center;
   position: relative;
@@ -103,11 +142,12 @@ h3 {
 
 .speech {
   position: absolute;
-  left: 56%;
+  left: 50%;
   top: -8px;
-  transform: translateX(-5%);
+  transform: translateX(-50%);
   display: inline-block;
-  width: min(270px, 52vw);
+  width: min(300px, calc(100vw - 2.6rem));
+  max-width: calc(100vw - 2.6rem);
   padding: 0.55rem 0.75rem;
   border-radius: 16px;
   background: rgba(15, 23, 42, 0.95);
@@ -135,6 +175,8 @@ h3 {
   border-radius: var(--radius);
   padding: 1rem 1rem 1.1rem;
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
   cursor: pointer;
   transform: translateY(14px);
   opacity: 0;
@@ -201,6 +243,7 @@ h3 {
   text-decoration: none;
   font-weight: 800;
   padding: 0.55rem 0.9rem;
+  margin-top: auto;
   transition: transform 150ms ease, filter 150ms ease;
 }
 
@@ -246,9 +289,19 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .progress-toolbar {
+    justify-content: flex-start;
+  }
+
+  .progress-message {
+    flex: 1 1 100%;
+  }
+
   .speech {
-    left: 45%;
-    top: -10px;
-    width: min(260px, 72vw);
+    position: static;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0.55rem;
   }
 }

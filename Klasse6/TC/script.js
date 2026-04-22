@@ -5,13 +5,17 @@ cards.forEach((card) => {
 
   if (destination) {
     card.addEventListener('click', (event) => {
-      if (event.target.closest('a')) {
+      if (event.target.closest('a, button, input, select, textarea, label')) {
         return;
       }
       window.location.href = destination;
     });
 
     card.addEventListener('keydown', (event) => {
+      if (event.target.closest('a, button, input, select, textarea, label')) {
+        return;
+      }
+
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         window.location.href = destination;

@@ -6,8 +6,15 @@
   <title>Von-Neumann + Software + Hardware - Coming soon</title>
   <link rel="stylesheet" href="../styles.css" />
 </head>
-<body>
+<body data-page-key="von-neumann">
   <header class="hero">
+    <div class="progress-toolbar" aria-label="Fortschritt Aktionen">
+      <button class="progress-btn" id="saveProgressBtn" type="button">Fortschritt speichern ↑</button>
+      <button class="progress-btn" id="loadProgressBtn" type="button">Fortschritt laden ↓</button>
+      <input id="loadProgressFile" type="file" accept="application/json,.json" hidden />
+      <span class="progress-message" id="progressMessage" aria-live="polite"></span>
+    </div>
+
     <div class="hero-inner">
       <div>
         <p class="eyebrow">Coming soon</p>
@@ -24,5 +31,6 @@
       </div>
     </div>
   </header>
+  <script src="../progress-shared.js"></script>
 </body>
 </html>
