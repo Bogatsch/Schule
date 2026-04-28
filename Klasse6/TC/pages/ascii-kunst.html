@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASCII-Kunst aus Bildern</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="ascii-kunst.css" />
+</head>
+<body data-page-key="ascii-kunst">
+  <header class="hero">
+    <div class="progress-toolbar" aria-label="Fortschritt Aktionen">
+      <button class="progress-btn" id="saveProgressBtn" type="button">Fortschritt speichern ↑</button>
+      <button class="progress-btn" id="loadProgressBtn" type="button">Fortschritt laden ↓</button>
+      <input id="loadProgressFile" type="file" accept="application/json,.json" hidden />
+      <span class="progress-message" id="progressMessage" aria-live="polite"></span>
+    </div>
+
+    <div class="hero-inner ascii-hero">
+      <div>
+        <h1>ASCII-Kunst aus Bildern</h1>
+        <p class="intro">
+          Wähle ein Bild per Upload oder füge einen direkten Bildlink ein. Die Seite wandelt
+          dein Motiv in ASCII-Zeichen um, die du kopieren oder als Textdatei speichern kannst.
+        </p>
+        <div class="hero-actions">
+          <a class="btn ghost" href="../index.html">Zur Startseite</a>
+        </div>
+      </div>
+      <div class="mascot-wrap" aria-hidden="true">
+        <img class="mascot" src="../binary-ascii-visualizer/Byte_mascot/Byte_Happy.png" alt="" />
+        <span class="speech">Ich helfe dir, Bilder in Zeichen umzuwandeln.</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container ascii-page">
+    <section class="studio-grid" aria-label="ASCII Werkstatt">
+      <article class="studio-card controls-card">
+        <h2>1. Bild auswählen</h2>
+        <p class="section-text compact-text">
+          Du kannst ein eigenes Bild hochladen, einen direkten Link einfügen oder mit einem Beispiel starten.
+        </p>
+
+        <label class="upload-dropzone" for="imageUpload">
+          <span class="upload-title">Bild hochladen</span>
+          <span class="upload-subtitle">PNG, JPG, GIF oder WebP</span>
+          <input id="imageUpload" type="file" accept="image/*" />
+        </label>
+
+        <div class="url-panel">
+          <label class="field-label" for="imageUrl">Bildlink</label>
+          <div class="url-row">
+            <input id="imageUrl" type="url" placeholder="https://.../bild.png" inputmode="url" />
+            <button class="btn" id="loadUrlBtn" type="button">Link laden</button>
+          </div>
+          <p class="helper-text">
+            Manche Webseiten blockieren das Laden fremder Bilder. In dem Fall funktioniert der Upload zuverlässig.
+          </p>
+        </div>
+
+        <div class="sample-panel">
+          <p class="field-label">Schnellstart</p>
+          <div class="sample-grid">
+            <button class="sample-btn" type="button" data-sample-src="../binary-ascii-visualizer/Byte_mascot/Byte_normal.png">Byte normal</button>
+            <button class="sample-btn" type="button" data-sample-src="../binary-ascii-visualizer/Byte_mascot/Byte_Happy.png">Byte happy</button>
+            <button class="sample-btn" type="button" data-sample-src="../binary-ascii-visualizer/Byte_mascot/Byte_Thinking.png">Byte denkt nach</button>
+            <button class="sample-btn" type="button" data-sample-src="../binary-ascii-visualizer/Byte_mascot/Byte_Sad.png">Byte traurig</button>
+          </div>
+        </div>
+
+        <div class="status-box" id="statusBox" aria-live="polite">
+          Noch kein Bild geladen.
+        </div>
+      </article>
+
+      <article class="studio-card settings-card">
+        <h2>2. ASCII einstellen</h2>
+        <div class="control-stack">
+          <label class="range-control" for="widthRange">
+            <span>Breite in Zeichen</span>
+            <strong id="widthValue">90</strong>
+          </label>
+          <input id="widthRange" type="range" min="30" max="160" step="2" value="90" />
+
+          <label class="range-control" for="brightnessRange">
+            <span>Helligkeit</span>
+            <strong id="brightnessValue">0</strong>
+          </label>
+          <input id="brightnessRange" type="range" min="-100" max="100" step="5" value="0" />
+
+          <label class="range-control" for="contrastRange">
+            <span>Kontrast</span>
+            <strong id="contrastValue">100%</strong>
+          </label>
+          <input id="contrastRange" type="range" min="50" max="180" step="5" value="100" />
+
+          <label class="field-label" for="charsetSelect">Zeichensatz</label>
+          <select id="charsetSelect">
+            <option value="classic">Klassisch</option>
+            <option value="blocks">Blockzeichen</option>
+            <option value="binary">Binär-Look</option>
+            <option value="dots">Punkte</option>
+          </select>
+
+          <label class="checkbox-row" for="invertToggle">
+            <input id="invertToggle" type="checkbox" />
+            <span>Hell und dunkel umkehren</span>
+          </label>
+        </div>
+
+        <div class="meta-box">
+          <h3>Bilddaten</h3>
+          <p id="imageMeta">Noch keine Bilddaten vorhanden.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="studio-card preview-card">
+        <div class="card-heading-row">
+          <h2>3. Vorschau</h2>
+          <span class="mini-badge">Original</span>
+        </div>
+        <div class="preview-frame empty" id="previewFrame">
+          <img id="sourcePreview" alt="Geladenes Bild" hidden />
+          <p id="previewPlaceholder">Lade ein Bild, damit hier die Vorschau erscheint.</p>
+        </div>
+      </article>
+
+      <article class="studio-card output-card">
+        <div class="card-heading-row output-header-row">
+          <div>
+            <h2>4. ASCII-Ausgabe</h2>
+            <p class="section-text compact-text">Kopiere die Ausgabe oder speichere sie als Textdatei.</p>
+          </div>
+          <div class="output-actions">
+            <button class="btn" id="copyBtn" type="button" disabled>Kopieren</button>
+            <button class="btn ghost" id="downloadBtn" type="button" disabled>TXT speichern</button>
+          </div>
+        </div>
+        <pre class="ascii-output" id="asciiOutput">Lade ein Bild hoch oder wähle ein Beispiel.</pre>
+      </article>
+    </section>
+
+  </main>
+
+  <canvas id="imageCanvas" hidden></canvas>
+
+  <script src="../progress-shared.js"></script>
+  <script src="ascii-kunst.js"></script>
+</body>
+</html>
