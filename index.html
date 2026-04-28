@@ -9,7 +9,6 @@
 
         :root {
             --bg: #f4efe3;
-            --bg-accent: rgba(17, 68, 94, 0.12);
             --surface: rgba(255, 252, 246, 0.9);
             --surface-strong: rgba(255, 248, 236, 0.98);
             --border: rgba(17, 68, 94, 0.18);
@@ -56,15 +55,42 @@
         }
 
         .page-shell {
-            width: min(1120px, calc(100% - 32px));
+            width: min(980px, calc(100% - 32px));
             margin: 0 auto;
-            padding: 40px 0 56px;
+            padding: 32px 0 48px;
             position: relative;
             z-index: 1;
         }
 
-        .hero {
-            padding: 34px;
+        .page-header {
+            margin-bottom: 18px;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--secondary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(2.4rem, 7vw, 4rem);
+            line-height: 0.98;
+        }
+
+        .intro {
+            margin: 12px 0 0;
+            max-width: 58ch;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .explorer {
+            padding: 24px;
             border-radius: var(--radius-xl);
             background: linear-gradient(135deg, rgba(255, 252, 246, 0.96), rgba(244, 236, 221, 0.86));
             border: 1px solid rgba(17, 68, 94, 0.14);
@@ -72,84 +98,25 @@
             backdrop-filter: blur(16px);
         }
 
-        .eyebrow,
-        .section-label,
-        .branch summary {
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .eyebrow {
-            margin: 0 0 10px;
-            color: var(--secondary);
-            font-size: 0.86rem;
-            font-weight: 600;
-        }
-
-        h1,
-        h2 {
-            margin: 0;
-            font-family: "Space Grotesk", sans-serif;
-            line-height: 0.98;
-        }
-
-        h1 {
-            font-size: clamp(2.8rem, 7vw, 5rem);
-            max-width: 11ch;
-        }
-
-        .hero-copy {
-            margin: 16px 0 0;
-            max-width: 62ch;
-            color: var(--muted);
-            font-size: 1.02rem;
-            line-height: 1.7;
-        }
-
-        .hero-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        .meta-pill,
-        .jump-links a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(17, 68, 94, 0.14);
-            background: rgba(255, 255, 255, 0.56);
-            color: var(--primary);
-            font-size: 0.94rem;
-            font-weight: 500;
-        }
-
-        .toolbar {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 18px;
-            align-items: end;
-            margin-top: 28px;
-        }
-
-        .search-block span,
-        .counter {
+        .search-block {
             display: block;
+            margin-bottom: 18px;
+        }
+
+        .search-block span {
+            display: block;
+            margin-bottom: 8px;
             color: var(--muted);
             font-size: 0.92rem;
             font-weight: 500;
-            margin-bottom: 8px;
         }
 
         .search-block input {
             width: 100%;
-            padding: 15px 16px;
+            padding: 14px 16px;
             border: 1px solid rgba(17, 68, 94, 0.18);
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.88);
             color: var(--text);
             font: inherit;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -160,136 +127,87 @@
             outline-offset: 2px;
         }
 
-        .counter strong {
-            display: block;
-            color: var(--primary);
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 2rem;
-            line-height: 1;
-        }
-
-        .jump-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin: 20px 0 0;
-        }
-
-        .tree-grid {
+        .tree-root {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 22px;
-            margin-top: 28px;
-        }
-
-        .tree-card {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            padding: 24px;
-            border-radius: var(--radius-lg);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            min-width: 0;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
             gap: 12px;
-            align-items: start;
         }
 
-        .section-label {
-            margin: 0 0 8px;
-            color: var(--secondary);
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-
-        h2 {
-            font-size: 1.9rem;
-        }
-
-        .card-count {
-            white-space: nowrap;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(17, 68, 94, 0.08);
-            color: var(--primary);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .branch {
-            border-left: 2px solid rgba(17, 68, 94, 0.12);
+        .folder {
+            margin: 0;
             padding-left: 16px;
+            border-left: 2px solid rgba(17, 68, 94, 0.12);
         }
 
-        .branch + .branch {
-            margin-top: 18px;
-        }
-
-        .branch[hidden],
-        .tree-card[hidden],
+        .folder[hidden],
         .page-link[hidden] {
             display: none !important;
         }
 
-        .branch summary {
+        .folder summary {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             cursor: pointer;
             list-style: none;
+            padding: 11px 14px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 252, 246, 0.8);
+            border: 1px solid rgba(17, 68, 94, 0.14);
             color: var(--primary);
-            font-size: 0.84rem;
-            font-weight: 700;
-            margin-bottom: 12px;
+            font-weight: 600;
         }
 
-        .branch summary::-webkit-details-marker {
+        .folder summary::-webkit-details-marker {
             display: none;
         }
 
-        .branch summary::before {
-            content: "+ ";
+        .folder summary::before {
+            content: "+";
+            display: inline-flex;
+            width: 1rem;
+            justify-content: center;
             color: var(--secondary);
+            font-weight: 700;
         }
 
-        .branch[open] > summary::before {
-            content: "- ";
+        .folder[open] > summary::before {
+            content: "-";
         }
 
-        .branch-content {
+        .folder-name {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 1rem;
+        }
+
+        .folder-children {
             display: grid;
-            gap: 12px;
+            gap: 10px;
+            padding: 10px 0 0 14px;
         }
 
         .page-link {
-            display: block;
-            padding: 14px 16px;
+            display: grid;
+            gap: 4px;
+            padding: 10px 12px;
             border-radius: var(--radius-md);
             background: var(--surface-strong);
-            border: 1px solid rgba(17, 68, 94, 0.14);
+            border: 1px dashed rgba(17, 68, 94, 0.18);
             transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
         }
 
         .page-link:hover,
         .page-link:focus-visible {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             border-color: rgba(17, 68, 94, 0.28);
-            box-shadow: 0 14px 30px rgba(17, 68, 94, 0.12);
+            box-shadow: 0 10px 24px rgba(17, 68, 94, 0.1);
             outline: none;
         }
 
-        .page-title {
-            display: block;
+        .page-name {
             font-weight: 600;
-            color: var(--text);
         }
 
         .page-path {
-            display: block;
-            margin-top: 6px;
             color: var(--muted);
             font-size: 0.88rem;
             word-break: break-word;
@@ -297,8 +215,8 @@
 
         .empty-state,
         .footnote {
-            margin-top: 22px;
-            padding: 18px 20px;
+            margin-top: 18px;
+            padding: 16px 18px;
             border-radius: 18px;
             background: rgba(255, 252, 246, 0.72);
             border: 1px solid rgba(17, 68, 94, 0.12);
@@ -315,233 +233,216 @@
             line-height: 1.6;
         }
 
-        @media (max-width: 980px) {
-            .tree-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
         @media (max-width: 720px) {
             .page-shell {
-                width: min(100% - 20px, 1120px);
+                width: min(100% - 20px, 980px);
                 padding-top: 20px;
             }
 
-            .hero,
-            .tree-card {
-                padding: 20px;
-            }
-
-            .toolbar {
-                grid-template-columns: 1fr;
-            }
-
-            .card-header {
-                flex-direction: column;
-            }
-
-            h2 {
-                font-size: 1.65rem;
+            .explorer {
+                padding: 18px;
             }
         }
     </style>
 </head>
 <body>
     <div class="page-shell">
-        <header class="hero">
-            <p class="eyebrow">Github Pages Startseite</p>
-            <h1>Schule im Browser</h1>
-            <p class="hero-copy">
-                Diese Seite buendelt alle aktuell veroeffentlichten HTML-Seiten aus dem Projekt.
-                Die Links sind relativ gesetzt und funktionieren daher sowohl lokal als auch auf
-                <a href="https://bogatsch.github.io/Schule/">bogatsch.github.io/Schule</a>.
+        <header class="page-header">
+            <p class="eyebrow">Navigation</p>
+            <h1>Schule</h1>
+            <p class="intro">
+                Alle veroeffentlichten Browser-Seiten als Ordnerstruktur. Ordner sind beim Laden
+                standardmaessig zugeklappt und oeffnen sich bei einer Suche automatisch entlang der Treffer.
             </p>
-
-            <div class="hero-meta">
-                <span class="meta-pill">10 Browser-Seiten</span>
-                <span class="meta-pill">Nach Klasse und Lernbereich gruppiert</span>
-                <span class="meta-pill">Suche nach Thema oder Pfad</span>
-            </div>
-
-            <div class="toolbar">
-                <label class="search-block" for="search">
-                    <span>Schnellsuche</span>
-                    <input id="search" type="search" placeholder="z. B. Klasse7, Algorithmen, css oder Neumann">
-                </label>
-
-                <div class="counter" aria-live="polite">
-                    Sichtbare Seiten
-                    <strong id="visible-count">10</strong>
-                </div>
-            </div>
-
-            <nav class="jump-links" aria-label="Sprungmarken">
-                <a href="#klasse6">Klasse 6</a>
-                <a href="#klasse7">Klasse 7</a>
-                <a href="#klasse11">Klasse 11</a>
-            </nav>
         </header>
 
-        <main class="tree-grid">
-            <section class="tree-card" id="klasse6" data-section>
-                <div class="card-header">
-                    <div>
-                        <p class="section-label">Klasse 6</p>
-                        <h2>TC</h2>
-                    </div>
-                    <span class="card-count">4 Seiten</span>
-                </div>
+        <main class="explorer" aria-label="Ordnerstruktur Schule">
+            <label class="search-block" for="search">
+                <span>Schnellsuche</span>
+                <input id="search" type="search" placeholder="z. B. Klasse7, LB2, binary, css oder Neumann">
+            </label>
 
-                <details class="branch" open data-branch>
-                    <summary>TC</summary>
-                    <div class="branch-content">
-                        <a class="page-link" data-page data-search="klasse6 tc themenuebersicht startseite index klasse6/tc" href="Klasse6/TC/">
-                            <span class="page-title">Themenuebersicht</span>
-                            <span class="page-path">/Klasse6/TC/</span>
-                        </a>
-
-                        <a class="page-link" data-page data-search="klasse6 tc binary ascii visualizer klasse6/tc/binary-ascii-visualizer" href="Klasse6/TC/binary-ascii-visualizer/">
-                            <span class="page-title">Binary ASCII Visualizer</span>
-                            <span class="page-path">/Klasse6/TC/binary-ascii-visualizer/</span>
-                        </a>
-
-                        <details class="branch" open data-branch>
-                            <summary>pages</summary>
-                            <div class="branch-content">
-                                <a class="page-link" data-page data-search="klasse6 tc pages algorithmen klasse6/tc/pages/algorithmen.html" href="Klasse6/TC/pages/algorithmen.html">
-                                    <span class="page-title">Algorithmen</span>
-                                    <span class="page-path">/Klasse6/TC/pages/algorithmen.html</span>
+            <div class="tree-root">
+                <details class="folder" data-folder>
+                    <summary><span class="folder-name">Klasse6</span></summary>
+                    <div class="folder-children">
+                        <details class="folder" data-folder>
+                            <summary><span class="folder-name">TC</span></summary>
+                            <div class="folder-children">
+                                <a class="page-link" data-page data-search="klasse6 tc index startseite themenuebersicht klasse6/tc/index.html" href="Klasse6/TC/">
+                                    <span class="page-name">index.html</span>
+                                    <span class="page-path">/Klasse6/TC/index.html</span>
                                 </a>
 
-                                <a class="page-link" data-page data-search="klasse6 tc pages von neumann klasse6/tc/pages/von-neumann.html" href="Klasse6/TC/pages/von-neumann.html">
-                                    <span class="page-title">Von Neumann</span>
-                                    <span class="page-path">/Klasse6/TC/pages/von-neumann.html</span>
-                                </a>
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">binary-ascii-visualizer</span></summary>
+                                    <div class="folder-children">
+                                        <a class="page-link" data-page data-search="klasse6 tc binary ascii visualizer index klasse6/tc/binary-ascii-visualizer/index.html" href="Klasse6/TC/binary-ascii-visualizer/">
+                                            <span class="page-name">index.html</span>
+                                            <span class="page-path">/Klasse6/TC/binary-ascii-visualizer/index.html</span>
+                                        </a>
+                                    </div>
+                                </details>
+
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">pages</span></summary>
+                                    <div class="folder-children">
+                                        <a class="page-link" data-page data-search="klasse6 tc pages algorithmen klasse6/tc/pages/algorithmen.html" href="Klasse6/TC/pages/algorithmen.html">
+                                            <span class="page-name">algorithmen.html</span>
+                                            <span class="page-path">/Klasse6/TC/pages/algorithmen.html</span>
+                                        </a>
+
+                                        <a class="page-link" data-page data-search="klasse6 tc pages von neumann klasse6/tc/pages/von-neumann.html" href="Klasse6/TC/pages/von-neumann.html">
+                                            <span class="page-name">von-neumann.html</span>
+                                            <span class="page-path">/Klasse6/TC/pages/von-neumann.html</span>
+                                        </a>
+                                    </div>
+                                </details>
                             </div>
                         </details>
                     </div>
                 </details>
-            </section>
 
-            <section class="tree-card" id="klasse7" data-section>
-                <div class="card-header">
-                    <div>
-                        <p class="section-label">Klasse 7</p>
-                        <h2>Sprachen &amp; Algorithmen</h2>
-                    </div>
-                    <span class="card-count">5 Seiten</span>
-                </div>
+                <details class="folder" data-folder>
+                    <summary><span class="folder-name">Klasse7</span></summary>
+                    <div class="folder-children">
+                        <details class="folder" data-folder>
+                            <summary><span class="folder-name">LB2_Sprachen</span></summary>
+                            <div class="folder-children">
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">Bechinie</span></summary>
+                                    <div class="folder-children">
+                                        <details class="folder" data-folder>
+                                            <summary><span class="folder-name">html</span></summary>
+                                            <div class="folder-children">
+                                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie html index klasse7/lb2_sprachen/bechinie/html/index.html" href="Klasse7/LB2_Sprachen/Bechinie/html/">
+                                                    <span class="page-name">index.html</span>
+                                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/html/index.html</span>
+                                                </a>
+                                            </div>
+                                        </details>
 
-                <details class="branch" open data-branch>
-                    <summary>LB2_Sprachen</summary>
-                    <div class="branch-content">
-                        <details class="branch" open data-branch>
-                            <summary>Bechinie</summary>
-                            <div class="branch-content">
-                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie html klasse7/lb2_sprachen/bechinie/html" href="Klasse7/LB2_Sprachen/Bechinie/html/">
-                                    <span class="page-title">HTML</span>
-                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/html/</span>
-                                </a>
+                                        <details class="folder" data-folder>
+                                            <summary><span class="folder-name">css-einstieg</span></summary>
+                                            <div class="folder-children">
+                                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css einstieg index klasse7/lb2_sprachen/bechinie/css-einstieg/index.html" href="Klasse7/LB2_Sprachen/Bechinie/css-einstieg/">
+                                                    <span class="page-name">index.html</span>
+                                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-einstieg/index.html</span>
+                                                </a>
+                                            </div>
+                                        </details>
 
-                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css einstieg klasse7/lb2_sprachen/bechinie/css-einstieg" href="Klasse7/LB2_Sprachen/Bechinie/css-einstieg/">
-                                    <span class="page-title">CSS Einstieg</span>
-                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-einstieg/</span>
-                                </a>
+                                        <details class="folder" data-folder>
+                                            <summary><span class="folder-name">css-vertiefung</span></summary>
+                                            <div class="folder-children">
+                                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css vertiefung index klasse7/lb2_sprachen/bechinie/css-vertiefung/index.html" href="Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/">
+                                                    <span class="page-name">index.html</span>
+                                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/index.html</span>
+                                                </a>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </details>
 
-                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css vertiefung klasse7/lb2_sprachen/bechinie/css-vertiefung" href="Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/">
-                                    <span class="page-title">CSS Vertiefung</span>
-                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/</span>
-                                </a>
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">Vorbereitung_LK</span></summary>
+                                    <div class="folder-children">
+                                        <a class="page-link" data-page data-search="klasse7 lb2 sprachen vorbereitung lk index klasse7/lb2_sprachen/vorbereitung_lk/index.html" href="Klasse7/LB2_Sprachen/Vorbereitung_LK/">
+                                            <span class="page-name">index.html</span>
+                                            <span class="page-path">/Klasse7/LB2_Sprachen/Vorbereitung_LK/index.html</span>
+                                        </a>
+                                    </div>
+                                </details>
                             </div>
                         </details>
 
-                        <a class="page-link" data-page data-search="klasse7 lb2 sprachen vorbereitung lk klasse7/lb2_sprachen/vorbereitung_lk" href="Klasse7/LB2_Sprachen/Vorbereitung_LK/">
-                            <span class="page-title">Vorbereitung LK</span>
-                            <span class="page-path">/Klasse7/LB2_Sprachen/Vorbereitung_LK/</span>
-                        </a>
+                        <details class="folder" data-folder>
+                            <summary><span class="folder-name">LB3_Algorithmen</span></summary>
+                            <div class="folder-children">
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">(nf)Grundstrukturen</span></summary>
+                                    <div class="folder-children">
+                                        <a class="page-link" data-page data-search="klasse7 lb3 algorithmen nf grundstrukturen index klasse7/lb3_algorithmen/(nf)grundstrukturen/index.html" href="Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/">
+                                            <span class="page-name">index.html</span>
+                                            <span class="page-path">/Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/index.html</span>
+                                        </a>
+                                    </div>
+                                </details>
+                            </div>
+                        </details>
                     </div>
                 </details>
 
-                <details class="branch" open data-branch>
-                    <summary>LB3_Algorithmen</summary>
-                    <div class="branch-content">
-                        <a class="page-link" data-page data-search="klasse7 lb3 algorithmen grundstrukturen nf klasse7/lb3_algorithmen/(nf)grundstrukturen" href="Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/">
-                            <span class="page-title">(nf) Grundstrukturen</span>
-                            <span class="page-path">/Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/</span>
-                        </a>
+                <details class="folder" data-folder>
+                    <summary><span class="folder-name">Klasse11</span></summary>
+                    <div class="folder-children">
+                        <details class="folder" data-folder>
+                            <summary><span class="folder-name">LB1_TI</span></summary>
+                            <div class="folder-children">
+                                <details class="folder" data-folder>
+                                    <summary><span class="folder-name">Theoretische_Grundlagen</span></summary>
+                                    <div class="folder-children">
+                                        <a class="page-link" data-page data-search="klasse11 lb1 ti theoretische grundlagen index klasse11/lb1_ti/theoretische_grundlagen/index.html" href="Klasse11/LB1_TI/Theoretische_Grundlagen/">
+                                            <span class="page-name">index.html</span>
+                                            <span class="page-path">/Klasse11/LB1_TI/Theoretische_Grundlagen/index.html</span>
+                                        </a>
+                                    </div>
+                                </details>
+                            </div>
+                        </details>
                     </div>
                 </details>
-            </section>
+            </div>
 
-            <section class="tree-card" id="klasse11" data-section>
-                <div class="card-header">
-                    <div>
-                        <p class="section-label">Klasse 11</p>
-                        <h2>Theoretische Informatik</h2>
-                    </div>
-                    <span class="card-count">1 Seite</span>
-                </div>
-
-                <details class="branch" open data-branch>
-                    <summary>LB1_TI</summary>
-                    <div class="branch-content">
-                        <a class="page-link" data-page data-search="klasse11 lb1 ti theoretische grundlagen klasse11/lb1_ti/theoretische_grundlagen" href="Klasse11/LB1_TI/Theoretische_Grundlagen/">
-                            <span class="page-title">Theoretische Grundlagen</span>
-                            <span class="page-path">/Klasse11/LB1_TI/Theoretische_Grundlagen/</span>
-                        </a>
-                    </div>
-                </details>
-            </section>
+            <p class="empty-state" id="empty-state" hidden>
+                Keine Seite passt zur aktuellen Suche. Versuche einen Ordnernamen oder einen Teil des Pfads.
+            </p>
         </main>
 
-        <p class="empty-state" id="empty-state" hidden>
-            Keine Seite passt zur aktuellen Suche. Versuche einen Ordnernamen, eine Klasse oder einen Teil des Pfads.
-        </p>
-
         <p class="footnote">
-            Nicht als HTML veroeffentlichte Projekte, zum Beispiel der VoiceAssistant unter Klasse11/LB6_AuS,
-            sind hier bewusst nicht verlinkt, weil sie nicht direkt ueber Github Pages im Browser laufen.
+            Es werden nur Ziele angezeigt, die direkt als HTML-Seite ueber Github Pages im Browser erreichbar sind.
         </p>
     </div>
 
     <script>
         const searchInput = document.getElementById("search");
-        const visibleCount = document.getElementById("visible-count");
         const emptyState = document.getElementById("empty-state");
         const pageLinks = [...document.querySelectorAll("[data-page]")];
-        const branches = [...document.querySelectorAll("[data-branch]")];
-        const sections = [...document.querySelectorAll("[data-section]")];
+        const folders = [...document.querySelectorAll("[data-folder]")];
+
+        const resetAutoOpenedFolders = () => {
+            folders.forEach((folder) => {
+                if (folder.dataset.autoOpened === "true") {
+                    folder.open = false;
+                    delete folder.dataset.autoOpened;
+                }
+            });
+        };
 
         const updateVisibility = () => {
             const query = searchInput.value.trim().toLowerCase();
-            let visiblePages = 0;
+
+            if (!query) {
+                resetAutoOpenedFolders();
+            }
 
             pageLinks.forEach((pageLink) => {
                 const haystack = pageLink.dataset.search || "";
-                const isMatch = !query || haystack.includes(query);
+                pageLink.hidden = Boolean(query) && !haystack.includes(query);
+            });
 
-                pageLink.hidden = !isMatch;
-                if (isMatch) {
-                    visiblePages += 1;
+            [...folders].reverse().forEach((folder) => {
+                const hasVisiblePage = Boolean(folder.querySelector("[data-page]:not([hidden])"));
+                folder.hidden = !hasVisiblePage;
+
+                if (query && hasVisiblePage && !folder.open) {
+                    folder.open = true;
+                    folder.dataset.autoOpened = "true";
                 }
             });
 
-            [...branches].reverse().forEach((branch) => {
-                const hasVisiblePage = branch.querySelector("[data-page]:not([hidden])");
-                branch.hidden = !hasVisiblePage;
-
-                if (query && hasVisiblePage) {
-                    branch.open = true;
-                }
-            });
-
-            sections.forEach((section) => {
-                const hasVisiblePage = section.querySelector("[data-page]:not([hidden])");
-                section.hidden = !hasVisiblePage;
-            });
-
-            visibleCount.textContent = String(visiblePages);
-            emptyState.hidden = visiblePages !== 0;
+            const hasAnyVisiblePage = pageLinks.some((pageLink) => !pageLink.hidden);
+            emptyState.hidden = hasAnyVisiblePage;
         };
 
         searchInput.addEventListener("input", updateVisibility);
