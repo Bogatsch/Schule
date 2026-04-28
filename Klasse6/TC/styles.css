@@ -166,7 +166,26 @@ h3 {
   margin-top: 1rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "binary algorithmen von-neumann"
+    "ascii . .";
   gap: 1rem;
+}
+
+.card-binary {
+  grid-area: binary;
+}
+
+.card-algorithmen {
+  grid-area: algorithmen;
+}
+
+.card-von-neumann {
+  grid-area: von-neumann;
+}
+
+.card-ascii {
+  grid-area: ascii;
 }
 
 .card {
@@ -291,6 +310,11 @@ h3 {
 @media (max-width: 820px) {
   .grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "binary"
+      "ascii"
+      "algorithmen"
+      "von-neumann";
   }
 
   .hero-inner {
