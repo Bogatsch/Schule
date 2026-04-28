@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schule | Navigation</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap");
+
+        :root {
+            --bg: #f4efe3;
+            --bg-accent: rgba(17, 68, 94, 0.12);
+            --surface: rgba(255, 252, 246, 0.9);
+            --surface-strong: rgba(255, 248, 236, 0.98);
+            --border: rgba(17, 68, 94, 0.18);
+            --text: #1b262c;
+            --muted: #5f6f7a;
+            --primary: #11445e;
+            --secondary: #bf5b2a;
+            --shadow: 0 24px 60px rgba(27, 38, 44, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "IBM Plex Sans", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(191, 91, 42, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(17, 68, 94, 0.16), transparent 32%),
+                linear-gradient(180deg, #f6f1e8 0%, #efe8da 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(17, 68, 94, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(17, 68, 94, 0.035) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 92%);
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .page-shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 40px 0 56px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero {
+            padding: 34px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, rgba(255, 252, 246, 0.96), rgba(244, 236, 221, 0.86));
+            border: 1px solid rgba(17, 68, 94, 0.14);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .eyebrow,
+        .section-label,
+        .branch summary {
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--secondary);
+            font-size: 0.86rem;
+            font-weight: 600;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            line-height: 0.98;
+        }
+
+        h1 {
+            font-size: clamp(2.8rem, 7vw, 5rem);
+            max-width: 11ch;
+        }
+
+        .hero-copy {
+            margin: 16px 0 0;
+            max-width: 62ch;
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.7;
+        }
+
+        .hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .meta-pill,
+        .jump-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(17, 68, 94, 0.14);
+            background: rgba(255, 255, 255, 0.56);
+            color: var(--primary);
+            font-size: 0.94rem;
+            font-weight: 500;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
+            align-items: end;
+            margin-top: 28px;
+        }
+
+        .search-block span,
+        .counter {
+            display: block;
+            color: var(--muted);
+            font-size: 0.92rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .search-block input {
+            width: 100%;
+            padding: 15px 16px;
+            border: 1px solid rgba(17, 68, 94, 0.18);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text);
+            font: inherit;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .search-block input:focus {
+            outline: 2px solid rgba(17, 68, 94, 0.22);
+            outline-offset: 2px;
+        }
+
+        .counter strong {
+            display: block;
+            color: var(--primary);
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .jump-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0 0;
+        }
+
+        .tree-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            margin-top: 28px;
+        }
+
+        .tree-card {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            min-width: 0;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .section-label {
+            margin: 0 0 8px;
+            color: var(--secondary);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 1.9rem;
+        }
+
+        .card-count {
+            white-space: nowrap;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(17, 68, 94, 0.08);
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .branch {
+            border-left: 2px solid rgba(17, 68, 94, 0.12);
+            padding-left: 16px;
+        }
+
+        .branch + .branch {
+            margin-top: 18px;
+        }
+
+        .branch[hidden],
+        .tree-card[hidden],
+        .page-link[hidden] {
+            display: none !important;
+        }
+
+        .branch summary {
+            cursor: pointer;
+            list-style: none;
+            color: var(--primary);
+            font-size: 0.84rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .branch summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .branch summary::before {
+            content: "+ ";
+            color: var(--secondary);
+        }
+
+        .branch[open] > summary::before {
+            content: "- ";
+        }
+
+        .branch-content {
+            display: grid;
+            gap: 12px;
+        }
+
+        .page-link {
+            display: block;
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            background: var(--surface-strong);
+            border: 1px solid rgba(17, 68, 94, 0.14);
+            transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .page-link:hover,
+        .page-link:focus-visible {
+            transform: translateY(-2px);
+            border-color: rgba(17, 68, 94, 0.28);
+            box-shadow: 0 14px 30px rgba(17, 68, 94, 0.12);
+            outline: none;
+        }
+
+        .page-title {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .page-path {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            word-break: break-word;
+        }
+
+        .empty-state,
+        .footnote {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: rgba(255, 252, 246, 0.72);
+            border: 1px solid rgba(17, 68, 94, 0.12);
+            color: var(--muted);
+            box-shadow: 0 10px 30px rgba(27, 38, 44, 0.06);
+        }
+
+        .empty-state[hidden] {
+            display: none;
+        }
+
+        .footnote {
+            font-size: 0.94rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 980px) {
+            .tree-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page-shell {
+                width: min(100% - 20px, 1120px);
+                padding-top: 20px;
+            }
+
+            .hero,
+            .tree-card {
+                padding: 20px;
+            }
+
+            .toolbar {
+                grid-template-columns: 1fr;
+            }
+
+            .card-header {
+                flex-direction: column;
+            }
+
+            h2 {
+                font-size: 1.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <p class="eyebrow">Github Pages Startseite</p>
+            <h1>Schule im Browser</h1>
+            <p class="hero-copy">
+                Diese Seite buendelt alle aktuell veroeffentlichten HTML-Seiten aus dem Projekt.
+                Die Links sind relativ gesetzt und funktionieren daher sowohl lokal als auch auf
+                <a href="https://bogatsch.github.io/Schule/">bogatsch.github.io/Schule</a>.
+            </p>
+
+            <div class="hero-meta">
+                <span class="meta-pill">10 Browser-Seiten</span>
+                <span class="meta-pill">Nach Klasse und Lernbereich gruppiert</span>
+                <span class="meta-pill">Suche nach Thema oder Pfad</span>
+            </div>
+
+            <div class="toolbar">
+                <label class="search-block" for="search">
+                    <span>Schnellsuche</span>
+                    <input id="search" type="search" placeholder="z. B. Klasse7, Algorithmen, css oder Neumann">
+                </label>
+
+                <div class="counter" aria-live="polite">
+                    Sichtbare Seiten
+                    <strong id="visible-count">10</strong>
+                </div>
+            </div>
+
+            <nav class="jump-links" aria-label="Sprungmarken">
+                <a href="#klasse6">Klasse 6</a>
+                <a href="#klasse7">Klasse 7</a>
+                <a href="#klasse11">Klasse 11</a>
+            </nav>
+        </header>
+
+        <main class="tree-grid">
+            <section class="tree-card" id="klasse6" data-section>
+                <div class="card-header">
+                    <div>
+                        <p class="section-label">Klasse 6</p>
+                        <h2>TC</h2>
+                    </div>
+                    <span class="card-count">4 Seiten</span>
+                </div>
+
+                <details class="branch" open data-branch>
+                    <summary>TC</summary>
+                    <div class="branch-content">
+                        <a class="page-link" data-page data-search="klasse6 tc themenuebersicht startseite index klasse6/tc" href="Klasse6/TC/">
+                            <span class="page-title">Themenuebersicht</span>
+                            <span class="page-path">/Klasse6/TC/</span>
+                        </a>
+
+                        <a class="page-link" data-page data-search="klasse6 tc binary ascii visualizer klasse6/tc/binary-ascii-visualizer" href="Klasse6/TC/binary-ascii-visualizer/">
+                            <span class="page-title">Binary ASCII Visualizer</span>
+                            <span class="page-path">/Klasse6/TC/binary-ascii-visualizer/</span>
+                        </a>
+
+                        <details class="branch" open data-branch>
+                            <summary>pages</summary>
+                            <div class="branch-content">
+                                <a class="page-link" data-page data-search="klasse6 tc pages algorithmen klasse6/tc/pages/algorithmen.html" href="Klasse6/TC/pages/algorithmen.html">
+                                    <span class="page-title">Algorithmen</span>
+                                    <span class="page-path">/Klasse6/TC/pages/algorithmen.html</span>
+                                </a>
+
+                                <a class="page-link" data-page data-search="klasse6 tc pages von neumann klasse6/tc/pages/von-neumann.html" href="Klasse6/TC/pages/von-neumann.html">
+                                    <span class="page-title">Von Neumann</span>
+                                    <span class="page-path">/Klasse6/TC/pages/von-neumann.html</span>
+                                </a>
+                            </div>
+                        </details>
+                    </div>
+                </details>
+            </section>
+
+            <section class="tree-card" id="klasse7" data-section>
+                <div class="card-header">
+                    <div>
+                        <p class="section-label">Klasse 7</p>
+                        <h2>Sprachen &amp; Algorithmen</h2>
+                    </div>
+                    <span class="card-count">5 Seiten</span>
+                </div>
+
+                <details class="branch" open data-branch>
+                    <summary>LB2_Sprachen</summary>
+                    <div class="branch-content">
+                        <details class="branch" open data-branch>
+                            <summary>Bechinie</summary>
+                            <div class="branch-content">
+                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie html klasse7/lb2_sprachen/bechinie/html" href="Klasse7/LB2_Sprachen/Bechinie/html/">
+                                    <span class="page-title">HTML</span>
+                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/html/</span>
+                                </a>
+
+                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css einstieg klasse7/lb2_sprachen/bechinie/css-einstieg" href="Klasse7/LB2_Sprachen/Bechinie/css-einstieg/">
+                                    <span class="page-title">CSS Einstieg</span>
+                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-einstieg/</span>
+                                </a>
+
+                                <a class="page-link" data-page data-search="klasse7 lb2 sprachen bechinie css vertiefung klasse7/lb2_sprachen/bechinie/css-vertiefung" href="Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/">
+                                    <span class="page-title">CSS Vertiefung</span>
+                                    <span class="page-path">/Klasse7/LB2_Sprachen/Bechinie/css-vertiefung/</span>
+                                </a>
+                            </div>
+                        </details>
+
+                        <a class="page-link" data-page data-search="klasse7 lb2 sprachen vorbereitung lk klasse7/lb2_sprachen/vorbereitung_lk" href="Klasse7/LB2_Sprachen/Vorbereitung_LK/">
+                            <span class="page-title">Vorbereitung LK</span>
+                            <span class="page-path">/Klasse7/LB2_Sprachen/Vorbereitung_LK/</span>
+                        </a>
+                    </div>
+                </details>
+
+                <details class="branch" open data-branch>
+                    <summary>LB3_Algorithmen</summary>
+                    <div class="branch-content">
+                        <a class="page-link" data-page data-search="klasse7 lb3 algorithmen grundstrukturen nf klasse7/lb3_algorithmen/(nf)grundstrukturen" href="Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/">
+                            <span class="page-title">(nf) Grundstrukturen</span>
+                            <span class="page-path">/Klasse7/LB3_Algorithmen/(nf)Grundstrukturen/</span>
+                        </a>
+                    </div>
+                </details>
+            </section>
+
+            <section class="tree-card" id="klasse11" data-section>
+                <div class="card-header">
+                    <div>
+                        <p class="section-label">Klasse 11</p>
+                        <h2>Theoretische Informatik</h2>
+                    </div>
+                    <span class="card-count">1 Seite</span>
+                </div>
+
+                <details class="branch" open data-branch>
+                    <summary>LB1_TI</summary>
+                    <div class="branch-content">
+                        <a class="page-link" data-page data-search="klasse11 lb1 ti theoretische grundlagen klasse11/lb1_ti/theoretische_grundlagen" href="Klasse11/LB1_TI/Theoretische_Grundlagen/">
+                            <span class="page-title">Theoretische Grundlagen</span>
+                            <span class="page-path">/Klasse11/LB1_TI/Theoretische_Grundlagen/</span>
+                        </a>
+                    </div>
+                </details>
+            </section>
+        </main>
+
+        <p class="empty-state" id="empty-state" hidden>
+            Keine Seite passt zur aktuellen Suche. Versuche einen Ordnernamen, eine Klasse oder einen Teil des Pfads.
+        </p>
+
+        <p class="footnote">
+            Nicht als HTML veroeffentlichte Projekte, zum Beispiel der VoiceAssistant unter Klasse11/LB6_AuS,
+            sind hier bewusst nicht verlinkt, weil sie nicht direkt ueber Github Pages im Browser laufen.
+        </p>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById("search");
+        const visibleCount = document.getElementById("visible-count");
+        const emptyState = document.getElementById("empty-state");
+        const pageLinks = [...document.querySelectorAll("[data-page]")];
+        const branches = [...document.querySelectorAll("[data-branch]")];
+        const sections = [...document.querySelectorAll("[data-section]")];
+
+        const updateVisibility = () => {
+            const query = searchInput.value.trim().toLowerCase();
+            let visiblePages = 0;
+
+            pageLinks.forEach((pageLink) => {
+                const haystack = pageLink.dataset.search || "";
+                const isMatch = !query || haystack.includes(query);
+
+                pageLink.hidden = !isMatch;
+                if (isMatch) {
+                    visiblePages += 1;
+                }
+            });
+
+            [...branches].reverse().forEach((branch) => {
+                const hasVisiblePage = branch.querySelector("[data-page]:not([hidden])");
+                branch.hidden = !hasVisiblePage;
+
+                if (query && hasVisiblePage) {
+                    branch.open = true;
+                }
+            });
+
+            sections.forEach((section) => {
+                const hasVisiblePage = section.querySelector("[data-page]:not([hidden])");
+                section.hidden = !hasVisiblePage;
+            });
+
+            visibleCount.textContent = String(visiblePages);
+            emptyState.hidden = visiblePages !== 0;
+        };
+
+        searchInput.addEventListener("input", updateVisibility);
+        updateVisibility();
+    </script>
+</body>
+</html>
