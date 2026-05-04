@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Übung Funktionen - Vom Punkt zum Rechteck</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">Klasse 7 · Algorithmen · Struktogramme</p>
+                <h1>Vom Punkt zum Rechteck</h1>
+                <p class="hero-text">
+                    In dieser Übung entsteht Schritt für Schritt ein Bild im Koordinatensystem:
+                    erst ein einzelner Punkt, dann eine Funktion, danach waagerechte und senkrechte
+                    Strecken und am Ende ein ganzes Rechteck.
+                </p>
+            </div>
+            <aside class="hero-panel">
+                <h2>So arbeitest du</h2>
+                <ol>
+                    <li>Links ergänzt du das Struktogramm.</li>
+                    <li>Du füllst Variablen oder Übergabeparameter aus.</li>
+                    <li>Rechts siehst du sofort die Folge im Koordinatensystem.</li>
+                </ol>
+            </aside>
+        </header>
+
+        <nav class="step-nav" aria-label="Stufen-Navigation">
+            <a href="#stage-1">1 Punkt ohne Funktion</a>
+            <a href="#stage-2">2 Punkt mit Funktion</a>
+            <a href="#stage-3">3 Waagerechte Strecke</a>
+            <a href="#stage-4">4 Senkrechte Strecke</a>
+            <a href="#stage-5">5 Rechteck</a>
+        </nav>
+
+        <main class="stages">
+            <section class="stage-card" id="stage-1" data-stage-tone="one">
+                <div class="stage-heading">
+                    <div>
+                        <p class="stage-number">Stufe 1</p>
+                        <h2>Punkt ohne Funktion</h2>
+                    </div>
+                    <p class="stage-description">
+                        Füge die drei Bausteine nacheinander hinzu: zwei Variablen und danach den Zeichenbefehl.
+                        Trage anschließend die Werte selbst ein.
+                    </p>
+                </div>
+
+                <div class="stage-layout">
+                    <div class="workspace-panel">
+                        <div class="panel-topline">
+                            <h3>Struktogramm aufbauen</h3>
+                            <button class="ghost-button" id="stage1-reset">Zurücksetzen</button>
+                        </div>
+
+                        <div class="builder-actions">
+                            <button class="action-button" id="stage1-add-x">1. Variable für x hinzufügen</button>
+                            <button class="action-button" id="stage1-add-y">2. Variable für y hinzufügen</button>
+                            <button class="action-button" id="stage1-add-point">3. Zeichenanweisung hinzufügen</button>
+                        </div>
+
+                        <div class="input-grid input-grid-two">
+                            <label>
+                                x_Koordinate
+                                <input type="number" id="stage1-x" min="0" max="10" step="1" placeholder="z. B. 4">
+                            </label>
+                            <label>
+                                y_Koordinate
+                                <input type="number" id="stage1-y" min="0" max="10" step="1" placeholder="z. B. 7">
+                            </label>
+                        </div>
+
+                        <div class="diagram-panel" id="diagram-stage1"></div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="panel-topline">
+                            <h3>Live-Vorschau</h3>
+                            <span class="legend-pill legend-pill-point">Ein Punkt</span>
+                        </div>
+                        <svg class="coordinate-board" id="board-stage1" aria-label="Koordinatensystem für Stufe 1"></svg>
+                        <div class="summary-box" id="summary-stage1"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stage-card" id="stage-2" data-stage-tone="two">
+                <div class="stage-heading">
+                    <div>
+                        <p class="stage-number">Stufe 2</p>
+                        <h2>Punkte mit Funktion</h2>
+                    </div>
+                    <p class="stage-description">
+                        Jetzt wird derselbe Zeichenauftrag mehrfach genutzt. Bestimme zuerst die beiden
+                        Übergabeparameter der Funktion und probiere danach verschiedene Funktionsaufrufe aus.
+                    </p>
+                </div>
+
+                <div class="stage-layout">
+                    <div class="workspace-panel">
+                        <div class="controls-group">
+                            <h3>Übergabeparameter der Funktion</h3>
+                            <div class="input-grid input-grid-two">
+                                <label>
+                                    Parameter 1
+                                    <input type="text" id="stage2-param1" maxlength="24" placeholder="z. B. x_Koordinate">
+                                </label>
+                                <label>
+                                    Parameter 2
+                                    <input type="text" id="stage2-param2" maxlength="24" placeholder="z. B. y_Koordinate">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="controls-group">
+                            <h3>Funktionsaufrufe ausprobieren</h3>
+                            <div class="call-stack">
+                                <div class="call-row call-row-a">
+                                    <span>Aufruf 1</span>
+                                    <label>x <input type="number" id="stage2-call1-x" min="0" max="10" step="1" value="2"></label>
+                                    <label>y <input type="number" id="stage2-call1-y" min="0" max="10" step="1" value="8"></label>
+                                </div>
+                                <div class="call-row call-row-b">
+                                    <span>Aufruf 2</span>
+                                    <label>x <input type="number" id="stage2-call2-x" min="0" max="10" step="1" value="5"></label>
+                                    <label>y <input type="number" id="stage2-call2-y" min="0" max="10" step="1" value="8"></label>
+                                </div>
+                                <div class="call-row call-row-c">
+                                    <span>Aufruf 3</span>
+                                    <label>x <input type="number" id="stage2-call3-x" min="0" max="10" step="1" value="8"></label>
+                                    <label>y <input type="number" id="stage2-call3-y" min="0" max="10" step="1" value="8"></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="diagram-panel" id="diagram-stage2"></div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="panel-topline">
+                            <h3>Live-Vorschau</h3>
+                            <div class="pill-row">
+                                <span class="legend-pill legend-pill-a">Aufruf 1</span>
+                                <span class="legend-pill legend-pill-b">Aufruf 2</span>
+                                <span class="legend-pill legend-pill-c">Aufruf 3</span>
+                            </div>
+                        </div>
+                        <svg class="coordinate-board" id="board-stage2" aria-label="Koordinatensystem für Stufe 2"></svg>
+                        <div class="summary-box" id="summary-stage2"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stage-card" id="stage-3" data-stage-tone="three">
+                <div class="stage-heading">
+                    <div>
+                        <p class="stage-number">Stufe 3</p>
+                        <h2>Waagerechte Strecke aus Punkten</h2>
+                    </div>
+                    <p class="stage-description">
+                        Die Funktion zeichnet viele Punkte auf derselben Höhe. Gib die Übergabeparameter an
+                        und beobachte, wie aus eng benachbarten Punkten eine waagerechte Strecke wird.
+                    </p>
+                </div>
+
+                <div class="stage-layout">
+                    <div class="workspace-panel">
+                        <div class="controls-group">
+                            <h3>Parameter der Funktion</h3>
+                            <div class="input-grid input-grid-three">
+                                <label>
+                                    Parameter 1
+                                    <input type="text" id="stage3-param1" maxlength="24" placeholder="z. B. x_Start">
+                                </label>
+                                <label>
+                                    Parameter 2
+                                    <input type="text" id="stage3-param2" maxlength="24" placeholder="z. B. x_Ziel">
+                                </label>
+                                <label>
+                                    Parameter 3
+                                    <input type="text" id="stage3-param3" maxlength="24" placeholder="z. B. y">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="controls-group">
+                            <h3>Funktionsaufruf</h3>
+                            <div class="input-grid input-grid-three">
+                                <label>
+                                    x_Start
+                                    <input type="number" id="stage3-start" min="0" max="10" step="0.5" value="3">
+                                </label>
+                                <label>
+                                    x_Ziel
+                                    <input type="number" id="stage3-end" min="0" max="10" step="0.5" value="6">
+                                </label>
+                                <label>
+                                    y
+                                    <input type="number" id="stage3-y" min="0" max="10" step="0.5" value="6">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="diagram-panel" id="diagram-stage3"></div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="panel-topline">
+                            <h3>Live-Vorschau</h3>
+                            <div class="pill-row">
+                                <span class="legend-pill legend-pill-point-seq">Einzelne Punkte</span>
+                                <span class="legend-pill legend-pill-line">Entstehende Strecke</span>
+                            </div>
+                        </div>
+                        <svg class="coordinate-board" id="board-stage3" aria-label="Koordinatensystem für Stufe 3"></svg>
+                        <div class="summary-box" id="summary-stage3"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stage-card" id="stage-4" data-stage-tone="four">
+                <div class="stage-heading">
+                    <div>
+                        <p class="stage-number">Stufe 4</p>
+                        <h2>Senkrechte Strecke aus Punkten</h2>
+                    </div>
+                    <p class="stage-description">
+                        Diese Funktion arbeitet genauso, nur jetzt bleibt x fest und y verändert sich.
+                        So entsteht eine senkrechte Strecke.
+                    </p>
+                </div>
+
+                <div class="stage-layout">
+                    <div class="workspace-panel">
+                        <div class="controls-group">
+                            <h3>Parameter der Funktion</h3>
+                            <div class="input-grid input-grid-three">
+                                <label>
+                                    Parameter 1
+                                    <input type="text" id="stage4-param1" maxlength="24" placeholder="z. B. x">
+                                </label>
+                                <label>
+                                    Parameter 2
+                                    <input type="text" id="stage4-param2" maxlength="24" placeholder="z. B. y_Start">
+                                </label>
+                                <label>
+                                    Parameter 3
+                                    <input type="text" id="stage4-param3" maxlength="24" placeholder="z. B. y_Ziel">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="controls-group">
+                            <h3>Funktionsaufruf</h3>
+                            <div class="input-grid input-grid-three">
+                                <label>
+                                    x
+                                    <input type="number" id="stage4-x" min="0" max="10" step="0.5" value="6">
+                                </label>
+                                <label>
+                                    y_Start
+                                    <input type="number" id="stage4-start" min="0" max="10" step="0.5" value="2">
+                                </label>
+                                <label>
+                                    y_Ziel
+                                    <input type="number" id="stage4-end" min="0" max="10" step="0.5" value="7">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="diagram-panel" id="diagram-stage4"></div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="panel-topline">
+                            <h3>Live-Vorschau</h3>
+                            <div class="pill-row">
+                                <span class="legend-pill legend-pill-point-seq">Einzelne Punkte</span>
+                                <span class="legend-pill legend-pill-line-vertical">Entstehende Strecke</span>
+                            </div>
+                        </div>
+                        <svg class="coordinate-board" id="board-stage4" aria-label="Koordinatensystem für Stufe 4"></svg>
+                        <div class="summary-box" id="summary-stage4"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="stage-card" id="stage-5" data-stage-tone="five">
+                <div class="stage-heading">
+                    <div>
+                        <p class="stage-number">Stufe 5</p>
+                        <h2>Rechteck aus vier Strecken</h2>
+                    </div>
+                    <p class="stage-description">
+                        Ein Rechteck besteht aus zwei waagerechten und zwei senkrechten Strecken. Ändere die
+                        Übergabeparameter und beobachte, wie sich alle vier Teilstrecken gemeinsam verändern.
+                    </p>
+                </div>
+
+                <div class="stage-layout">
+                    <div class="workspace-panel">
+                        <div class="controls-group">
+                            <h3>Parameter der Funktion</h3>
+                            <div class="input-grid input-grid-four">
+                                <label>
+                                    Parameter 1
+                                    <input type="text" id="stage5-param1" maxlength="24" placeholder="z. B. x">
+                                </label>
+                                <label>
+                                    Parameter 2
+                                    <input type="text" id="stage5-param2" maxlength="24" placeholder="z. B. y">
+                                </label>
+                                <label>
+                                    Parameter 3
+                                    <input type="text" id="stage5-param3" maxlength="24" placeholder="z. B. hoehe">
+                                </label>
+                                <label>
+                                    Parameter 4
+                                    <input type="text" id="stage5-param4" maxlength="24" placeholder="z. B. breite">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="controls-group">
+                            <h3>Funktionsaufruf</h3>
+                            <div class="input-grid input-grid-four">
+                                <label>
+                                    x
+                                    <input type="number" id="stage5-x" min="0" max="10" step="0.5" value="5">
+                                </label>
+                                <label>
+                                    y
+                                    <input type="number" id="stage5-y" min="0" max="10" step="0.5" value="5">
+                                </label>
+                                <label>
+                                    Höhe
+                                    <input type="number" id="stage5-height" min="0.5" max="10" step="0.5" value="1">
+                                </label>
+                                <label>
+                                    Breite
+                                    <input type="number" id="stage5-width" min="0.5" max="10" step="0.5" value="2">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="diagram-panel" id="diagram-stage5"></div>
+                    </div>
+
+                    <div class="preview-panel">
+                        <div class="panel-topline">
+                            <h3>Live-Vorschau</h3>
+                            <div class="pill-row pill-row-wrap">
+                                <span class="legend-pill legend-pill-top">Obere Strecke</span>
+                                <span class="legend-pill legend-pill-bottom">Untere Strecke</span>
+                                <span class="legend-pill legend-pill-left">Linke Strecke</span>
+                                <span class="legend-pill legend-pill-right">Rechte Strecke</span>
+                            </div>
+                        </div>
+                        <svg class="coordinate-board" id="board-stage5" aria-label="Koordinatensystem für Stufe 5"></svg>
+                        <div class="summary-box" id="summary-stage5"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
