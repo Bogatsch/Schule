@@ -1,0 +1,684 @@
+:root {
+  --ink: #101010;
+  --coal: #171a1c;
+  --paper: #f6f7f2;
+  --line: rgba(16, 16, 16, 0.16);
+  --white-line: rgba(255, 255, 255, 0.18);
+  --text-soft: rgba(255, 255, 255, 0.76);
+  --muted: #5d6468;
+  --red: #f04e37;
+  --cyan: #25c7d9;
+  --lime: #c8f05a;
+  --max: 1180px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0;
+  overflow-x: hidden;
+}
+
+img,
+iframe {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+.scroll-line {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 30;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), var(--cyan), var(--lime));
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px max(24px, calc((100% - var(--max)) / 2));
+  color: #ffffff;
+  transition: background-color 180ms ease, border-color 180ms ease, padding 180ms ease;
+}
+
+.site-header.is-scrolled {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  background: rgba(16, 16, 16, 0.86);
+  border-bottom: 1px solid var(--white-line);
+  backdrop-filter: blur(18px);
+}
+
+.brand,
+.site-nav {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
+    linear-gradient(0deg, transparent 46%, #ffffff 46% 54%, transparent 54%),
+    var(--red);
+  box-shadow: 8px 0 0 -3px var(--cyan);
+}
+
+.site-nav {
+  gap: 8px;
+}
+
+.site-nav a {
+  min-height: 40px;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.94rem;
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  outline: none;
+}
+
+.hero {
+  position: relative;
+  min-height: 88svh;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 140px max(24px, calc((100% - var(--max)) / 2)) 34px;
+  color: #ffffff;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgba(6, 6, 6, 0.86) 0%, rgba(6, 6, 6, 0.52) 34%, rgba(6, 6, 6, 0.18) 62%),
+    linear-gradient(180deg, rgba(6, 6, 6, 0.22) 0%, rgba(6, 6, 6, 0.14) 46%, rgba(6, 6, 6, 0.86) 100%),
+    url("assets/hero-cyclists.png") center center / cover no-repeat;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  height: 116px;
+  background:
+    repeating-linear-gradient(
+      112deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px,
+      transparent 18px
+    );
+  opacity: 0.8;
+}
+
+.hero-content {
+  width: min(680px, 100%);
+  padding-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: var(--red);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.hero h1,
+.section h2 {
+  margin: 0;
+  line-height: 0.94;
+  font-weight: 920;
+}
+
+.hero h1 {
+  max-width: 9ch;
+  font-size: 5.7rem;
+}
+
+.hero-kicker {
+  margin: 18px 0 0;
+  color: var(--cyan);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.hero-copy {
+  max-width: 560px;
+  margin: 18px 0 0;
+  color: var(--text-soft);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.button-primary {
+  background: var(--red);
+  color: #ffffff;
+  box-shadow: 0 18px 42px rgba(240, 78, 55, 0.32);
+}
+
+.button-secondary {
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.button-dark {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.hero-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  width: min(720px, 100%);
+  margin: 22px 0 0;
+  border: 1px solid var(--white-line);
+  border-radius: 6px;
+  background: var(--white-line);
+  overflow: hidden;
+}
+
+.hero-facts div {
+  min-height: 96px;
+  padding: 18px;
+  background: rgba(14, 14, 14, 0.46);
+  backdrop-filter: blur(16px);
+}
+
+.hero-facts dt {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.hero-facts dd {
+  margin: 0;
+  font-weight: 850;
+}
+
+.race-strip {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 18px;
+  overflow: hidden;
+  padding: 0 max(24px, calc((100% - var(--max)) / 2));
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.race-strip span {
+  position: relative;
+  flex: 0 0 auto;
+  padding-right: 30px;
+}
+
+.race-strip span::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--cyan);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.section {
+  padding: 92px max(24px, calc((100% - var(--max)) / 2));
+}
+
+.section-inner {
+  width: min(var(--max), 100%);
+  margin: 0 auto;
+}
+
+.section-light {
+  background:
+    linear-gradient(135deg, rgba(37, 199, 217, 0.09), transparent 42%),
+    var(--paper);
+}
+
+.section-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 0.88fr) minmax(280px, 0.72fr);
+  gap: 42px;
+  align-items: end;
+  margin-bottom: 34px;
+}
+
+.section h2 {
+  font-size: 3.4rem;
+}
+
+.section-heading p:not(.eyebrow),
+.vibe-copy p,
+.form-intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.feature-card {
+  min-height: 250px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.feature-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 28px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.feature-card h3 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.section-dark {
+  padding: 0;
+  background: var(--coal);
+  color: #ffffff;
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.82fr);
+  min-height: 620px;
+}
+
+.image-slice {
+  min-height: 620px;
+  background:
+    linear-gradient(90deg, rgba(23, 26, 28, 0.05), rgba(23, 26, 28, 0.34)),
+    url("assets/hero-cyclists.png") 63% center / cover no-repeat;
+}
+
+.vibe-copy {
+  align-self: center;
+  padding: 72px max(24px, calc((100vw - var(--max)) / 2)) 72px 64px;
+}
+
+.vibe-copy h2 {
+  max-width: 620px;
+  font-size: 3.25rem;
+}
+
+.vibe-copy p {
+  max-width: 570px;
+  margin-top: 22px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.vibe-list {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vibe-list li {
+  padding: 14px 0 14px 26px;
+  border-top: 1px solid var(--white-line);
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.55;
+  position: relative;
+}
+
+.vibe-list li::before {
+  content: "";
+  position: absolute;
+  top: 21px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--lime);
+  transform: rotate(45deg);
+}
+
+.section-form {
+  background:
+    linear-gradient(90deg, rgba(240, 78, 55, 0.12), transparent 38%),
+    #ffffff;
+}
+
+.form-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.46fr) minmax(0, 0.74fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.form-intro {
+  position: sticky;
+  top: 96px;
+}
+
+.form-intro h2 {
+  font-size: 3rem;
+}
+
+.form-intro p {
+  margin-top: 20px;
+}
+
+.form-intro .button {
+  margin-top: 28px;
+}
+
+.form-frame {
+  min-height: 760px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(16, 16, 16, 0.12);
+}
+
+.form-frame iframe {
+  width: 100%;
+  height: 820px;
+  border: 0;
+  background: #ffffff;
+}
+
+.site-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 28px max(24px, calc((100% - var(--max)) / 2));
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.site-footer span {
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.site-footer a {
+  text-decoration: none;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: #ffffff;
+  outline: none;
+}
+
+@media (max-width: 980px) {
+  .hero {
+    min-height: 86svh;
+  }
+
+  .hero h1 {
+    font-size: 4.25rem;
+  }
+
+  .hero-facts,
+  .feature-grid,
+  .section-heading,
+  .form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .image-slice {
+    min-height: 420px;
+  }
+
+  .vibe-copy {
+    padding: 64px 24px;
+  }
+
+  .form-intro {
+    position: static;
+  }
+}
+
+@media (max-width: 680px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 16px 16px;
+  }
+
+  .site-nav {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: auto;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .site-nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    font-size: 0.78rem;
+  }
+
+  .brand span:last-child {
+    display: none;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    min-height: 84svh;
+    padding: 116px 18px 22px;
+  }
+
+  .hero-content {
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .hero-copy {
+    max-width: 100%;
+  }
+
+  .hero-bg {
+    background:
+      linear-gradient(90deg, rgba(6, 6, 6, 0.88), rgba(6, 6, 6, 0.34)),
+      linear-gradient(180deg, rgba(6, 6, 6, 0.08), rgba(6, 6, 6, 0.9)),
+      url("assets/hero-cyclists.png") 62% center / cover no-repeat;
+  }
+
+  .hero h1 {
+    font-size: 3.15rem;
+  }
+
+  .hero-kicker {
+    font-size: 1.05rem;
+  }
+
+  .hero-copy {
+    font-size: 0.98rem;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .hero-facts {
+    display: none;
+  }
+
+  .race-strip {
+    padding-inline: 18px;
+  }
+
+  .section {
+    padding: 64px 18px;
+  }
+
+  .section h2,
+  .vibe-copy h2,
+  .form-intro h2 {
+    font-size: 2.25rem;
+  }
+
+  .feature-card {
+    min-height: 220px;
+    padding: 24px;
+  }
+
+  .image-slice {
+    min-height: 330px;
+  }
+
+  .form-frame {
+    min-height: 700px;
+  }
+
+  .form-frame iframe {
+    height: 760px;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero h1 {
+    font-size: 2.6rem;
+  }
+
+  .site-nav a {
+    font-size: 0.78rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
