@@ -1,0 +1,64 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  MAX_RECORDING_MS,
+  VIDEO_MIME_CANDIDATES,
+  formatPlaybackTime,
+  formatRecordingTime,
+  selectSupportedVideoMimeType
+} from '../media-utils.js';
+
+test('bevorzugt ein Safari-kompatibles MP4-Format', () => {
+  const checked = [];
+  const recorder = {
+    isTypeSupported(type) {
+      checked.push(type);
+      return type === 'video/mp4';
+    }
+  };
+
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
+  assert.deepEqual(checked, VIDEO_MIME_CANDIDATES.slice(0, 2));
+});
+
+test('fällt auf WebM zurück, wenn MP4 nicht verfügbar ist', () => {
+  const recorder = {
+    isTypeSupported: (type) => type === 'video/webm;codecs=vp8'
+  };
+
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm;codecs=vp8');
+});
+
+test('meldet ein nicht unterstütztes Aufnahmeformat', () => {
+  assert.equal(selectSupportedVideoMimeType({ isTypeSupported: () => false }), null);
+  assert.equal(selectSupportedVideoMimeType(null), null);
+  assert.equal(selectSupportedVideoMimeType({}), null);
+});
+
+test('überspringt Browserfehler bei der Formatprüfung', () => {
+  const recorder = {
+    isTypeSupported(type) {
+      if (type.startsWith('video/mp4')) {
+        throw new Error('nicht verfügbar');
+      }
+      return type === 'video/webm';
+    }
+  };
+
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm');
+});
+
+test('formatiert und begrenzt den Aufnahmezähler auf 20 Sekunden', () => {
+  assert.equal(MAX_RECORDING_MS, 20_000);
+  assert.equal(formatRecordingTime(0), '00:00.0');
+  assert.equal(formatRecordingTime(12_349), '00:12.3');
+  assert.equal(formatRecordingTime(99_999), '00:20.0');
+});
+
+test('formatiert Wiedergabezeiten verständlich', () => {
+  assert.equal(formatPlaybackTime(0), '0:00');
+  assert.equal(formatPlaybackTime(9.9), '0:09');
+  assert.equal(formatPlaybackTime(65), '1:05');
+  assert.equal(formatPlaybackTime(Number.NaN), '0:00');
+});

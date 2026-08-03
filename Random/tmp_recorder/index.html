@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#073b4c">
+    <meta name="color-scheme" content="light">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sportkamera">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
+    <title>Sportkamera – aufnehmen und direkt ansehen</title>
+    <meta name="description" content="Datensparsame Foto- und Videoaufnahme für direktes Bewegungsfeedback im Sportunterricht.">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body data-view="start">
+    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+
+    <div class="app-shell">
+      <header class="topbar" aria-label="App-Kopfzeile">
+        <div class="brand" aria-label="Sportkamera">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>
+            <strong>Sportkamera</strong>
+            <small>Direktes Bewegungsfeedback</small>
+          </span>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+        <section id="start-view" class="view start-view" aria-labelledby="start-title">
+          <div class="intro-copy">
+            <h1 id="start-title">Bewegung sehen.<br><span>Besser verstehen.</span></h1>
+            <p class="lead">Nimm ein Foto oder ein kurzes Video auf und sieh es dir sofort an – ohne Konto, Upload oder Speicherung.</p>
+
+            <aside class="privacy-card" role="note" aria-labelledby="privacy-title">
+              <span class="privacy-icon" aria-hidden="true">✓</span>
+              <div>
+                <h2 id="privacy-title">Deine Aufnahme bleibt hier</h2>
+                <p>Aufnahmen bleiben nur vorübergehend auf diesem Gerät. Sie werden nicht hochgeladen oder dauerhaft von dieser App gespeichert. Beim Verwerfen, bei einer neuen Aufnahme oder beim Verlassen der App wird die aktuelle Aufnahme entfernt.</p>
+              </div>
+            </aside>
+          </div>
+
+          <div class="mode-panel" aria-labelledby="mode-title">
+            <div class="step-label"><span>1</span> Aufnahmeart wählen</div>
+            <h2 id="mode-title">Was möchtest du aufnehmen?</h2>
+            <div class="mode-grid">
+              <button class="mode-card photo-card" type="button" data-start-mode="photo">
+                <span class="mode-icon photo-icon" aria-hidden="true"><span></span></span>
+                <span class="mode-text"><strong>Foto</strong><small>Ein einzelner Moment</small></span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </button>
+              <button class="mode-card video-card" type="button" data-start-mode="video">
+                <span class="mode-icon video-icon" aria-hidden="true"><span></span></span>
+                <span class="mode-text"><strong>Video</strong><small>Bis zu 20 Sekunden · ohne Ton</small></span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+            <p id="environment-status" class="environment-status" role="status" aria-live="polite">Die Kamera wird erst nach deiner Auswahl aktiviert.</p>
+          </div>
+        </section>
+
+        <section id="camera-view" class="view camera-view" aria-labelledby="camera-title" hidden>
+          <div class="view-toolbar">
+            <button id="camera-back" class="text-button" type="button">
+              <span aria-hidden="true">←</span> Zurück
+            </button>
+            <div class="mode-switch" role="group" aria-label="Aufnahmeart">
+              <button type="button" data-camera-mode="photo" aria-pressed="true">Foto</button>
+              <button type="button" data-camera-mode="video" aria-pressed="false">Video</button>
+            </div>
+            <button id="switch-camera" class="text-button align-right" type="button" aria-label="Zwischen Front- und Rückkamera wechseln">
+              Kamera wechseln <span aria-hidden="true">↻</span>
+            </button>
+          </div>
+
+          <div class="camera-heading">
+            <div>
+              <p class="eyebrow" id="camera-kicker">Fotoaufnahme</p>
+              <h1 id="camera-title">Kamera ausrichten</h1>
+            </div>
+            <p id="camera-facing-label" class="camera-facing-label">Rückkamera</p>
+          </div>
+
+          <div id="camera-stage" class="camera-stage" aria-busy="true">
+            <video id="live-video" autoplay muted playsinline aria-label="Livebild der Kamera"></video>
+            <div id="camera-placeholder" class="camera-placeholder" role="status">
+              <span class="spinner" aria-hidden="true"></span>
+              <span>Kamera wird gestartet …</span>
+            </div>
+            <div id="recording-indicator" class="recording-indicator" role="timer" aria-live="off" hidden>
+              <span class="recording-dot" aria-hidden="true"></span>
+              <span>AUFNAHME</span>
+              <strong id="recording-time">00:00.0</strong>
+            </div>
+          </div>
+
+          <div class="capture-controls">
+            <p id="camera-status" class="camera-status" role="status" aria-live="polite">Kamera wird vorbereitet.</p>
+            <button id="capture-button" class="capture-button" type="button" aria-label="Foto aufnehmen" disabled>
+              <span class="capture-button-inner" aria-hidden="true"></span>
+            </button>
+            <p id="capture-hint" class="capture-hint">Tippe auf den Kreis, um ein Foto aufzunehmen.</p>
+          </div>
+        </section>
+
+        <section id="preview-view" class="view preview-view" aria-labelledby="preview-title" hidden>
+          <div class="view-toolbar preview-toolbar">
+            <button id="preview-back" class="text-button" type="button">
+              <span aria-hidden="true">←</span> Zurück
+            </button>
+            <p class="preview-label">Vorschau</p>
+            <span class="toolbar-spacer" aria-hidden="true"></span>
+          </div>
+
+          <div class="preview-heading">
+            <p class="eyebrow" id="preview-kicker">Aufnahme fertig</p>
+            <h1 id="preview-title">Sieh dir deine Bewegung an</h1>
+          </div>
+
+          <div class="preview-stage">
+            <img id="photo-preview" alt="" draggable="false" hidden>
+            <video id="video-preview" playsinline muted preload="metadata" aria-label="Aufgenommenes Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture hidden></video>
+          </div>
+
+          <div id="playback-controls" class="playback-controls" aria-label="Videowiedergabe" hidden>
+            <button id="play-button" class="play-button" type="button" aria-label="Video starten">
+              <span aria-hidden="true">▶</span><span>Start</span>
+            </button>
+            <div class="timeline-wrap">
+              <label class="visually-hidden" for="timeline">Wiedergabeposition</label>
+              <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
+              <output id="playback-time" for="timeline">0:00 / 0:00</output>
+            </div>
+            <fieldset class="speed-control">
+              <legend>Tempo</legend>
+              <div role="group" aria-label="Wiedergabegeschwindigkeit">
+                <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
+                <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
+                <button type="button" data-speed="1" aria-pressed="true">1×</button>
+              </div>
+            </fieldset>
+          </div>
+
+          <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
+
+          <div class="preview-actions">
+            <button id="discard-button" class="secondary-action danger-action" type="button">
+              <span aria-hidden="true">×</span> Aufnahme verwerfen
+            </button>
+            <button id="new-recording-button" class="primary-action" type="button">
+              Neue Aufnahme <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </section>
+
+        <section id="error-view" class="view error-view" aria-labelledby="error-title" hidden>
+          <div class="error-card" role="alert">
+            <span class="error-symbol" aria-hidden="true">!</span>
+            <p class="eyebrow">Kamera nicht verfügbar</p>
+            <h1 id="error-title">Das hat noch nicht geklappt</h1>
+            <p id="error-message">Die Kamera konnte nicht gestartet werden.</p>
+            <div class="error-actions">
+              <button id="retry-button" class="primary-action" type="button">Erneut versuchen</button>
+              <button id="error-home-button" class="secondary-action" type="button">Zur Startseite</button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="persistent-privacy">
+        <span aria-hidden="true">✓</span>
+        <p><strong>Privat und flüchtig:</strong> Aufnahmen bleiben nur vorübergehend auf diesem Gerät. Sie werden nicht hochgeladen oder dauerhaft von dieser App gespeichert. Beim Verwerfen, bei einer neuen Aufnahme oder beim Verlassen der App wird die aktuelle Aufnahme entfernt.</p>
+      </footer>
+    </div>
+
+    <canvas id="capture-canvas" aria-hidden="true" hidden></canvas>
+    <noscript>Diese Anwendung benötigt JavaScript, um auf die Kamera zuzugreifen.</noscript>
+  </body>
+</html>
