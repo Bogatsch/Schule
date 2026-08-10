@@ -335,6 +335,7 @@ try {
     secure: window.isSecureContext,
     photoButtons: document.querySelectorAll('[data-start-mode="photo"]').length,
     videoButtons: document.querySelectorAll('[data-start-mode="video"]').length,
+    guideLinks: document.querySelectorAll('.guide-entry').length,
     externalResources: [...document.querySelectorAll('[src],[href]')]
       .map((node) => node.src || node.href)
       .filter((url) => /^https?:/.test(url) && !url.startsWith(location.origin)),
@@ -345,11 +346,21 @@ try {
   assert.equal(initial.secure, true);
   assert.equal(initial.photoButtons, 1);
   assert.equal(initial.videoButtons, 1);
+  assert.equal(initial.guideLinks, 1);
   assert.deepEqual(initial.externalResources, []);
   assert.equal(initial.horizontalOverflow, false);
   results.push('Startansicht, HTTPS/localhost-Kontext und lokale Ressourcen');
 
   const portraitScreenshot = await screenshot('start-portrait.png');
+
+  await click('.guide-entry');
+  await waitFor(`document.title === 'Leitbilder | Sportkamera'
+    && document.querySelectorAll('[data-category]').length === 2`);
+  await click('[data-category="individualsportarten"]');
+  await waitFor(`!document.querySelector('[data-category-content="individualsportarten"]').hidden`);
+  await click('.guides-back');
+  await waitFor(`document.title === 'Sportkamera' && document.body.dataset.view === 'start'`);
+  results.push('Leitbilder-Seite mit Individual- und Spielsportarten');
 
   await click('[data-start-mode="photo"]');
   await waitFor(`document.body.dataset.view === 'camera'

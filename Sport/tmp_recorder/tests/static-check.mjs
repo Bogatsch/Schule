@@ -14,6 +14,9 @@ const requiredFiles = [
   'manifest.webmanifest',
   'sw.js',
   'README.md',
+  'pages/leitbilder/index.html',
+  'pages/leitbilder/styles.css',
+  'pages/leitbilder/app.js',
   'icons/favicon-64.png',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
@@ -40,12 +43,15 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, worker, styles, manifestText] = await Promise.all([
+const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('sw.js'),
   read('styles.css'),
-  read('manifest.webmanifest')
+  read('manifest.webmanifest'),
+  read('pages/leitbilder/index.html'),
+  read('pages/leitbilder/styles.css'),
+  read('pages/leitbilder/app.js')
 ]);
 const manifest = JSON.parse(manifestText);
 
@@ -57,6 +63,14 @@ assert.doesNotMatch(html, /Bewegung sehen|Deine Aufnahme bleibt hier|Aufnahmen b
 assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteuerung ist verboten');
 assert.doesNotMatch(html, /\sdownload(?:\s|=|>)/i, 'Download-Funktion ist verboten');
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
+assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite fehlt');
+
+assert.match(guidesHtml, /Content-Security-Policy/i, 'CSP der Leitbilder-Seite fehlt');
+assert.match(guidesHtml, /Individualsportarten/, 'Auswahl für Individualsportarten fehlt');
+assert.match(guidesHtml, /Spielsportarten/, 'Auswahl für Spielsportarten fehlt');
+assert.doesNotMatch(guidesHtml, /https?:\/\//i, 'Leitbilder-Seite enthält eine externe Ressource');
+assert.doesNotMatch(guidesApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Leitbilder-Code enthält eine Netzwerk- oder Speicher-API');
+assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Leitbilder-Seite fehlt');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');

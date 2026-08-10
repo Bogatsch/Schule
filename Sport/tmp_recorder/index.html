@@ -34,22 +34,33 @@
 
       <main id="main-content" tabindex="-1">
         <section id="start-view" class="view start-view" aria-labelledby="mode-title">
-          <div class="mode-panel" aria-labelledby="mode-title">
-            <div class="step-label"><span>1</span> Aufnahmeart wählen</div>
-            <h2 id="mode-title">Was möchtest du aufnehmen?</h2>
-            <div class="mode-grid">
-              <button class="mode-card photo-card" type="button" data-start-mode="photo">
-                <span class="mode-icon photo-icon" aria-hidden="true"><span></span></span>
-                <span class="mode-text"><strong>Foto</strong><small>Ein einzelner Moment</small></span>
-                <span class="arrow" aria-hidden="true">→</span>
-              </button>
-              <button class="mode-card video-card" type="button" data-start-mode="video">
-                <span class="mode-icon video-icon" aria-hidden="true"><span></span></span>
-                <span class="mode-text"><strong>Video</strong><small>Bis zu 3 Minuten · ohne Ton</small></span>
-                <span class="arrow" aria-hidden="true">→</span>
-              </button>
+          <div class="start-content">
+            <div class="mode-panel" aria-labelledby="mode-title">
+              <div class="step-label"><span>1</span> Aufnahmeart wählen</div>
+              <h2 id="mode-title">Was möchtest du aufnehmen?</h2>
+              <div class="mode-grid">
+                <button class="mode-card photo-card" type="button" data-start-mode="photo">
+                  <span class="mode-icon photo-icon" aria-hidden="true"><span></span></span>
+                  <span class="mode-text"><strong>Foto</strong><small>Ein einzelner Moment</small></span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </button>
+                <button class="mode-card video-card" type="button" data-start-mode="video">
+                  <span class="mode-icon video-icon" aria-hidden="true"><span></span></span>
+                  <span class="mode-text"><strong>Video</strong><small>Bis zu 3 Minuten · ohne Ton</small></span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </button>
+              </div>
+              <p id="environment-status" class="environment-status" role="status" aria-live="polite"></p>
             </div>
-            <p id="environment-status" class="environment-status" role="status" aria-live="polite"></p>
+
+            <a class="guide-entry" href="./pages/leitbilder/index.html">
+              <span class="guide-entry-icon" aria-hidden="true">▶</span>
+              <span class="guide-entry-text">
+                <strong>Leitbilder ansehen</strong>
+                <small>Individual- und Spielsportarten</small>
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </a>
           </div>
         </section>
 
