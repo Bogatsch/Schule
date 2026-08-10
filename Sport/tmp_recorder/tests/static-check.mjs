@@ -17,10 +17,10 @@ const requiredFiles = [
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
-  'pages/leitbilder/basketball/index.html',
-  'pages/leitbilder/basketball/angriffsschlag/index.html',
-  'pages/leitbilder/basketball/angriffsschlag/app.js',
-  'Videos/Spielsportarten/Basketball/Angriffsschlag/Angriffschlag.mp4',
+  'pages/leitbilder/volleyball/index.html',
+  'pages/leitbilder/volleyball/angriffsschlag/index.html',
+  'pages/leitbilder/volleyball/angriffsschlag/app.js',
+  'Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
   'icons/favicon-64.png',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
@@ -47,7 +47,7 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, basketballHtml, playerHtml, playerApp] = await Promise.all([
+const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('sw.js'),
@@ -56,9 +56,9 @@ const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guides
   read('pages/leitbilder/index.html'),
   read('pages/leitbilder/styles.css'),
   read('pages/leitbilder/app.js'),
-  read('pages/leitbilder/basketball/index.html'),
-  read('pages/leitbilder/basketball/angriffsschlag/index.html'),
-  read('pages/leitbilder/basketball/angriffsschlag/app.js')
+  read('pages/leitbilder/volleyball/index.html'),
+  read('pages/leitbilder/volleyball/angriffsschlag/index.html'),
+  read('pages/leitbilder/volleyball/angriffsschlag/app.js')
 ]);
 const manifest = JSON.parse(manifestText);
 
@@ -71,23 +71,33 @@ assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteue
 assert.doesNotMatch(html, /\sdownload(?:\s|=|>)/i, 'Download-Funktion ist verboten');
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
 assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite fehlt');
+assert.match(html, /id="comparison-button"/, 'Button für den Leitbildvergleich fehlt');
+assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4"/, 'Leitbildauswahl für den Vergleich fehlt');
+assert.match(html, /id="comparison-play-button"/, 'eigene Start-/Pause-Taste des Leitbilds fehlt');
+assert.match(html, /id="comparison-timeline"/, 'eigene Zeitleiste des Leitbilds fehlt');
+assert.match(html, /styles\.css\?v=14/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=14/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
+assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
+assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Leitbilds fehlt');
+assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
 
 assert.match(guidesHtml, /Content-Security-Policy/i, 'CSP der Leitbilder-Seite fehlt');
 assert.match(guidesHtml, /Individualsportarten/, 'Auswahl für Individualsportarten fehlt');
 assert.match(guidesHtml, /Spielsportarten/, 'Auswahl für Spielsportarten fehlt');
-assert.match(guidesHtml, /data-sport="basketball"/, 'Basketball-Auswahl fehlt');
-assert.match(guidesHtml, /href="\.\/basketball\/index\.html"/, 'Basketball-Link zur Leitbilderliste fehlt');
+assert.match(guidesHtml, /data-sport="volleyball"/, 'Volleyball-Auswahl fehlt');
+assert.match(guidesHtml, /href="\.\/volleyball\/index\.html"/, 'Volleyball-Link zur Leitbilderliste fehlt');
 assert.doesNotMatch(guidesHtml, /https?:\/\//i, 'Leitbilder-Seite enthält eine externe Ressource');
 assert.doesNotMatch(guidesApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Leitbilder-Code enthält eine Netzwerk- oder Speicher-API');
 assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Leitbilder-Seite fehlt');
 
-assert.match(basketballHtml, /Content-Security-Policy/i, 'CSP der Basketball-Seite fehlt');
-assert.match(basketballHtml, /data-guide="angriffsschlag"/, 'Angriffsschlag fehlt in der Leitbilderliste');
-assert.match(basketballHtml, /href="\.\/angriffsschlag\/index\.html"/, 'Link zum Angriffsschlag-Player fehlt');
-assert.doesNotMatch(basketballHtml, /https?:\/\//i, 'Basketball-Seite enthält eine externe Ressource');
+assert.match(volleyballHtml, /Content-Security-Policy/i, 'CSP der Volleyball-Seite fehlt');
+assert.match(volleyballHtml, /data-guide="angriffsschlag"/, 'Angriffsschlag fehlt in der Leitbilderliste');
+assert.match(volleyballHtml, /href="\.\/angriffsschlag\/index\.html"/, 'Link zum Angriffsschlag-Player fehlt');
+assert.doesNotMatch(volleyballHtml, /https?:\/\//i, 'Volleyball-Seite enthält eine externe Ressource');
 
 assert.match(playerHtml, /Content-Security-Policy/i, 'CSP der Player-Seite fehlt');
-assert.match(playerHtml, /Videos\/Spielsportarten\/Basketball\/Angriffsschlag\/Angriffschlag\.mp4/, 'Basketball-Leitbild fehlt');
+assert.match(playerHtml, /Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4/, 'Volleyball-Leitbild fehlt');
 assert.match(playerHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiedergabe fehlt');
 assert.match(playerHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
 assert.match(playerHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');

@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js"></script>
+    <link rel="stylesheet" href="./styles.css?v=14">
+    <script type="module" src="./app.js?v=14"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -122,28 +122,81 @@
             <h1 id="preview-title">Sieh dir deine Bewegung an</h1>
           </div>
 
-          <div class="preview-stage">
+          <div id="preview-stage" class="preview-stage">
             <img id="photo-preview" alt="" draggable="false" hidden>
-            <video id="video-preview" playsinline muted preload="metadata" aria-label="Aufgenommenes Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture hidden></video>
+            <div id="own-video-pane" class="preview-pane" hidden>
+              <span class="preview-pane-label">Eigene Aufnahme</span>
+              <video id="video-preview" playsinline muted preload="metadata" aria-label="Aufgenommenes Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture hidden></video>
+            </div>
+            <div id="comparison-pane" class="preview-pane" hidden>
+              <span id="comparison-pane-label" class="preview-pane-label">Leitbild</span>
+              <video id="comparison-video" playsinline preload="metadata" aria-label="Ausgewähltes Leitbild-Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture></video>
+            </div>
           </div>
 
-          <div id="playback-controls" class="playback-controls" aria-label="Videowiedergabe" hidden>
-            <button id="play-button" class="play-button" type="button" aria-label="Video starten">
-              <span aria-hidden="true">▶</span><span>Start</span>
-            </button>
-            <div class="timeline-wrap">
-              <label class="visually-hidden" for="timeline">Wiedergabeposition</label>
-              <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
-              <output id="playback-time" for="timeline">0:00 / 0:00</output>
-            </div>
-            <fieldset class="speed-control">
-              <legend>Tempo</legend>
-              <div role="group" aria-label="Wiedergabegeschwindigkeit">
-                <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
-                <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
-                <button type="button" data-speed="1" aria-pressed="true">1×</button>
+          <div id="preview-player-grid" class="preview-player-grid">
+            <div id="playback-controls" class="playback-controls" aria-label="Wiedergabe der eigenen Aufnahme" hidden>
+              <p class="player-control-label">Eigene Aufnahme</p>
+              <button id="play-button" class="play-button" type="button" aria-label="Eigene Aufnahme starten">
+                <span aria-hidden="true">▶</span><span>Start</span>
+              </button>
+              <div class="timeline-wrap">
+                <label class="visually-hidden" for="timeline">Wiedergabeposition der eigenen Aufnahme</label>
+                <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
+                <output id="playback-time" for="timeline">0:00 / 0:00</output>
               </div>
-            </fieldset>
+              <fieldset class="speed-control">
+                <legend>Tempo</legend>
+                <div role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
+                  <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
+                  <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
+                  <button type="button" data-speed="1" aria-pressed="true">1×</button>
+                </div>
+              </fieldset>
+            </div>
+
+            <div id="comparison-playback-controls" class="playback-controls" aria-label="Wiedergabe des Leitbilds" hidden>
+              <p id="comparison-player-label" class="player-control-label">Leitbild</p>
+              <button id="comparison-play-button" class="play-button" type="button" aria-label="Leitbild starten">
+                <span aria-hidden="true">▶</span><span>Start</span>
+              </button>
+              <div class="timeline-wrap">
+                <label class="visually-hidden" for="comparison-timeline">Wiedergabeposition des Leitbilds</label>
+                <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
+                <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
+              </div>
+              <fieldset class="speed-control">
+                <legend>Tempo</legend>
+                <div role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
+                  <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
+                  <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
+                  <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+
+          <div id="comparison-controls" class="comparison-controls" hidden>
+            <button id="comparison-button" class="secondary-action comparison-button" type="button" aria-expanded="false" aria-controls="comparison-picker">
+              <span aria-hidden="true">◫</span>
+              <span id="comparison-button-label">Leitbild daneben</span>
+            </button>
+
+            <div id="comparison-picker" class="comparison-picker" hidden>
+              <p>Leitbild auswählen</p>
+              <button class="comparison-option" type="button" data-comparison-src="./Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4" data-comparison-title="Volleyball · Angriffsschlag">
+                <span>
+                  <strong>Angriffsschlag</strong>
+                  <small>Volleyball</small>
+                </span>
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+
+            <div id="comparison-active" class="comparison-active" hidden>
+              <span><strong>Daneben:</strong> <span id="comparison-active-label"></span></span>
+              <button id="comparison-remove" type="button">Entfernen</button>
+            </div>
           </div>
 
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
