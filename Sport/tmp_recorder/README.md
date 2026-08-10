@@ -64,7 +64,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 ## Bedienung
 
 - **Foto** erstellt einen einzelnen Schnappschuss über Canvas.
-- **Video** zeichnet maximal 20 Sekunden ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher.
+- **Video** zeichnet maximal 3 Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
 - In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle Aufnahme vor dem Ansichtswechsel.
@@ -78,7 +78,7 @@ Eine echte iPad-Kamera und Safari-Berechtigungsdialoge lassen sich nicht zuverl�
 2. Rück- und Frontkamera jeweils im Hoch- und Querformat; Frontbild und Fotoausrichtung vergleichen.
 3. Foto aufnehmen, anzeigen, verwerfen und mehrere Fotos nacheinander erstellen.
 4. Video manuell stoppen, abspielen, pausieren und mit 0,25×, 0,5× sowie 1× betrachten.
-5. Eine Videoaufnahme laufen lassen und prüfen, dass sie bei 20 Sekunden automatisch endet.
+5. Eine Videoaufnahme laufen lassen und prüfen, dass sie bei 3 Minuten automatisch endet.
 6. Während Livebild, laufender Aufnahme und Vorschau jeweils zum Home-Bildschirm wechseln; bei der Rückkehr muss die App sicher auf der Startansicht stehen und die Aufnahme entfernt sein.
 7. Seite mit einer Vorschau neu laden; keine Aufnahme darf wieder erscheinen.
 8. Nach einmaligem vollständigem Online-Start die Web-App schließen, die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.

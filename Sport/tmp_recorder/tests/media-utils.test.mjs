@@ -49,11 +49,12 @@ test('überspringt Browserfehler bei der Formatprüfung', () => {
   assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm');
 });
 
-test('formatiert und begrenzt den Aufnahmezähler auf 20 Sekunden', () => {
-  assert.equal(MAX_RECORDING_MS, 20_000);
+test('formatiert und begrenzt den Aufnahmezähler auf 3 Minuten', () => {
+  assert.equal(MAX_RECORDING_MS, 180_000);
   assert.equal(formatRecordingTime(0), '00:00.0');
   assert.equal(formatRecordingTime(12_349), '00:12.3');
-  assert.equal(formatRecordingTime(99_999), '00:20.0');
+  assert.equal(formatRecordingTime(99_999), '01:39.9');
+  assert.equal(formatRecordingTime(999_999), '03:00.0');
 });
 
 test('formatiert Wiedergabezeiten verständlich', () => {

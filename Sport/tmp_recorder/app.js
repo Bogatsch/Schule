@@ -81,7 +81,7 @@ function setModeUI() {
   });
 
   const isPhoto = currentMode === 'photo';
-  elements.cameraKicker.textContent = isPhoto ? 'Fotoaufnahme' : 'Videoaufnahme · maximal 20 Sekunden';
+  elements.cameraKicker.textContent = isPhoto ? 'Fotoaufnahme' : 'Videoaufnahme · maximal 3 Minuten';
   elements.cameraTitle.textContent = isPhoto ? 'Kamera ausrichten' : 'Bewegung vorbereiten';
   elements.captureButton.setAttribute('aria-label', isPhoto ? 'Foto aufnehmen' : 'Videoaufnahme starten');
   elements.captureHint.textContent = isPhoto
@@ -408,7 +408,7 @@ function stopVideoRecording(reason = 'manual') {
   elements.captureButton.classList.remove('recording');
   elements.captureButton.setAttribute('aria-label', 'Videoaufnahme wird beendet');
   elements.cameraStatus.textContent = reason === 'limit'
-    ? '20 Sekunden erreicht. Video wird vorbereitet …'
+    ? '3 Minuten erreicht. Video wird vorbereitet …'
     : 'Video wird vorbereitet …';
   mediaRecorder.stop();
 }

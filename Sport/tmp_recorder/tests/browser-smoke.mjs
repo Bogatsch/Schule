@@ -414,9 +414,9 @@ try {
   await waitFor(`document.body.dataset.view === 'camera' && !document.querySelector('#capture-button').disabled`);
   await click('#capture-button');
   await waitFor(`!document.querySelector('#recording-indicator').hidden`);
-  await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 23_000);
-  assert.equal(await evaluate(`document.querySelector('#recording-time').textContent`), '00:20.0');
-  results.push('Automatisches Aufnahmeende nach 20 Sekunden');
+  await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 183_000);
+  assert.equal(await evaluate(`document.querySelector('#recording-time').textContent`), '03:00.0');
+  results.push('Automatisches Aufnahmeende nach 3 Minuten');
 
   await click('#new-recording-button');
   await waitFor(`document.body.dataset.view === 'camera' && !document.querySelector('#capture-button').disabled`);
