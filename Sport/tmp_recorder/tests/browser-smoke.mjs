@@ -494,11 +494,11 @@ try {
   const landscapeLayout = await evaluate(`({
     overflow: document.documentElement.scrollWidth > innerWidth,
     startColumns: getComputedStyle(document.querySelector('#start-view')).gridTemplateColumns,
-    privacyVisible: !document.querySelector('.privacy-card').hidden
+    modePanelWidth: document.querySelector('.mode-panel').getBoundingClientRect().width
   })`);
   assert.equal(landscapeLayout.overflow, false);
   assert.notEqual(landscapeLayout.startColumns, 'none');
-  assert.equal(landscapeLayout.privacyVisible, true);
+  assert.ok(landscapeLayout.modePanelWidth > 0 && landscapeLayout.modePanelWidth <= 680);
   const landscapeScreenshot = await screenshot('start-landscape.png');
   await click('[data-start-mode="photo"]');
   await waitFor(`document.body.dataset.view === 'camera'

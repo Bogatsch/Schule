@@ -53,7 +53,7 @@ assert.match(html, /Content-Security-Policy/i, 'CSP fehlt');
 assert.match(html, /connect-src 'none'/, 'CSP muss externe Verbindungen sperren');
 assert.match(html, /media-src 'self' blob:/, 'CSP muss nur lokale Blob-Medien erlauben');
 assert.match(html, /apple-mobile-web-app-capable/, 'Apple-PWA-Metadaten fehlen');
-assert.match(html, /Aufnahmen bleiben nur vorübergehend auf diesem Gerät/, 'Datenschutzhinweis fehlt');
+assert.doesNotMatch(html, /Bewegung sehen|Deine Aufnahme bleibt hier|Aufnahmen bleiben nur vorübergehend/, 'entfernter Einleitungstext ist noch vorhanden');
 assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteuerung ist verboten');
 assert.doesNotMatch(html, /\sdownload(?:\s|=|>)/i, 'Download-Funktion ist verboten');
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
