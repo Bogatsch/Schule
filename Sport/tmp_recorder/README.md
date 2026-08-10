@@ -67,6 +67,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - **Video** zeichnet maximal 3 Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
 - In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
+- Unter **Leitbilder ansehen → Spielsportarten → Basketball** steht eine Liste der Leitbilder. Das Leitbild **Angriffsschlag** öffnet einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle Aufnahme vor dem Ansichtswechsel.
 - Beim Wechsel in den Hintergrund, Neuladen oder Verlassen wird die aktuelle Aufnahme ebenfalls entfernt. Eine frühere Aufnahme wird nach dem Laden nie wiederhergestellt.
 
@@ -93,6 +94,8 @@ Die automatische Prüfung des nicht unterstützten Aufnahmeformats erfolgt über
 - `styles.css` – responsive Touch-Gestaltung für Hoch- und Querformat samt Safe Areas
 - `app.js` – Kamera, Aufnahme, Wiedergabe und zentrale temporäre Medienbereinigung
 - `media-utils.js` – getestete Formatauswahl und Zeitformatierung
+- `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
+- `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos
 - `manifest.webmanifest` und `icons/` – Installation als PWA und Apple-Touch-Icon
 - `sw.js` – versionierter Offline-Cache ausschließlich für statische App-Dateien
 - `tests/` – automatisierte Funktions-, Datenschutz- und PWA-Prüfungen

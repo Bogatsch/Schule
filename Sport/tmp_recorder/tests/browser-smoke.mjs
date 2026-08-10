@@ -356,10 +356,21 @@ try {
   await click('.guide-entry');
   await waitFor(`document.title === 'Leitbilder | Sportkamera'
     && document.querySelectorAll('[data-category]').length === 2`);
-  await click('[data-category="individualsportarten"]');
-  await waitFor(`!document.querySelector('[data-category-content="individualsportarten"]').hidden`);
-  await click('[data-sport="volleyball"]');
-  await waitFor(`!document.querySelector('[data-sport-content="volleyball"]').hidden`);
+  await click('[data-category="spielsportarten"]');
+  await waitFor(`!document.querySelector('[data-category-content="spielsportarten"]').hidden`);
+  await click('[data-sport="basketball"]');
+  await waitFor(`document.title === 'Basketball | Sportkamera'
+    && document.querySelectorAll('[data-guide]').length >= 1`);
+  await click('[data-guide="angriffsschlag"]');
+  await waitFor(`document.title === 'Angriffsschlag | Sportkamera'
+    && document.querySelector('#guide-video').readyState >= 1`);
+  await click('[data-guide-speed="0.5"]');
+  assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
+  await click('.video-back');
+  await waitFor(`document.title === 'Basketball | Sportkamera'`);
+  await click('.sport-back');
+  await waitFor(`document.title === 'Leitbilder | Sportkamera'
+    && !document.querySelector('[data-category-content="spielsportarten"]').hidden`);
   await click('.guides-back');
   await waitFor(`document.title === 'Sportkamera' && document.body.dataset.view === 'start'`);
   results.push('Leitbilder-Seite mit Individual- und Spielsportarten');

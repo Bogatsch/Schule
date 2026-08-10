@@ -17,6 +17,10 @@ const requiredFiles = [
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
+  'pages/leitbilder/basketball/index.html',
+  'pages/leitbilder/basketball/angriffsschlag/index.html',
+  'pages/leitbilder/basketball/angriffsschlag/app.js',
+  'Videos/Spielsportarten/Basketball/Angriffsschlag/Angriffschlag.mp4',
   'icons/favicon-64.png',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
@@ -43,7 +47,7 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp] = await Promise.all([
+const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, basketballHtml, playerHtml, playerApp] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('sw.js'),
@@ -51,7 +55,10 @@ const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guides
   read('manifest.webmanifest'),
   read('pages/leitbilder/index.html'),
   read('pages/leitbilder/styles.css'),
-  read('pages/leitbilder/app.js')
+  read('pages/leitbilder/app.js'),
+  read('pages/leitbilder/basketball/index.html'),
+  read('pages/leitbilder/basketball/angriffsschlag/index.html'),
+  read('pages/leitbilder/basketball/angriffsschlag/app.js')
 ]);
 const manifest = JSON.parse(manifestText);
 
@@ -68,11 +75,26 @@ assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite 
 assert.match(guidesHtml, /Content-Security-Policy/i, 'CSP der Leitbilder-Seite fehlt');
 assert.match(guidesHtml, /Individualsportarten/, 'Auswahl für Individualsportarten fehlt');
 assert.match(guidesHtml, /Spielsportarten/, 'Auswahl für Spielsportarten fehlt');
-assert.match(guidesHtml, /data-sport="volleyball"/, 'Volleyball-Auswahl fehlt');
+assert.match(guidesHtml, /data-sport="basketball"/, 'Basketball-Auswahl fehlt');
+assert.match(guidesHtml, /href="\.\/basketball\/index\.html"/, 'Basketball-Link zur Leitbilderliste fehlt');
 assert.doesNotMatch(guidesHtml, /https?:\/\//i, 'Leitbilder-Seite enthält eine externe Ressource');
 assert.doesNotMatch(guidesApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Leitbilder-Code enthält eine Netzwerk- oder Speicher-API');
 assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Leitbilder-Seite fehlt');
-assert.match(guidesApp, /dataset\.sportContent/, 'Unterauswahl für Sportarten fehlt');
+
+assert.match(basketballHtml, /Content-Security-Policy/i, 'CSP der Basketball-Seite fehlt');
+assert.match(basketballHtml, /data-guide="angriffsschlag"/, 'Angriffsschlag fehlt in der Leitbilderliste');
+assert.match(basketballHtml, /href="\.\/angriffsschlag\/index\.html"/, 'Link zum Angriffsschlag-Player fehlt');
+assert.doesNotMatch(basketballHtml, /https?:\/\//i, 'Basketball-Seite enthält eine externe Ressource');
+
+assert.match(playerHtml, /Content-Security-Policy/i, 'CSP der Player-Seite fehlt');
+assert.match(playerHtml, /Videos\/Spielsportarten\/Basketball\/Angriffsschlag\/Angriffschlag\.mp4/, 'Basketball-Leitbild fehlt');
+assert.match(playerHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiedergabe fehlt');
+assert.match(playerHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
+assert.match(playerHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');
+assert.doesNotMatch(playerHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Leitbild verwendet native Videosteuerung');
+assert.doesNotMatch(playerHtml, /https?:\/\//i, 'Player-Seite enthält eine externe Ressource');
+assert.doesNotMatch(playerApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Player-Code enthält eine Netzwerk- oder Speicher-API');
+assert.match(playerApp, /playbackRate/, 'Geschwindigkeitssteuerung für Leitbilder fehlt');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');
