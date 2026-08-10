@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#073b4c">
+    <meta name="color-scheme" content="light">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
+    <title>Leitbilder | Sportkamera</title>
+    <meta name="description" content="Leitbilder für Individual- und Spielsportarten auswählen.">
+    <link rel="manifest" href="../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="../../icons/favicon-64.png">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body data-view="guides">
+    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+
+    <div class="app-shell">
+      <header class="topbar" aria-label="App-Kopfzeile">
+        <a class="brand brand-link" href="../../index.html" aria-label="Zur Sportkamera">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>
+            <strong>Sportkamera</strong>
+            <small>Direktes Bewegungsfeedback</small>
+          </span>
+        </a>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+        <section class="view guides-view" aria-labelledby="guides-title">
+          <a class="text-button guides-back" href="../../index.html">
+            <span aria-hidden="true">←</span> Zurück
+          </a>
+
+          <div class="guides-panel">
+            <div class="step-label"><span>2</span> Leitbilder auswählen</div>
+            <h1 id="guides-title">Welche Sportart möchtest du ansehen?</h1>
+
+            <div class="category-grid" role="group" aria-label="Sportart auswählen">
+              <button class="category-card" type="button" data-category="individualsportarten" aria-pressed="false">
+                <span class="category-icon individual-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" focusable="false">
+                    <path class="icon-accent" d="M19 7h10M24 7v5"></path>
+                    <path d="M34 14l3-3M33 13l3 3"></path>
+                    <circle cx="24" cy="27" r="14"></circle>
+                    <path d="M24 19v8l6 4"></path>
+                  </svg>
+                </span>
+                <span class="category-text">
+                  <strong>Individualsportarten</strong>
+                  <small>Einzelne Bewegungen betrachten</small>
+                </span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </button>
+
+              <button class="category-card" type="button" data-category="spielsportarten" aria-pressed="false">
+                <span class="category-icon team-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" focusable="false">
+                    <circle cx="24" cy="24" r="17"></circle>
+                    <path class="icon-accent" d="M24 17l7 5-3 8h-8l-3-8z"></path>
+                    <path d="M24 7v10M8 19l9 3M12 36l8-6M36 36l-8-6M40 19l-9 3"></path>
+                  </svg>
+                </span>
+                <span class="category-text">
+                  <strong>Spielsportarten</strong>
+                  <small>Zusammenspiel und Spielsituationen</small>
+                </span>
+                <span class="arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+
+            <section class="category-content" data-category-content="individualsportarten" aria-labelledby="individual-title" hidden>
+              <h2 id="individual-title" tabindex="-1">Individualsportarten</h2>
+              <p>Noch keine Leitbilder hinterlegt.</p>
+            </section>
+
+            <section class="category-content" data-category-content="spielsportarten" aria-labelledby="team-title" hidden>
+              <h2 id="team-title" tabindex="-1">Spielsportarten</h2>
+              <div class="sport-grid">
+                <a class="sport-card sport-link" href="./volleyball/index.html" data-sport="volleyball">
+                  <span class="sport-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" focusable="false">
+                      <circle cx="24" cy="24" r="17"></circle>
+                      <path d="M24 7v34M7 24h34M12 12c7 5 11 12 12 21M36 12c-7 5-11 12-12 21"></path>
+                    </svg>
+                  </span>
+                  <span class="sport-text">
+                    <strong>Volleyball</strong>
+                    <small>Leitbilder ansehen</small>
+                  </span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </a>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

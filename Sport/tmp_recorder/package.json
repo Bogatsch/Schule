@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check media-utils.js && node --check sw.js",
+    "check": "node --check app.js && node --check media-utils.js && node --check pages/leitbilder/app.js && node --check pages/leitbilder/volleyball/angriffsschlag/app.js && node --check sw.js",
     "test": "npm run check && node --test tests/media-utils.test.mjs && node tests/static-check.mjs",
     "test:browser": "node tests/browser-smoke.mjs"
   }

@@ -1,14 +1,20 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v5`;
+const CACHE_NAME = `${CACHE_PREFIX}v16`;
 
 // Nur diese statischen Dateien dürfen in Cache Storage gelangen.
 const APP_SHELL = Object.freeze([
   './',
   './index.html',
-  './styles.css',
+  './styles.css?v=16',
   './media-utils.js',
-  './app.js',
+  './app.js?v=16',
   './manifest.webmanifest',
+  './pages/leitbilder/index.html',
+  './pages/leitbilder/styles.css',
+  './pages/leitbilder/app.js',
+  './pages/leitbilder/volleyball/index.html',
+  './pages/leitbilder/volleyball/angriffsschlag/index.html',
+  './pages/leitbilder/volleyball/angriffsschlag/app.js',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
@@ -50,10 +56,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigationen werden online geladen; offline folgt ausschließlich index.html.
+  // Navigationen werden online geladen; offline folgt die passende gecachte Seite.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_DOCUMENT))
+      fetch(request).catch(() => (
+        caches.match(request, { ignoreSearch: true })
+          .then((cachedResponse) => cachedResponse || caches.match(OFFLINE_DOCUMENT))
+      ))
     );
     return;
   }

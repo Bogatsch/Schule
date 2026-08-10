@@ -32,12 +32,34 @@ const elements = {
   recordingTime: document.querySelector('#recording-time'),
   previewBack: document.querySelector('#preview-back'),
   previewKicker: document.querySelector('#preview-kicker'),
+  previewStage: document.querySelector('#preview-stage'),
   photoPreview: document.querySelector('#photo-preview'),
+  ownVideoPane: document.querySelector('#own-video-pane'),
   videoPreview: document.querySelector('#video-preview'),
+  comparisonPane: document.querySelector('#comparison-pane'),
+  comparisonPaneLabel: document.querySelector('#comparison-pane-label'),
+  comparisonVideo: document.querySelector('#comparison-video'),
+  previewPlayerGrid: document.querySelector('#preview-player-grid'),
   playbackControls: document.querySelector('#playback-controls'),
   playButton: document.querySelector('#play-button'),
   timeline: document.querySelector('#timeline'),
   playbackTime: document.querySelector('#playback-time'),
+  comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
+  comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
+  comparisonPlayButton: document.querySelector('#comparison-play-button'),
+  comparisonTimeline: document.querySelector('#comparison-timeline'),
+  comparisonPlaybackTime: document.querySelector('#comparison-playback-time'),
+  comparisonControls: document.querySelector('#comparison-controls'),
+  comparisonButton: document.querySelector('#comparison-button'),
+  comparisonButtonLabel: document.querySelector('#comparison-button-label'),
+  comparisonPicker: document.querySelector('#comparison-picker'),
+  comparisonClose: document.querySelector('#comparison-close'),
+  comparisonSteps: [...document.querySelectorAll('[data-comparison-step]')],
+  comparisonSportTitle: document.querySelector('#comparison-sport-title'),
+  comparisonSportLists: [...document.querySelectorAll('[data-comparison-sport-list]')],
+  comparisonActive: document.querySelector('#comparison-active'),
+  comparisonActiveLabel: document.querySelector('#comparison-active-label'),
+  comparisonRemove: document.querySelector('#comparison-remove'),
   previewStatus: document.querySelector('#preview-status'),
   discardButton: document.querySelector('#discard-button'),
   newRecordingButton: document.querySelector('#new-recording-button'),
@@ -67,6 +89,7 @@ let recordingTimer = null;
 let recordingLimitTimer = null;
 let isRecording = false;
 let operationId = 0;
+let selectedComparisonCategory = 'spielsportarten';
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -109,6 +132,101 @@ function resetPlaybackUI() {
   document.querySelectorAll('[data-speed]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.speed === '1'));
   });
+  resetComparison();
+}
+
+function resetComparisonPlaybackUI() {
+  elements.comparisonPlayButton.innerHTML = '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.comparisonPlayButton.setAttribute('aria-label', 'Leitbild starten');
+  elements.comparisonTimeline.value = '0';
+  elements.comparisonPlaybackTime.value = '0:00 / 0:00';
+  document.querySelectorAll('[data-comparison-speed]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.comparisonSpeed === '1'));
+  });
+}
+
+function showComparisonStep(stepName) {
+  let selectedStep = null;
+  elements.comparisonSteps.forEach((step) => {
+    step.hidden = step.dataset.comparisonStep !== stepName;
+    if (!step.hidden) {
+      selectedStep = step;
+    }
+  });
+  if (elements.comparisonPicker.open) {
+    selectedStep?.querySelector('h3')?.focus({ preventScroll: true });
+  }
+}
+
+function showComparisonSports(category) {
+  selectedComparisonCategory = category;
+  const isIndividual = category === 'individualsportarten';
+  elements.comparisonSportTitle.textContent = isIndividual
+    ? 'Individualsportart auswählen'
+    : 'Spielsportart auswählen';
+  elements.comparisonSportLists.forEach((list) => {
+    list.hidden = list.dataset.comparisonSportList !== category;
+  });
+  showComparisonStep('sport');
+}
+
+function openComparisonPicker() {
+  showComparisonStep('category');
+  elements.comparisonSportLists.forEach((list) => {
+    list.hidden = true;
+  });
+  elements.comparisonButton.setAttribute('aria-expanded', 'true');
+  if (typeof elements.comparisonPicker.showModal === 'function') {
+    elements.comparisonPicker.showModal();
+  } else {
+    elements.comparisonPicker.setAttribute('open', '');
+  }
+}
+
+function closeComparisonPicker({ restoreFocus = false } = {}) {
+  if (elements.comparisonPicker.open) {
+    elements.comparisonPicker.close();
+  } else {
+    elements.comparisonPicker.removeAttribute('open');
+  }
+  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) {
+    elements.comparisonButton.focus({ preventScroll: true });
+  }
+}
+
+function resetComparison() {
+  elements.comparisonVideo.pause();
+  elements.comparisonVideo.removeAttribute('src');
+  elements.comparisonVideo.load();
+  elements.comparisonPane.hidden = true;
+  elements.previewStage.classList.remove('comparing');
+  elements.previewPlayerGrid.classList.remove('comparing');
+  elements.comparisonPlaybackControls.hidden = true;
+  closeComparisonPicker();
+  elements.comparisonButtonLabel.textContent = 'Leitbild daneben';
+  elements.comparisonActive.hidden = true;
+  elements.comparisonActiveLabel.textContent = '';
+  resetComparisonPlaybackUI();
+}
+
+function selectComparison(button) {
+  elements.comparisonVideo.pause();
+  resetComparisonPlaybackUI();
+  elements.comparisonVideo.src = button.dataset.comparisonSrc;
+  elements.comparisonVideo.playbackRate = 1;
+  elements.comparisonVideo.load();
+  elements.comparisonPaneLabel.textContent = button.dataset.comparisonTitle;
+  elements.comparisonPlayerLabel.textContent = button.dataset.comparisonTitle;
+  elements.comparisonPane.hidden = false;
+  elements.previewStage.classList.add('comparing');
+  elements.previewPlayerGrid.classList.add('comparing');
+  elements.comparisonPlaybackControls.hidden = false;
+  closeComparisonPicker({ restoreFocus: true });
+  elements.comparisonButtonLabel.textContent = 'Leitbild wechseln';
+  elements.comparisonActiveLabel.textContent = button.dataset.comparisonTitle;
+  elements.comparisonActive.hidden = false;
+  elements.previewStatus.textContent = `${button.dataset.comparisonTitle} wird daneben angezeigt.`;
 }
 
 function stopCameraTracks() {
@@ -180,6 +298,7 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   elements.videoPreview.removeAttribute('src');
   elements.videoPreview.load();
   elements.videoPreview.hidden = true;
+  elements.ownVideoPane.hidden = true;
   elements.photoPreview.removeAttribute('src');
   elements.photoPreview.alt = '';
   elements.photoPreview.hidden = true;
@@ -365,7 +484,9 @@ async function takePhoto() {
     elements.photoPreview.alt = 'Dein gerade aufgenommenes Foto';
     elements.photoPreview.hidden = false;
     elements.videoPreview.hidden = true;
+    elements.ownVideoPane.hidden = true;
     elements.playbackControls.hidden = true;
+    elements.comparisonControls.hidden = true;
     elements.previewKicker.textContent = 'Foto aufgenommen';
     stopStreamAfterCapture();
     resetCanvas();
@@ -386,8 +507,10 @@ function showVideoPreview(blob, mimeType) {
   currentObjectUrl = URL.createObjectURL(currentBlob);
   elements.videoPreview.src = currentObjectUrl;
   elements.videoPreview.hidden = false;
+  elements.ownVideoPane.hidden = false;
   elements.photoPreview.hidden = true;
   elements.playbackControls.hidden = false;
+  elements.comparisonControls.hidden = false;
   elements.videoPreview.playbackRate = 1;
   elements.previewKicker.textContent = `Video aufgenommen · ${mimeType.startsWith('video/mp4') ? 'MP4' : 'WebM'}`;
   resetPlaybackUI();
@@ -504,6 +627,13 @@ function updatePlaybackUI() {
   elements.playbackTime.value = `${formatPlaybackTime(currentTime)} / ${formatPlaybackTime(duration)}`;
 }
 
+function updateComparisonPlaybackUI() {
+  const duration = Number.isFinite(elements.comparisonVideo.duration) ? elements.comparisonVideo.duration : 0;
+  const currentTime = Number.isFinite(elements.comparisonVideo.currentTime) ? elements.comparisonVideo.currentTime : 0;
+  elements.comparisonTimeline.value = duration ? String(Math.round((currentTime / duration) * 1000)) : '0';
+  elements.comparisonPlaybackTime.value = `${formatPlaybackTime(currentTime)} / ${formatPlaybackTime(duration)}`;
+}
+
 async function togglePlayback() {
   if (elements.videoPreview.paused || elements.videoPreview.ended) {
     if (elements.videoPreview.ended) {
@@ -512,10 +642,27 @@ async function togglePlayback() {
     try {
       await elements.videoPreview.play();
     } catch {
-      elements.previewStatus.textContent = 'Das Video konnte nicht gestartet werden. Tippe erneut auf Start.';
+      elements.videoPreview.pause();
+      elements.previewStatus.textContent = 'Die eigene Aufnahme konnte nicht gestartet werden. Tippe erneut auf Start.';
     }
   } else {
     elements.videoPreview.pause();
+  }
+}
+
+async function toggleComparisonPlayback() {
+  if (elements.comparisonVideo.paused || elements.comparisonVideo.ended) {
+    if (elements.comparisonVideo.ended) {
+      elements.comparisonVideo.currentTime = 0;
+    }
+    try {
+      await elements.comparisonVideo.play();
+    } catch {
+      elements.comparisonVideo.pause();
+      elements.previewStatus.textContent = 'Das Leitbild konnte nicht gestartet werden. Tippe erneut auf Start.';
+    }
+  } else {
+    elements.comparisonVideo.pause();
   }
 }
 
@@ -525,6 +672,14 @@ function updatePlayButton() {
     ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
     : '<span aria-hidden="true">▶</span><span>Start</span>';
   elements.playButton.setAttribute('aria-label', playing ? 'Video pausieren' : 'Video starten');
+}
+
+function updateComparisonPlayButton() {
+  const playing = !elements.comparisonVideo.paused && !elements.comparisonVideo.ended;
+  elements.comparisonPlayButton.innerHTML = playing
+    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
+    : '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.comparisonPlayButton.setAttribute('aria-label', playing ? 'Leitbild pausieren' : 'Leitbild starten');
 }
 
 document.querySelectorAll('[data-start-mode]').forEach((button) => {
@@ -560,11 +715,21 @@ elements.newRecordingButton.addEventListener('click', () => void beginNewSession
 elements.retryButton.addEventListener('click', () => void beginNewSession(currentMode));
 elements.errorHomeButton.addEventListener('click', () => cleanupMedia({ nextView: 'start' }));
 elements.playButton.addEventListener('click', () => void togglePlayback());
+elements.comparisonPlayButton.addEventListener('click', () => void toggleComparisonPlayback());
 
 elements.timeline.addEventListener('input', () => {
   const duration = elements.videoPreview.duration;
   if (Number.isFinite(duration) && duration > 0) {
     elements.videoPreview.currentTime = (Number(elements.timeline.value) / 1000) * duration;
+    updatePlaybackUI();
+  }
+});
+
+elements.comparisonTimeline.addEventListener('input', () => {
+  const duration = elements.comparisonVideo.duration;
+  if (Number.isFinite(duration) && duration > 0) {
+    elements.comparisonVideo.currentTime = (Number(elements.comparisonTimeline.value) / 1000) * duration;
+    updateComparisonPlaybackUI();
   }
 });
 
@@ -575,8 +740,62 @@ document.querySelectorAll('[data-speed]').forEach((button) => {
     document.querySelectorAll('[data-speed]').forEach((speedButton) => {
       speedButton.setAttribute('aria-pressed', String(speedButton === button));
     });
-    elements.previewStatus.textContent = `Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
+    elements.previewStatus.textContent = `Eigene Aufnahme: Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
   });
+});
+
+document.querySelectorAll('[data-comparison-speed]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const rate = Number(button.dataset.comparisonSpeed);
+    elements.comparisonVideo.playbackRate = rate;
+    document.querySelectorAll('[data-comparison-speed]').forEach((speedButton) => {
+      speedButton.setAttribute('aria-pressed', String(speedButton === button));
+    });
+    elements.previewStatus.textContent = `Leitbild: Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
+  });
+});
+
+elements.comparisonButton.addEventListener('click', () => {
+  openComparisonPicker();
+});
+
+elements.comparisonClose.addEventListener('click', () => closeComparisonPicker({ restoreFocus: true }));
+
+elements.comparisonPicker.addEventListener('close', () => {
+  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+});
+
+elements.comparisonPicker.addEventListener('click', (event) => {
+  if (event.target === elements.comparisonPicker) {
+    closeComparisonPicker({ restoreFocus: true });
+  }
+});
+
+document.querySelectorAll('[data-comparison-category]').forEach((button) => {
+  button.addEventListener('click', () => showComparisonSports(button.dataset.comparisonCategory));
+});
+
+document.querySelectorAll('[data-comparison-sport]').forEach((button) => {
+  button.addEventListener('click', () => showComparisonStep('guide'));
+});
+
+document.querySelectorAll('[data-comparison-back]').forEach((button) => {
+  button.addEventListener('click', () => {
+    if (button.dataset.comparisonBack === 'category') {
+      showComparisonStep('category');
+    } else {
+      showComparisonSports(selectedComparisonCategory);
+    }
+  });
+});
+
+document.querySelectorAll('[data-comparison-src]').forEach((button) => {
+  button.addEventListener('click', () => selectComparison(button));
+});
+
+elements.comparisonRemove.addEventListener('click', () => {
+  resetComparison();
+  elements.previewStatus.textContent = 'Das Leitbild wurde aus dem Vergleich entfernt.';
 });
 
 elements.videoPreview.addEventListener('play', updatePlayButton);
@@ -585,6 +804,18 @@ elements.videoPreview.addEventListener('ended', updatePlayButton);
 elements.videoPreview.addEventListener('timeupdate', updatePlaybackUI);
 elements.videoPreview.addEventListener('durationchange', updatePlaybackUI);
 elements.videoPreview.addEventListener('contextmenu', (event) => event.preventDefault());
+elements.comparisonVideo.addEventListener('play', updateComparisonPlayButton);
+elements.comparisonVideo.addEventListener('pause', updateComparisonPlayButton);
+elements.comparisonVideo.addEventListener('ended', updateComparisonPlayButton);
+elements.comparisonVideo.addEventListener('timeupdate', updateComparisonPlaybackUI);
+elements.comparisonVideo.addEventListener('durationchange', updateComparisonPlaybackUI);
+elements.comparisonVideo.addEventListener('loadedmetadata', updateComparisonPlaybackUI);
+elements.comparisonVideo.addEventListener('error', () => {
+  if (!elements.comparisonPane.hidden && elements.comparisonVideo.hasAttribute('src')) {
+    elements.previewStatus.textContent = 'Das ausgewählte Leitbild konnte nicht geladen werden.';
+  }
+});
+elements.comparisonVideo.addEventListener('contextmenu', (event) => event.preventDefault());
 elements.photoPreview.addEventListener('contextmenu', (event) => event.preventDefault());
 
 window.addEventListener('pagehide', () => cleanupMedia({ nextView: 'start' }));
@@ -610,6 +841,8 @@ function initialize() {
       });
     }, { once: true });
   }
+
+  document.body.dataset.ready = 'true';
 }
 
 initialize();

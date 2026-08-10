@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#073b4c">
+    <meta name="color-scheme" content="light">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
+    <title>Angriffsschlag | Sportkamera</title>
+    <meta name="description" content="Volleyball-Leitbild zum Angriffsschlag ansehen.">
+    <link rel="manifest" href="../../../../manifest.webmanifest">
+    <link rel="apple-touch-icon" href="../../../../icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="../../../../icons/favicon-64.png">
+    <link rel="stylesheet" href="../../../../styles.css">
+    <link rel="stylesheet" href="../../styles.css">
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body data-view="guides">
+    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+
+    <div class="app-shell">
+      <header class="topbar" aria-label="App-Kopfzeile">
+        <a class="brand brand-link" href="../../../../index.html" aria-label="Zur Sportkamera">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span>
+            <strong>Sportkamera</strong>
+            <small>Direktes Bewegungsfeedback</small>
+          </span>
+        </a>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+        <section class="view guides-view" aria-labelledby="video-title">
+          <a class="text-button guides-back video-back" href="../index.html">
+            <span aria-hidden="true">←</span> Zurück
+          </a>
+
+          <div class="guides-panel video-page-panel">
+            <div class="step-label"><span>4</span> Volleyball</div>
+            <h1 id="video-title">Angriffsschlag</h1>
+
+            <div class="guide-video-stage">
+              <video id="guide-video" class="guide-video" playsinline preload="metadata" aria-label="Volleyball-Leitbild zum Angriffsschlag" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture>
+                <source src="../../../../Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4" type="video/mp4">
+                Dein Browser kann dieses Video nicht abspielen.
+              </video>
+            </div>
+
+            <div class="playback-controls guide-playback-controls" aria-label="Videowiedergabe">
+              <button id="guide-play-button" class="play-button" type="button" aria-label="Video starten">
+                <span aria-hidden="true">▶</span><span>Start</span>
+              </button>
+              <div class="timeline-wrap">
+                <label class="visually-hidden" for="guide-timeline">Wiedergabeposition</label>
+                <input id="guide-timeline" type="range" min="0" max="1000" value="0" step="1">
+                <output id="guide-playback-time" for="guide-timeline">0:00 / 0:00</output>
+              </div>
+              <fieldset class="speed-control">
+                <legend>Tempo</legend>
+                <div role="group" aria-label="Wiedergabegeschwindigkeit">
+                  <button type="button" data-guide-speed="0.25" aria-pressed="false">0,25×</button>
+                  <button type="button" data-guide-speed="0.5" aria-pressed="false">0,5×</button>
+                  <button type="button" data-guide-speed="1" aria-pressed="true">1×</button>
+                </div>
+              </fieldset>
+            </div>
+            <p id="guide-video-status" class="preview-status" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

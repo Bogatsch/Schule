@@ -62,7 +62,9 @@ const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.webmanifest': 'application/manifest+json; charset=utf-8',
-  '.png': 'image/png'
+  '.png': 'image/png',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm'
 };
 
 const webServer = createServer(async (request, response) => {
@@ -73,10 +75,31 @@ const webServer = createServer(async (request, response) => {
     const filePath = path.resolve(appRoot, `.${normalized}`);
     assert.ok(filePath.startsWith(appRoot + path.sep));
     const content = await readFile(filePath);
-    response.writeHead(200, {
+    const headers = {
       'Content-Type': mimeTypes[path.extname(filePath)] ?? 'application/octet-stream',
-      'Cache-Control': 'no-store'
-    });
+      'Cache-Control': 'no-store',
+      'Accept-Ranges': 'bytes'
+    };
+    const rangeMatch = request.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
+    if (rangeMatch) {
+      const start = Number(rangeMatch[1]);
+      const requestedEnd = rangeMatch[2] ? Number(rangeMatch[2]) : content.length - 1;
+      const end = Math.min(requestedEnd, content.length - 1);
+      if (start >= content.length || start > end) {
+        response.writeHead(416, { ...headers, 'Content-Range': `bytes */${content.length}` });
+        response.end();
+        return;
+      }
+      const partialContent = content.subarray(start, end + 1);
+      response.writeHead(206, {
+        ...headers,
+        'Content-Length': partialContent.length,
+        'Content-Range': `bytes ${start}-${end}/${content.length}`
+      });
+      response.end(partialContent);
+      return;
+    }
+    response.writeHead(200, { ...headers, 'Content-Length': content.length });
     response.end(content);
   } catch {
     response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -335,6 +358,7 @@ try {
     secure: window.isSecureContext,
     photoButtons: document.querySelectorAll('[data-start-mode="photo"]').length,
     videoButtons: document.querySelectorAll('[data-start-mode="video"]').length,
+    guideLinks: document.querySelectorAll('.guide-entry').length,
     externalResources: [...document.querySelectorAll('[src],[href]')]
       .map((node) => node.src || node.href)
       .filter((url) => /^https?:/.test(url) && !url.startsWith(location.origin)),
@@ -345,11 +369,36 @@ try {
   assert.equal(initial.secure, true);
   assert.equal(initial.photoButtons, 1);
   assert.equal(initial.videoButtons, 1);
+  assert.equal(initial.guideLinks, 1);
   assert.deepEqual(initial.externalResources, []);
   assert.equal(initial.horizontalOverflow, false);
   results.push('Startansicht, HTTPS/localhost-Kontext und lokale Ressourcen');
 
   const portraitScreenshot = await screenshot('start-portrait.png');
+
+  await click('.guide-entry');
+  await waitFor(`document.title === 'Leitbilder | Sportkamera'
+    && document.querySelectorAll('[data-category]').length === 2`);
+  await click('[data-category="spielsportarten"]');
+  await waitFor(`!document.querySelector('[data-category-content="spielsportarten"]').hidden`);
+  await click('[data-sport="volleyball"]');
+  await waitFor(`document.title === 'Volleyball | Sportkamera'
+    && document.querySelectorAll('[data-guide]').length >= 1`);
+  await click('[data-guide="angriffsschlag"]');
+  await waitFor(`document.title === 'Angriffsschlag | Sportkamera'
+    && document.querySelector('#guide-video').readyState >= 1`);
+  await click('[data-guide-speed="0.5"]');
+  assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
+  await click('.video-back');
+  await waitFor(`document.title === 'Volleyball | Sportkamera'`);
+  await click('.sport-back');
+  await waitFor(`document.title === 'Leitbilder | Sportkamera'
+    && !document.querySelector('[data-category-content="spielsportarten"]').hidden`);
+  await click('.guides-back');
+  await waitFor(`document.title === 'Sportkamera'
+    && document.body.dataset.view === 'start'
+    && document.body.dataset.ready === 'true'`);
+  results.push('Leitbilder-Seite mit Individual- und Spielsportarten');
 
   await click('[data-start-mode="photo"]');
   await waitFor(`document.body.dataset.view === 'camera'
@@ -402,6 +451,94 @@ try {
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
   await click('[data-speed="1"]');
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 1);
+
+  assert.equal(await evaluate(`document.querySelector('#comparison-controls').hidden`), false);
+  await click('#comparison-button');
+  await waitFor(`document.querySelector('#comparison-picker').open
+    && !document.querySelector('[data-comparison-step="category"]').hidden`);
+  await click('[data-comparison-category="individualsportarten"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="sport"]').hidden
+    && !document.querySelector('[data-comparison-sport-list="individualsportarten"]').hidden`);
+  assert.match(
+    await evaluate(`document.querySelector('[data-comparison-sport-list="individualsportarten"]').textContent`),
+    /noch keine Leitbilder/i
+  );
+  await click('[data-comparison-back="category"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="category"]').hidden`);
+  await click('[data-comparison-category="spielsportarten"]');
+  await waitFor(`!document.querySelector('[data-comparison-sport-list="spielsportarten"]').hidden`);
+  await click('[data-comparison-sport="volleyball"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="guide"]').hidden`);
+  await click('[data-comparison-src]');
+  await waitFor(`!document.querySelector('#comparison-pane').hidden
+    && !document.querySelector('#comparison-playback-controls').hidden
+    && !document.querySelector('#comparison-picker').open
+    && document.querySelector('#comparison-video').readyState >= 1`);
+  assert.equal(await evaluate(`document.querySelector('#preview-stage').classList.contains('comparing')`), true);
+  const comparisonPlayerLayout = await evaluate(`(() => {
+    const own = document.querySelector('#playback-controls').getBoundingClientRect();
+    const guide = document.querySelector('#comparison-playback-controls').getBoundingClientRect();
+    return {
+      sameRow: Math.abs(own.top - guide.top) < 2,
+      ownWidth: own.width,
+      guideWidth: guide.width,
+      viewportWidth: innerWidth
+    };
+  })()`);
+  assert.equal(comparisonPlayerLayout.sameRow, true);
+  assert.ok(comparisonPlayerLayout.ownWidth < comparisonPlayerLayout.viewportWidth * 0.6);
+  assert.ok(comparisonPlayerLayout.guideWidth < comparisonPlayerLayout.viewportWidth * 0.6);
+
+  await click('[data-speed="0.5"]');
+  assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
+  assert.equal(await evaluate(`document.querySelector('#comparison-video').playbackRate`), 1);
+  await click('#play-button');
+  await waitFor(`!document.querySelector('#video-preview').paused
+    && document.querySelector('#comparison-video').paused`);
+  await click('#play-button');
+  await waitFor(`document.querySelector('#video-preview').paused`);
+
+  const ownSeek = await evaluate(`(() => {
+    const timeline = document.querySelector('#timeline');
+    timeline.value = '500';
+    timeline.dispatchEvent(new Event('input', { bubbles: true }));
+    return {
+      ownTime: document.querySelector('#video-preview').currentTime,
+      guideTime: document.querySelector('#comparison-video').currentTime
+    };
+  })()`);
+  assert.ok(ownSeek.ownTime > 0);
+  assert.equal(ownSeek.guideTime, 0);
+
+  const ownTimeBeforeGuideSeek = await evaluate(`document.querySelector('#video-preview').currentTime`);
+  await evaluate(`(() => {
+    const timeline = document.querySelector('#comparison-timeline');
+    timeline.value = '250';
+    timeline.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+  await waitFor(`document.querySelector('#comparison-video').currentTime > 0`);
+  const guideSeek = await evaluate(`({
+    ownTime: document.querySelector('#video-preview').currentTime,
+    guideTime: document.querySelector('#comparison-video').currentTime
+  })`);
+  assert.ok(guideSeek.guideTime > 0);
+  assert.ok(Math.abs(guideSeek.ownTime - ownTimeBeforeGuideSeek) < 0.01);
+
+  await click('[data-comparison-speed="0.25"]');
+  assert.equal(await evaluate(`document.querySelector('#comparison-video').playbackRate`), 0.25);
+  assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
+  await click('#comparison-play-button');
+  await waitFor(`document.querySelector('#video-preview').paused
+    && !document.querySelector('#comparison-video').paused`);
+  await click('#comparison-play-button');
+  await waitFor(`document.querySelector('#comparison-video').paused`);
+  results.push('Eigene Aufnahme und Leitbild unabhängig steuern');
+
+  await click('#comparison-remove');
+  await waitFor(`document.querySelector('#comparison-pane').hidden
+    && document.querySelector('#comparison-playback-controls').hidden
+    && !document.querySelector('#preview-stage').classList.contains('comparing')`);
+  await click('[data-speed="1"]');
   await click('#play-button');
   await waitFor(`!document.querySelector('#video-preview').paused`);
   await click('#play-button');
