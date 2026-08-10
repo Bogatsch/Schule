@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=14">
-    <script type="module" src="./app.js?v=14"></script>
+    <link rel="stylesheet" href="./styles.css?v=16">
+    <script type="module" src="./app.js?v=16"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -182,22 +182,107 @@
               <span id="comparison-button-label">Leitbild daneben</span>
             </button>
 
-            <div id="comparison-picker" class="comparison-picker" hidden>
-              <p>Leitbild auswählen</p>
-              <button class="comparison-option" type="button" data-comparison-src="./Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4" data-comparison-title="Volleyball · Angriffsschlag">
-                <span>
-                  <strong>Angriffsschlag</strong>
-                  <small>Volleyball</small>
-                </span>
-                <span aria-hidden="true">→</span>
-              </button>
-            </div>
-
             <div id="comparison-active" class="comparison-active" hidden>
               <span><strong>Daneben:</strong> <span id="comparison-active-label"></span></span>
               <button id="comparison-remove" type="button">Entfernen</button>
             </div>
           </div>
+
+          <dialog id="comparison-picker" class="comparison-dialog" aria-labelledby="comparison-dialog-title">
+            <div class="comparison-dialog-shell">
+              <header class="comparison-dialog-header">
+                <div>
+                  <p class="eyebrow">Leitbild auswählen</p>
+                  <h2 id="comparison-dialog-title">Welches Leitbild möchtest du sehen?</h2>
+                </div>
+                <button id="comparison-close" class="comparison-close" type="button" aria-label="Auswahl schließen">×</button>
+              </header>
+
+              <section class="comparison-step" data-comparison-step="category" aria-labelledby="comparison-category-title">
+                <div class="step-label"><span>1</span> Sportartengruppe wählen</div>
+                <h3 id="comparison-category-title" tabindex="-1">Individual- oder Spielsport?</h3>
+                <div class="comparison-category-grid">
+                  <button class="comparison-category-card" type="button" data-comparison-category="individualsportarten" autofocus>
+                    <span class="comparison-category-icon" aria-hidden="true">
+                      <svg viewBox="0 0 48 48" focusable="false">
+                        <path class="icon-accent" d="M19 7h10M24 7v5"></path>
+                        <path d="M34 14l3-3M33 13l3 3"></path>
+                        <circle cx="24" cy="27" r="14"></circle>
+                        <path d="M24 19v8l6 4"></path>
+                      </svg>
+                    </span>
+                    <span class="comparison-card-text">
+                      <strong>Individualsportarten</strong>
+                      <small>Einzelne Bewegungen betrachten</small>
+                    </span>
+                    <span class="arrow" aria-hidden="true">→</span>
+                  </button>
+
+                  <button class="comparison-category-card" type="button" data-comparison-category="spielsportarten">
+                    <span class="comparison-category-icon team-icon" aria-hidden="true">
+                      <svg viewBox="0 0 48 48" focusable="false">
+                        <circle cx="24" cy="24" r="17"></circle>
+                        <path class="icon-accent" d="M24 17l7 5-3 8h-8l-3-8z"></path>
+                        <path d="M24 7v10M8 19l9 3M12 36l8-6M36 36l-8-6M40 19l-9 3"></path>
+                      </svg>
+                    </span>
+                    <span class="comparison-card-text">
+                      <strong>Spielsportarten</strong>
+                      <small>Zusammenspiel und Spielsituationen</small>
+                    </span>
+                    <span class="arrow" aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="comparison-step" data-comparison-step="sport" aria-labelledby="comparison-sport-title" hidden>
+                <button class="comparison-modal-back" type="button" data-comparison-back="category"><span aria-hidden="true">←</span> Zurück</button>
+                <div class="step-label"><span>2</span> Sportart wählen</div>
+                <h3 id="comparison-sport-title" tabindex="-1">Sportart auswählen</h3>
+
+                <div class="comparison-sport-list" data-comparison-sport-list="individualsportarten" hidden>
+                  <p class="comparison-empty">Für Individualsportarten sind noch keine Leitbilder hinterlegt.</p>
+                </div>
+
+                <div class="comparison-sport-list" data-comparison-sport-list="spielsportarten" hidden>
+                  <button class="comparison-list-card" type="button" data-comparison-sport="volleyball">
+                    <span class="comparison-list-icon" aria-hidden="true">
+                      <svg viewBox="0 0 48 48" focusable="false">
+                        <circle cx="24" cy="24" r="17"></circle>
+                        <path d="M24 7v34M7 24h34M12 12c7 5 11 12 12 21M36 12c-7 5-11 12-12 21"></path>
+                      </svg>
+                    </span>
+                    <span class="comparison-card-text">
+                      <strong>Volleyball</strong>
+                      <small>Leitbilder ansehen</small>
+                    </span>
+                    <span class="arrow" aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </section>
+
+              <section class="comparison-step" data-comparison-step="guide" aria-labelledby="comparison-guide-title" hidden>
+                <button class="comparison-modal-back" type="button" data-comparison-back="sport"><span aria-hidden="true">←</span> Zurück</button>
+                <div class="step-label"><span>3</span> Volleyball</div>
+                <h3 id="comparison-guide-title" tabindex="-1">Leitbild auswählen</h3>
+                <div class="comparison-guide-list">
+                  <button class="comparison-list-card" type="button" data-comparison-src="./Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4" data-comparison-title="Volleyball · Angriffsschlag">
+                    <span class="comparison-list-icon" aria-hidden="true">
+                      <svg viewBox="0 0 48 48" focusable="false">
+                        <rect x="10" y="11" width="28" height="22" rx="4"></rect>
+                        <path d="M15 38h18M24 33v5M17 20h14M20 25l4 4 7-9"></path>
+                      </svg>
+                    </span>
+                    <span class="comparison-card-text">
+                      <strong>Angriffsschlag</strong>
+                      <small>Video auswählen</small>
+                    </span>
+                    <span class="arrow" aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </section>
+            </div>
+          </dialog>
 
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
 

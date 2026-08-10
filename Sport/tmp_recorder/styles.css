@@ -859,51 +859,190 @@ h2 {
   min-height: 48px;
 }
 
-.comparison-picker {
-  width: min(100%, 520px);
-  padding: 0.9rem;
+.comparison-dialog {
+  width: min(calc(100% - 2rem), 900px);
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 24px;
+  box-shadow: 0 24px 80px rgb(7 29 36 / 32%);
+}
+
+.comparison-dialog::backdrop {
+  background: rgb(7 29 36 / 58%);
+  backdrop-filter: blur(4px);
+}
+
+.comparison-dialog-shell {
+  max-height: calc(100dvh - 2rem);
+  padding: clamp(1.2rem, 3vw, 2rem);
+  overflow-y: auto;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgb(7 59 76 / 9%);
+  border-radius: 24px;
 }
 
-.comparison-picker > p {
-  margin: 0 0 0.6rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.comparison-option {
+.comparison-dialog-header {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  gap: 1.5rem;
+  align-items: flex-start;
   justify-content: space-between;
-  width: 100%;
-  min-height: 64px;
-  padding: 0.7rem 0.9rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.comparison-dialog-header .eyebrow {
+  margin: 0 0 0.4rem;
+}
+
+.comparison-dialog-header h2 {
+  margin: 0;
   color: var(--teal);
-  text-align: left;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  letter-spacing: -0.04em;
+}
+
+.comparison-close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--teal);
+  font-size: 1.7rem;
   cursor: pointer;
   background: white;
   border: 2px solid var(--line);
   border-radius: 12px;
+  place-items: center;
 }
 
-.comparison-option:hover {
+.comparison-close:hover,
+.comparison-close:focus-visible {
   border-color: var(--teal-2);
 }
 
-.comparison-option > span:first-child {
-  display: grid;
-  gap: 0.2rem;
+.comparison-step {
+  padding-top: 1.2rem;
 }
 
-.comparison-option small {
+.comparison-step h3 {
+  margin: 0.85rem 0 1rem;
+  color: var(--teal);
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  letter-spacing: -0.025em;
+}
+
+.comparison-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.comparison-category-card,
+.comparison-list-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  min-height: 112px;
+  padding: 1rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.comparison-category-card:hover,
+.comparison-list-card:hover {
+  border-color: var(--teal-2);
+  box-shadow: 0 10px 26px rgb(7 59 76 / 11%);
+  transform: translateY(-2px);
+}
+
+.comparison-category-icon,
+.comparison-list-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  background: var(--aqua);
+  border-radius: 16px;
+  place-items: center;
+}
+
+.comparison-category-icon.team-icon,
+.comparison-list-icon {
+  background: #fff0eb;
+}
+
+.comparison-category-icon svg,
+.comparison-list-icon svg {
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 2.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.comparison-category-icon .icon-accent {
+  stroke: var(--coral);
+}
+
+.comparison-card-text {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.comparison-card-text strong {
+  color: var(--teal);
+  font-size: 1.08rem;
+}
+
+.comparison-card-text small {
   color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.comparison-sport-list,
+.comparison-guide-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.comparison-list-card {
+  min-height: 86px;
+}
+
+.comparison-modal-back {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0;
+  color: var(--teal);
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.comparison-empty {
+  margin: 0;
+  padding: 1.1rem;
+  color: var(--muted);
+  background: var(--aqua);
+  border: 1px solid #b9ddd6;
+  border-radius: 14px;
 }
 
 .comparison-active {
@@ -1207,6 +1346,37 @@ noscript {
     border-radius: 16px;
     box-shadow: var(--shadow);
     aspect-ratio: 16 / 9;
+  }
+
+  .comparison-dialog {
+    width: calc(100% - 1rem);
+    max-height: calc(100dvh - 1rem);
+    border-radius: 18px;
+  }
+
+  .comparison-dialog-shell {
+    max-height: calc(100dvh - 1rem);
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .comparison-dialog-header {
+    gap: 0.8rem;
+  }
+
+  .comparison-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-category-card {
+    min-height: 94px;
+  }
+
+  .comparison-category-icon,
+  .comparison-list-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
   }
 
 }

@@ -53,6 +53,10 @@ const elements = {
   comparisonButton: document.querySelector('#comparison-button'),
   comparisonButtonLabel: document.querySelector('#comparison-button-label'),
   comparisonPicker: document.querySelector('#comparison-picker'),
+  comparisonClose: document.querySelector('#comparison-close'),
+  comparisonSteps: [...document.querySelectorAll('[data-comparison-step]')],
+  comparisonSportTitle: document.querySelector('#comparison-sport-title'),
+  comparisonSportLists: [...document.querySelectorAll('[data-comparison-sport-list]')],
   comparisonActive: document.querySelector('#comparison-active'),
   comparisonActiveLabel: document.querySelector('#comparison-active-label'),
   comparisonRemove: document.querySelector('#comparison-remove'),
@@ -85,6 +89,7 @@ let recordingTimer = null;
 let recordingLimitTimer = null;
 let isRecording = false;
 let operationId = 0;
+let selectedComparisonCategory = 'spielsportarten';
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -140,6 +145,56 @@ function resetComparisonPlaybackUI() {
   });
 }
 
+function showComparisonStep(stepName) {
+  let selectedStep = null;
+  elements.comparisonSteps.forEach((step) => {
+    step.hidden = step.dataset.comparisonStep !== stepName;
+    if (!step.hidden) {
+      selectedStep = step;
+    }
+  });
+  if (elements.comparisonPicker.open) {
+    selectedStep?.querySelector('h3')?.focus({ preventScroll: true });
+  }
+}
+
+function showComparisonSports(category) {
+  selectedComparisonCategory = category;
+  const isIndividual = category === 'individualsportarten';
+  elements.comparisonSportTitle.textContent = isIndividual
+    ? 'Individualsportart auswählen'
+    : 'Spielsportart auswählen';
+  elements.comparisonSportLists.forEach((list) => {
+    list.hidden = list.dataset.comparisonSportList !== category;
+  });
+  showComparisonStep('sport');
+}
+
+function openComparisonPicker() {
+  showComparisonStep('category');
+  elements.comparisonSportLists.forEach((list) => {
+    list.hidden = true;
+  });
+  elements.comparisonButton.setAttribute('aria-expanded', 'true');
+  if (typeof elements.comparisonPicker.showModal === 'function') {
+    elements.comparisonPicker.showModal();
+  } else {
+    elements.comparisonPicker.setAttribute('open', '');
+  }
+}
+
+function closeComparisonPicker({ restoreFocus = false } = {}) {
+  if (elements.comparisonPicker.open) {
+    elements.comparisonPicker.close();
+  } else {
+    elements.comparisonPicker.removeAttribute('open');
+  }
+  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) {
+    elements.comparisonButton.focus({ preventScroll: true });
+  }
+}
+
 function resetComparison() {
   elements.comparisonVideo.pause();
   elements.comparisonVideo.removeAttribute('src');
@@ -148,8 +203,7 @@ function resetComparison() {
   elements.previewStage.classList.remove('comparing');
   elements.previewPlayerGrid.classList.remove('comparing');
   elements.comparisonPlaybackControls.hidden = true;
-  elements.comparisonPicker.hidden = true;
-  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+  closeComparisonPicker();
   elements.comparisonButtonLabel.textContent = 'Leitbild daneben';
   elements.comparisonActive.hidden = true;
   elements.comparisonActiveLabel.textContent = '';
@@ -168,8 +222,7 @@ function selectComparison(button) {
   elements.previewStage.classList.add('comparing');
   elements.previewPlayerGrid.classList.add('comparing');
   elements.comparisonPlaybackControls.hidden = false;
-  elements.comparisonPicker.hidden = true;
-  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+  closeComparisonPicker({ restoreFocus: true });
   elements.comparisonButtonLabel.textContent = 'Leitbild wechseln';
   elements.comparisonActiveLabel.textContent = button.dataset.comparisonTitle;
   elements.comparisonActive.hidden = false;
@@ -703,9 +756,37 @@ document.querySelectorAll('[data-comparison-speed]').forEach((button) => {
 });
 
 elements.comparisonButton.addEventListener('click', () => {
-  const willOpen = elements.comparisonPicker.hidden;
-  elements.comparisonPicker.hidden = !willOpen;
-  elements.comparisonButton.setAttribute('aria-expanded', String(willOpen));
+  openComparisonPicker();
+});
+
+elements.comparisonClose.addEventListener('click', () => closeComparisonPicker({ restoreFocus: true }));
+
+elements.comparisonPicker.addEventListener('close', () => {
+  elements.comparisonButton.setAttribute('aria-expanded', 'false');
+});
+
+elements.comparisonPicker.addEventListener('click', (event) => {
+  if (event.target === elements.comparisonPicker) {
+    closeComparisonPicker({ restoreFocus: true });
+  }
+});
+
+document.querySelectorAll('[data-comparison-category]').forEach((button) => {
+  button.addEventListener('click', () => showComparisonSports(button.dataset.comparisonCategory));
+});
+
+document.querySelectorAll('[data-comparison-sport]').forEach((button) => {
+  button.addEventListener('click', () => showComparisonStep('guide'));
+});
+
+document.querySelectorAll('[data-comparison-back]').forEach((button) => {
+  button.addEventListener('click', () => {
+    if (button.dataset.comparisonBack === 'category') {
+      showComparisonStep('category');
+    } else {
+      showComparisonSports(selectedComparisonCategory);
+    }
+  });
 });
 
 document.querySelectorAll('[data-comparison-src]').forEach((button) => {

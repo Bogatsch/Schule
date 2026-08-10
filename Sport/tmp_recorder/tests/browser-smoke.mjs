@@ -454,10 +454,25 @@ try {
 
   assert.equal(await evaluate(`document.querySelector('#comparison-controls').hidden`), false);
   await click('#comparison-button');
-  await waitFor(`!document.querySelector('#comparison-picker').hidden`);
+  await waitFor(`document.querySelector('#comparison-picker').open
+    && !document.querySelector('[data-comparison-step="category"]').hidden`);
+  await click('[data-comparison-category="individualsportarten"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="sport"]').hidden
+    && !document.querySelector('[data-comparison-sport-list="individualsportarten"]').hidden`);
+  assert.match(
+    await evaluate(`document.querySelector('[data-comparison-sport-list="individualsportarten"]').textContent`),
+    /noch keine Leitbilder/i
+  );
+  await click('[data-comparison-back="category"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="category"]').hidden`);
+  await click('[data-comparison-category="spielsportarten"]');
+  await waitFor(`!document.querySelector('[data-comparison-sport-list="spielsportarten"]').hidden`);
+  await click('[data-comparison-sport="volleyball"]');
+  await waitFor(`!document.querySelector('[data-comparison-step="guide"]').hidden`);
   await click('[data-comparison-src]');
   await waitFor(`!document.querySelector('#comparison-pane').hidden
     && !document.querySelector('#comparison-playback-controls').hidden
+    && !document.querySelector('#comparison-picker').open
     && document.querySelector('#comparison-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#preview-stage').classList.contains('comparing')`), true);
   const comparisonPlayerLayout = await evaluate(`(() => {
