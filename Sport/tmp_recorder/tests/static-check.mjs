@@ -68,9 +68,11 @@ assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite 
 assert.match(guidesHtml, /Content-Security-Policy/i, 'CSP der Leitbilder-Seite fehlt');
 assert.match(guidesHtml, /Individualsportarten/, 'Auswahl für Individualsportarten fehlt');
 assert.match(guidesHtml, /Spielsportarten/, 'Auswahl für Spielsportarten fehlt');
+assert.match(guidesHtml, /data-sport="volleyball"/, 'Volleyball-Auswahl fehlt');
 assert.doesNotMatch(guidesHtml, /https?:\/\//i, 'Leitbilder-Seite enthält eine externe Ressource');
 assert.doesNotMatch(guidesApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Leitbilder-Code enthält eine Netzwerk- oder Speicher-API');
 assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Leitbilder-Seite fehlt');
+assert.match(guidesApp, /dataset\.sportContent/, 'Unterauswahl für Sportarten fehlt');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');

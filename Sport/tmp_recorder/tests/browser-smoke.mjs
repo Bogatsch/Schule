@@ -358,6 +358,8 @@ try {
     && document.querySelectorAll('[data-category]').length === 2`);
   await click('[data-category="individualsportarten"]');
   await waitFor(`!document.querySelector('[data-category-content="individualsportarten"]').hidden`);
+  await click('[data-sport="volleyball"]');
+  await waitFor(`!document.querySelector('[data-sport-content="volleyball"]').hidden`);
   await click('.guides-back');
   await waitFor(`document.title === 'Sportkamera' && document.body.dataset.view === 'start'`);
   results.push('Leitbilder-Seite mit Individual- und Spielsportarten');

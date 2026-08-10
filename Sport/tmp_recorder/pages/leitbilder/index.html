@@ -77,7 +77,25 @@
 
             <section class="category-content" data-category-content="individualsportarten" aria-labelledby="individual-title" hidden>
               <h2 id="individual-title" tabindex="-1">Individualsportarten</h2>
-              <p>Noch keine Leitbilder hinterlegt.</p>
+              <div class="sport-grid">
+                <button class="sport-card" type="button" data-sport="volleyball" aria-expanded="false" aria-controls="volleyball-content">
+                  <span class="sport-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" focusable="false">
+                      <circle cx="24" cy="24" r="17"></circle>
+                      <path d="M24 7c5 6 7 11 6 16M9 18c8-1 14 1 20 6M14 37c2-8 7-13 15-16M40 25c-7 2-12 6-15 14"></path>
+                    </svg>
+                  </span>
+                  <span class="sport-text">
+                    <strong>Volleyball</strong>
+                    <small>Leitbilder ansehen</small>
+                  </span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </button>
+              </div>
+
+              <div id="volleyball-content" class="sport-content" data-sport-content="volleyball" hidden>
+                <p>Noch keine Leitbilder hinterlegt.</p>
+              </div>
             </section>
 
             <section class="category-content" data-category-content="spielsportarten" aria-labelledby="team-title" hidden>
