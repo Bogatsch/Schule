@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v4`;
+const CACHE_NAME = `${CACHE_PREFIX}v5`;
 
 // Nur diese statischen Dateien dürfen in Cache Storage gelangen.
 const APP_SHELL = Object.freeze([

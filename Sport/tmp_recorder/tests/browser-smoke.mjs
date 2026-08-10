@@ -340,7 +340,7 @@ try {
       .filter((url) => /^https?:/.test(url) && !url.startsWith(location.origin)),
     horizontalOverflow: document.documentElement.scrollWidth > innerWidth
   })`);
-  assert.equal(initial.title, 'Sportkamera – aufnehmen und direkt ansehen');
+  assert.equal(initial.title, 'Sportkamera');
   assert.equal(initial.view, 'start');
   assert.equal(initial.secure, true);
   assert.equal(initial.photoButtons, 1);
@@ -479,7 +479,7 @@ try {
   await new Promise((resolve) => webServer.close(resolve));
   try {
     await reload(false);
-    assert.equal(await evaluate(`document.title`), 'Sportkamera – aufnehmen und direkt ansehen');
+    assert.equal(await evaluate(`document.title`), 'Sportkamera');
     assert.equal(await evaluate(`document.body.dataset.view`), 'start');
   } finally {
     await new Promise((resolve, reject) => {
