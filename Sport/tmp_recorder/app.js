@@ -44,11 +44,15 @@ const elements = {
   playButton: document.querySelector('#play-button'),
   timeline: document.querySelector('#timeline'),
   playbackTime: document.querySelector('#playback-time'),
+  speedMenu: document.querySelector('#speed-menu'),
+  speedValue: document.querySelector('#speed-value'),
   comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
   comparisonPlayButton: document.querySelector('#comparison-play-button'),
   comparisonTimeline: document.querySelector('#comparison-timeline'),
   comparisonPlaybackTime: document.querySelector('#comparison-playback-time'),
+  comparisonSpeedMenu: document.querySelector('#comparison-speed-menu'),
+  comparisonSpeedValue: document.querySelector('#comparison-speed-value'),
   comparisonControls: document.querySelector('#comparison-controls'),
   comparisonButton: document.querySelector('#comparison-button'),
   comparisonButtonLabel: document.querySelector('#comparison-button-label'),
@@ -128,6 +132,8 @@ function resetPlaybackUI() {
   elements.playButton.setAttribute('aria-label', 'Video starten');
   elements.timeline.value = '0';
   elements.playbackTime.value = '0:00 / 0:00';
+  elements.speedMenu.open = false;
+  elements.speedValue.textContent = '1×';
   elements.previewStatus.textContent = '';
   document.querySelectorAll('[data-speed]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.speed === '1'));
@@ -140,6 +146,8 @@ function resetComparisonPlaybackUI() {
   elements.comparisonPlayButton.setAttribute('aria-label', 'Leitbild starten');
   elements.comparisonTimeline.value = '0';
   elements.comparisonPlaybackTime.value = '0:00 / 0:00';
+  elements.comparisonSpeedMenu.open = false;
+  elements.comparisonSpeedValue.textContent = '1×';
   document.querySelectorAll('[data-comparison-speed]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.comparisonSpeed === '1'));
   });
@@ -740,6 +748,8 @@ document.querySelectorAll('[data-speed]').forEach((button) => {
     document.querySelectorAll('[data-speed]').forEach((speedButton) => {
       speedButton.setAttribute('aria-pressed', String(speedButton === button));
     });
+    elements.speedValue.textContent = button.textContent.trim();
+    elements.speedMenu.open = false;
     elements.previewStatus.textContent = `Eigene Aufnahme: Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
   });
 });
@@ -751,8 +761,37 @@ document.querySelectorAll('[data-comparison-speed]').forEach((button) => {
     document.querySelectorAll('[data-comparison-speed]').forEach((speedButton) => {
       speedButton.setAttribute('aria-pressed', String(speedButton === button));
     });
+    elements.comparisonSpeedValue.textContent = button.textContent.trim();
+    elements.comparisonSpeedMenu.open = false;
     elements.previewStatus.textContent = `Leitbild: Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
   });
+});
+
+document.querySelectorAll('.speed-menu').forEach((menu) => {
+  menu.addEventListener('toggle', () => {
+    if (!menu.open) {
+      return;
+    }
+    document.querySelectorAll('.speed-menu').forEach((otherMenu) => {
+      if (otherMenu !== menu) {
+        otherMenu.open = false;
+      }
+    });
+  });
+  menu.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && menu.open) {
+      menu.open = false;
+      menu.querySelector('summary')?.focus();
+    }
+  });
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.speed-menu')) {
+    document.querySelectorAll('.speed-menu').forEach((menu) => {
+      menu.open = false;
+    });
+  }
 });
 
 elements.comparisonButton.addEventListener('click', () => {

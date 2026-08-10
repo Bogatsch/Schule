@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=16">
-    <script type="module" src="./app.js?v=16"></script>
+    <link rel="stylesheet" href="./styles.css?v=17">
+    <script type="module" src="./app.js?v=17"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -145,14 +145,16 @@
                 <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
                 <output id="playback-time" for="timeline">0:00 / 0:00</output>
               </div>
-              <fieldset class="speed-control">
-                <legend>Tempo</legend>
-                <div role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
+              <details id="speed-menu" class="speed-menu">
+                <summary aria-label="Tempo der eigenen Aufnahme ändern">
+                  <span id="speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
+                </summary>
+                <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
                   <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
                   <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
                   <button type="button" data-speed="1" aria-pressed="true">1×</button>
                 </div>
-              </fieldset>
+              </details>
             </div>
 
             <div id="comparison-playback-controls" class="playback-controls" aria-label="Wiedergabe des Leitbilds" hidden>
@@ -165,14 +167,16 @@
                 <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
                 <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
               </div>
-              <fieldset class="speed-control">
-                <legend>Tempo</legend>
-                <div role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
+              <details id="comparison-speed-menu" class="speed-menu">
+                <summary aria-label="Tempo des Leitbilds ändern">
+                  <span id="comparison-speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
+                </summary>
+                <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
                   <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
                   <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
                   <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
                 </div>
-              </fieldset>
+              </details>
             </div>
           </div>
 

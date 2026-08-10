@@ -445,10 +445,16 @@ try {
   assert.equal(await evaluate(`document.querySelector('#playback-controls').hidden`), false);
   results.push('Video manuell stoppen und mit eigenen Steuerelementen anzeigen');
 
+  await click('#speed-menu summary');
+  await waitFor(`document.querySelector('#speed-menu').open`);
   await click('[data-speed="0.25"]');
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.25);
+  assert.equal(await evaluate(`document.querySelector('#speed-value').textContent`), '0,25×');
+  assert.equal(await evaluate(`document.querySelector('#speed-menu').open`), false);
+  await click('#speed-menu summary');
   await click('[data-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
+  await click('#speed-menu summary');
   await click('[data-speed="1"]');
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 1);
 
@@ -489,6 +495,35 @@ try {
   assert.ok(comparisonPlayerLayout.ownWidth < comparisonPlayerLayout.viewportWidth * 0.6);
   assert.ok(comparisonPlayerLayout.guideWidth < comparisonPlayerLayout.viewportWidth * 0.6);
 
+  await setViewport(844, 390);
+  const compactLandscapeLayout = await evaluate(`(() => {
+    const ownControls = document.querySelector('#playback-controls').getBoundingClientRect();
+    const guideControls = document.querySelector('#comparison-playback-controls').getBoundingClientRect();
+    const timeline = document.querySelector('#comparison-timeline').getBoundingClientRect();
+    const speed = document.querySelector('#comparison-speed-menu summary').getBoundingClientRect();
+    return {
+      overflow: document.documentElement.scrollWidth > innerWidth,
+      ownHeight: ownControls.height,
+      guideHeight: guideControls.height,
+      speedRightOfTimeline: speed.left >= timeline.right - 2
+    };
+  })()`);
+  assert.equal(compactLandscapeLayout.overflow, false);
+  assert.ok(compactLandscapeLayout.ownHeight < 155);
+  assert.ok(compactLandscapeLayout.guideHeight < 155);
+  assert.equal(compactLandscapeLayout.speedRightOfTimeline, true);
+  await click('#comparison-speed-menu summary');
+  await waitFor(`document.querySelector('#comparison-speed-menu').open`);
+  const upwardSpeedMenu = await evaluate(`(() => {
+    const summary = document.querySelector('#comparison-speed-menu summary').getBoundingClientRect();
+    const options = document.querySelector('#comparison-speed-menu .speed-options').getBoundingClientRect();
+    return options.bottom <= summary.top + 2;
+  })()`);
+  assert.equal(upwardSpeedMenu, true);
+  await click('#comparison-speed-menu summary');
+  await setViewport(1024, 1366);
+
+  await click('#speed-menu summary');
   await click('[data-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
   assert.equal(await evaluate(`document.querySelector('#comparison-video').playbackRate`), 1);
@@ -524,8 +559,12 @@ try {
   assert.ok(guideSeek.guideTime > 0);
   assert.ok(Math.abs(guideSeek.ownTime - ownTimeBeforeGuideSeek) < 0.01);
 
+  await click('#comparison-speed-menu summary');
+  await waitFor(`document.querySelector('#comparison-speed-menu').open`);
   await click('[data-comparison-speed="0.25"]');
   assert.equal(await evaluate(`document.querySelector('#comparison-video').playbackRate`), 0.25);
+  assert.equal(await evaluate(`document.querySelector('#comparison-speed-value').textContent`), '0,25×');
+  assert.equal(await evaluate(`document.querySelector('#comparison-speed-menu').open`), false);
   assert.equal(await evaluate(`document.querySelector('#video-preview').playbackRate`), 0.5);
   await click('#comparison-play-button');
   await waitFor(`document.querySelector('#video-preview').paused
@@ -538,6 +577,7 @@ try {
   await waitFor(`document.querySelector('#comparison-pane').hidden
     && document.querySelector('#comparison-playback-controls').hidden
     && !document.querySelector('#preview-stage').classList.contains('comparing')`);
+  await click('#speed-menu summary');
   await click('[data-speed="1"]');
   await click('#play-button');
   await waitFor(`!document.querySelector('#video-preview').paused`);
