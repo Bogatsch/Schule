@@ -383,10 +383,11 @@ try {
   await waitFor(`!document.querySelector('[data-category-content="spielsportarten"]').hidden`);
   await click('[data-sport="volleyball"]');
   await waitFor(`document.title === 'Volleyball | Sportkamera'
-    && document.querySelectorAll('[data-guide]').length >= 1`);
-  await click('[data-guide="angriffsschlag"]');
-  await waitFor(`document.title === 'Angriffsschlag | Sportkamera'
+    && document.querySelectorAll('[data-guide]').length >= 2`);
+  await click('[data-guide="pritschen-seitlich"]');
+  await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
     && document.querySelector('#guide-video').readyState >= 1`);
+  assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
   await click('[data-guide-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
   await click('.video-back');
@@ -475,11 +476,12 @@ try {
   await waitFor(`!document.querySelector('[data-comparison-sport-list="spielsportarten"]').hidden`);
   await click('[data-comparison-sport="volleyball"]');
   await waitFor(`!document.querySelector('[data-comparison-step="guide"]').hidden`);
-  await click('[data-comparison-src]');
+  await click('[data-comparison-title="Volleyball · Pritschen seitlich"]');
   await waitFor(`!document.querySelector('#comparison-pane').hidden
     && !document.querySelector('#comparison-playback-controls').hidden
     && !document.querySelector('#comparison-picker').open
     && document.querySelector('#comparison-video').readyState >= 1`);
+  assert.equal(await evaluate(`document.querySelector('#comparison-video').muted`), true);
   assert.equal(await evaluate(`document.querySelector('#preview-stage').classList.contains('comparing')`), true);
   const comparisonPlayerLayout = await evaluate(`(() => {
     const own = document.querySelector('#playback-controls').getBoundingClientRect();

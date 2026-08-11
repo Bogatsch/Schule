@@ -20,7 +20,9 @@ const requiredFiles = [
   'pages/leitbilder/volleyball/index.html',
   'pages/leitbilder/volleyball/angriffsschlag/index.html',
   'pages/leitbilder/volleyball/angriffsschlag/app.js',
+  'pages/leitbilder/volleyball/pritschen-seitlich/index.html',
   'Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
+  'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4',
   'icons/favicon-64.png',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
@@ -47,7 +49,7 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp] = await Promise.all([
+const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('sw.js'),
@@ -58,7 +60,8 @@ const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guides
   read('pages/leitbilder/app.js'),
   read('pages/leitbilder/volleyball/index.html'),
   read('pages/leitbilder/volleyball/angriffsschlag/index.html'),
-  read('pages/leitbilder/volleyball/angriffsschlag/app.js')
+  read('pages/leitbilder/volleyball/angriffsschlag/app.js'),
+  read('pages/leitbilder/volleyball/pritschen-seitlich/index.html')
 ]);
 const manifest = JSON.parse(manifestText);
 
@@ -75,8 +78,10 @@ assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource'
 assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite fehlt');
 assert.match(html, /id="comparison-button"/, 'Button für den Leitbildvergleich fehlt');
 assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4"/, 'Leitbildauswahl für den Vergleich fehlt');
+assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4"/, 'Pritschen fehlt in der Leitbildauswahl für den Vergleich');
 assert.match(html, /id="comparison-play-button"/, 'eigene Start-/Pause-Taste des Leitbilds fehlt');
 assert.match(html, /id="comparison-timeline"/, 'eigene Zeitleiste des Leitbilds fehlt');
+assert.match(html, /<video id="comparison-video"[^>]*\smuted(?:\s|=|>)/i, 'Leitbildvergleich muss stummgeschaltet sein');
 assert.match(html, /<dialog id="comparison-picker"/, 'modale Leitbildauswahl fehlt');
 assert.match(html, /data-comparison-category="individualsportarten"/, 'Individualsport-Schritt der Vergleichsauswahl fehlt');
 assert.match(html, /data-comparison-category="spielsportarten"/, 'Spielsport-Schritt der Vergleichsauswahl fehlt');
@@ -91,7 +96,7 @@ assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleis
 assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Leitbilds fehlt');
 assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
 
-[html, guidesHtml, volleyballHtml, playerHtml].forEach((pageHtml) => {
+[html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {
   assert.doesNotMatch(pageHtml, /class="step-label"><span>\d+<\/span>/, 'Nummerierung der Ablaufschritte ist noch vorhanden');
 });
 
@@ -107,6 +112,8 @@ assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Lei
 assert.match(volleyballHtml, /Content-Security-Policy/i, 'CSP der Volleyball-Seite fehlt');
 assert.match(volleyballHtml, /data-guide="angriffsschlag"/, 'Angriffsschlag fehlt in der Leitbilderliste');
 assert.match(volleyballHtml, /href="\.\/angriffsschlag\/index\.html"/, 'Link zum Angriffsschlag-Player fehlt');
+assert.match(volleyballHtml, /data-guide="pritschen-seitlich"/, 'Pritschen fehlt in der Leitbilderliste');
+assert.match(volleyballHtml, /href="\.\/pritschen-seitlich\/index\.html"/, 'Link zum Pritschen-Player fehlt');
 assert.doesNotMatch(volleyballHtml, /https?:\/\//i, 'Volleyball-Seite enthält eine externe Ressource');
 
 assert.match(playerHtml, /Content-Security-Policy/i, 'CSP der Player-Seite fehlt');
@@ -115,9 +122,19 @@ assert.match(playerHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiederga
 assert.match(playerHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
 assert.match(playerHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');
 assert.doesNotMatch(playerHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Leitbild verwendet native Videosteuerung');
+assert.match(playerHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Angriffsschlag muss stummgeschaltet sein');
 assert.doesNotMatch(playerHtml, /https?:\/\//i, 'Player-Seite enthält eine externe Ressource');
 assert.doesNotMatch(playerApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Player-Code enthält eine Netzwerk- oder Speicher-API');
 assert.match(playerApp, /playbackRate/, 'Geschwindigkeitssteuerung für Leitbilder fehlt');
+
+assert.match(pritschenHtml, /Content-Security-Policy/i, 'CSP der Pritschen-Seite fehlt');
+assert.match(pritschenHtml, /Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4/, 'Pritschen-Leitbild fehlt');
+assert.match(pritschenHtml, /data-guide-speed="0\.25"/, 'langsame Pritschen-Wiedergabe fehlt');
+assert.match(pritschenHtml, /data-guide-speed="0\.5"/, 'mittlere Pritschen-Wiedergabe fehlt');
+assert.match(pritschenHtml, /data-guide-speed="1"/, 'normale Pritschen-Wiedergabe fehlt');
+assert.doesNotMatch(pritschenHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Pritschen-Player verwendet native Videosteuerung');
+assert.match(pritschenHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Pritschen muss stummgeschaltet sein');
+assert.doesNotMatch(pritschenHtml, /https?:\/\//i, 'Pritschen-Seite enthält eine externe Ressource');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');

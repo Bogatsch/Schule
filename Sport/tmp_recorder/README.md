@@ -68,7 +68,8 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
 - In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
 - Mit **Leitbild daneben** lässt sich ein Leitbild direkt neben die eigene Aufnahme schalten. Die Auswahl öffnet sich als dreistufiges Fenster für Sportartengruppe, Sportart und Leitbild. Beide Videos haben eigene Bedienelemente für Start/Pause, Zeitleiste und Wiedergabegeschwindigkeit.
-- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** steht eine Liste der Leitbilder. Das Leitbild **Angriffsschlag** öffnet einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
+- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** steht eine Liste der Leitbilder. **Angriffsschlag** und **Pritschen seitlich** öffnen jeweils einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
+- Alle Leitbild-Videos werden grundsätzlich ohne Ton wiedergegeben.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle Aufnahme vor dem Ansichtswechsel.
 - Beim Wechsel in den Hintergrund, Neuladen oder Verlassen wird die aktuelle Aufnahme ebenfalls entfernt. Eine frühere Aufnahme wird nach dem Laden nie wiederhergestellt.
 
