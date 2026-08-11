@@ -31,7 +31,6 @@ const elements = {
   recordingIndicator: document.querySelector('#recording-indicator'),
   recordingTime: document.querySelector('#recording-time'),
   previewBack: document.querySelector('#preview-back'),
-  previewKicker: document.querySelector('#preview-kicker'),
   previewStage: document.querySelector('#preview-stage'),
   photoPreview: document.querySelector('#photo-preview'),
   ownVideoPane: document.querySelector('#own-video-pane'),
@@ -495,7 +494,6 @@ async function takePhoto() {
     elements.ownVideoPane.hidden = true;
     elements.playbackControls.hidden = true;
     elements.comparisonControls.hidden = true;
-    elements.previewKicker.textContent = 'Foto aufgenommen';
     stopStreamAfterCapture();
     resetCanvas();
     setView('preview');
@@ -510,7 +508,7 @@ function updateRecordingTimer() {
   elements.recordingTime.textContent = formatRecordingTime(elapsed);
 }
 
-function showVideoPreview(blob, mimeType) {
+function showVideoPreview(blob) {
   currentBlob = blob;
   currentObjectUrl = URL.createObjectURL(currentBlob);
   elements.videoPreview.src = currentObjectUrl;
@@ -520,7 +518,6 @@ function showVideoPreview(blob, mimeType) {
   elements.playbackControls.hidden = false;
   elements.comparisonControls.hidden = false;
   elements.videoPreview.playbackRate = 1;
-  elements.previewKicker.textContent = `Video aufgenommen · ${mimeType.startsWith('video/mp4') ? 'MP4' : 'WebM'}`;
   resetPlaybackUI();
   elements.videoPreview.load();
   setView('preview');
@@ -599,7 +596,7 @@ function startVideoRecording() {
     const blob = new Blob(usableChunks, { type: recordedType });
     stopStreamAfterCapture();
     elements.recordingIndicator.hidden = true;
-    showVideoPreview(blob, recordedType);
+    showVideoPreview(blob);
   };
 
   try {

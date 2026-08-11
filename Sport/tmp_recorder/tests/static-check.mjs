@@ -67,6 +67,8 @@ assert.match(html, /connect-src 'none'/, 'CSP muss externe Verbindungen sperren'
 assert.match(html, /media-src 'self' blob:/, 'CSP muss nur lokale Blob-Medien erlauben');
 assert.match(html, /apple-mobile-web-app-capable/, 'Apple-PWA-Metadaten fehlen');
 assert.doesNotMatch(html, /Bewegung sehen|Deine Aufnahme bleibt hier|Aufnahmen bleiben nur vorübergehend/, 'entfernter Einleitungstext ist noch vorhanden');
+assert.doesNotMatch(html, /Vorschau|preview-label|preview-kicker/, 'entfernte Vorschau-Beschriftung ist noch vorhanden');
+assert.doesNotMatch(app, /Foto aufgenommen|Video aufgenommen/, 'entfernter Aufnahmestatus ist noch vorhanden');
 assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteuerung ist verboten');
 assert.doesNotMatch(html, /\sdownload(?:\s|=|>)/i, 'Download-Funktion ist verboten');
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
@@ -81,8 +83,8 @@ assert.match(html, /data-comparison-category="spielsportarten"/, 'Spielsport-Sch
 assert.match(html, /data-comparison-sport="volleyball"/, 'Sportart-Schritt der Vergleichsauswahl fehlt');
 assert.match(html, /id="speed-menu"/, 'kompakte Tempoauswahl der eigenen Aufnahme fehlt');
 assert.match(html, /id="comparison-speed-menu"/, 'kompakte Tempoauswahl des Leitbilds fehlt');
-assert.match(html, /styles\.css\?v=18/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=18/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=19/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=19/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
 assert.match(app, /showModal/, 'modales Öffnen der Leitbildauswahl fehlt');
 assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
