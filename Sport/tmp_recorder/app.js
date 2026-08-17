@@ -27,7 +27,6 @@ const elements = {
   switchCamera: document.querySelector('#switch-camera'),
   liveVideo: document.querySelector('#live-video'),
   captureButton: document.querySelector('#capture-button'),
-  captureHint: document.querySelector('#capture-hint'),
   recordingIndicator: document.querySelector('#recording-indicator'),
   recordingTime: document.querySelector('#recording-time'),
   previewBack: document.querySelector('#preview-back'),
@@ -110,9 +109,6 @@ function setModeUI() {
   elements.cameraKicker.textContent = isPhoto ? 'Fotoaufnahme' : 'Videoaufnahme · maximal 3 Minuten';
   elements.cameraTitle.textContent = isPhoto ? 'Kamera ausrichten' : 'Bewegung vorbereiten';
   elements.captureButton.setAttribute('aria-label', isPhoto ? 'Foto aufnehmen' : 'Videoaufnahme starten');
-  elements.captureHint.textContent = isPhoto
-    ? 'Tippe auf den Kreis, um ein Foto aufzunehmen.'
-    : 'Tippe auf den Kreis zum Starten und erneut zum Stoppen.';
   elements.captureButton.classList.toggle('video-mode', !isPhoto);
 }
 
@@ -386,7 +382,7 @@ async function startCamera() {
   setView('camera');
   elements.cameraStage.setAttribute('aria-busy', 'true');
   elements.cameraPlaceholder.hidden = false;
-  elements.cameraStatus.textContent = 'Kamera wird vorbereitet.';
+  elements.cameraStatus.textContent = '';
   elements.captureButton.disabled = true;
 
   try {
@@ -414,9 +410,7 @@ async function startCamera() {
 
     elements.cameraPlaceholder.hidden = true;
     elements.cameraStage.setAttribute('aria-busy', 'false');
-    elements.cameraStatus.textContent = currentMode === 'photo'
-      ? 'Bereit für dein Foto.'
-      : 'Bereit für dein Video. Es wird ohne Ton aufgenommen.';
+    elements.cameraStatus.textContent = '';
     elements.captureButton.disabled = false;
   } catch (error) {
     if (thisOperation === operationId) {
