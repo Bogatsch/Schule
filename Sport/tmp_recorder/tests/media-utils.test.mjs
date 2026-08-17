@@ -9,25 +9,25 @@ import {
   selectSupportedVideoMimeType
 } from '../media-utils.js';
 
-test('bevorzugt ein Safari-kompatibles MP4-Format', () => {
+test('bevorzugt WebM, wenn der Browser es unterstützt', () => {
   const checked = [];
   const recorder = {
     isTypeSupported(type) {
       checked.push(type);
-      return type === 'video/mp4';
+      return type === 'video/webm;codecs=vp8';
     }
   };
 
-  assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
-  assert.deepEqual(checked, VIDEO_MIME_CANDIDATES);
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm;codecs=vp8');
+  assert.deepEqual(checked, VIDEO_MIME_CANDIDATES.slice(0, 2));
 });
 
-test('lehnt einen Browser mit ausschließlicher WebM-Unterstützung ab', () => {
+test('fällt auf MP4 zurück, wenn WebM nicht verfügbar ist', () => {
   const recorder = {
-    isTypeSupported: (type) => type === 'video/webm;codecs=vp8'
+    isTypeSupported: (type) => type === 'video/mp4'
   };
 
-  assert.equal(selectSupportedVideoMimeType(recorder), null);
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
 });
 
 test('meldet ein nicht unterstütztes Aufnahmeformat', () => {
@@ -39,7 +39,7 @@ test('meldet ein nicht unterstütztes Aufnahmeformat', () => {
 test('überspringt Browserfehler bei der Formatprüfung', () => {
   const recorder = {
     isTypeSupported(type) {
-      if (type.includes('avc1')) {
+      if (type.startsWith('video/webm')) {
         throw new Error('nicht verfügbar');
       }
       return type === 'video/mp4';
@@ -49,9 +49,10 @@ test('überspringt Browserfehler bei der Formatprüfung', () => {
   assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
 });
 
-test('enthält ausschließlich echte MP4-Aufnahmeformate', () => {
+test('enthält WebM- und MP4-Aufnahmeformate', () => {
   assert.ok(VIDEO_MIME_CANDIDATES.length > 0);
-  assert.ok(VIDEO_MIME_CANDIDATES.every((type) => type.startsWith('video/mp4')));
+  assert.ok(VIDEO_MIME_CANDIDATES.some((type) => type.startsWith('video/webm')));
+  assert.ok(VIDEO_MIME_CANDIDATES.some((type) => type.startsWith('video/mp4')));
 });
 
 test('formatiert und begrenzt den Aufnahmezähler auf 3 Minuten', () => {

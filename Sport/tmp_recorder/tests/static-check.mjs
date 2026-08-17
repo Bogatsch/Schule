@@ -95,14 +95,14 @@ assert.match(html, /<dialog id="download-dialog"/, 'Namensdialog für den Downlo
 assert.match(html, />Download<\/button>/, 'Download-Bestätigung fehlt');
 assert.match(html, />Abbruch<\/button>/, 'Download-Abbruch fehlt');
 assert.match(html, /styles\.css\?v=24/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=25/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /app\.js\?v=26/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
 assert.match(app, /showModal/, 'modales Öffnen der Leitbildauswahl fehlt');
 assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
 assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Leitbilds fehlt');
 assert.match(app, /link\.download\s*=/, 'lokaler Download der Aufnahme fehlt');
 assert.match(app, /sanitizeDownloadName/, 'sichere Dateinamensverarbeitung fehlt');
-assert.match(app, /downloadMediaKind === 'photo' \? 'jpg' : 'mp4'/, 'Video-Download ist nicht fest auf MP4 eingestellt');
+assert.match(app, /startsWith\('video\/mp4'\) \? 'mp4' : 'webm'/, 'Download-Endung folgt nicht dem tatsächlichen Aufnahmeformat');
 assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
 
 [html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {

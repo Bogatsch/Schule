@@ -3,7 +3,7 @@ import {
   formatPlaybackTime,
   formatRecordingTime,
   selectSupportedVideoMimeType
-} from './media-utils.js?v=25';
+} from './media-utils.js?v=26';
 
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
@@ -211,7 +211,10 @@ function closeComparisonPicker({ restoreFocus = false } = {}) {
 }
 
 function getDownloadExtension() {
-  return downloadMediaKind === 'photo' ? 'jpg' : 'mp4';
+  if (downloadMediaKind === 'photo') {
+    return 'jpg';
+  }
+  return currentBlob?.type?.toLowerCase().startsWith('video/mp4') ? 'mp4' : 'webm';
 }
 
 function sanitizeDownloadName(value, fallback) {
@@ -459,7 +462,7 @@ async function startCamera() {
   if (currentMode === 'video') {
     selectedMimeType = selectSupportedVideoMimeType(window.MediaRecorder);
     if (!selectedMimeType) {
-      showError('Dieser Browser kann Videos nicht direkt als MP4 aufnehmen. Die Videoaufnahme ist hier deshalb nicht verfügbar; die Fotoaufnahme bleibt nutzbar.');
+      showError('Dieser Browser bietet kein unterstütztes WebM- oder MP4-Aufnahmeformat an. Die Fotoaufnahme bleibt verfügbar.');
       return;
     }
   }
@@ -632,7 +635,7 @@ function startVideoRecording() {
 
   const mimeType = selectSupportedVideoMimeType(window.MediaRecorder);
   if (!mimeType) {
-    showError('Dieser Browser kann Videos nicht direkt als MP4 aufnehmen. Bitte verwende einen aktuellen Browser oder die Fotoaufnahme.');
+    showError('Dieser Browser bietet kein unterstütztes WebM- oder MP4-Aufnahmeformat an. Bitte verwende einen aktuellen Browser oder die Fotoaufnahme.');
     return;
   }
 
