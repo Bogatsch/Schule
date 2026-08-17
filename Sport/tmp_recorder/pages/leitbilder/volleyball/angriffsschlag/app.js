@@ -20,8 +20,8 @@ function updateGuidePlaybackUI() {
 function updateGuidePlayButton() {
   const playing = !guideVideo.paused && !guideVideo.ended;
   guidePlayButton.innerHTML = playing
-    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
-    : '<span aria-hidden="true">▶</span><span>Start</span>';
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
   guidePlayButton.setAttribute('aria-label', playing ? 'Video pausieren' : 'Video starten');
 }
 

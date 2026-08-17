@@ -139,7 +139,7 @@ function updateFacingUI() {
 }
 
 function resetPlaybackUI() {
-  elements.playButton.innerHTML = '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.playButton.innerHTML = '<span aria-hidden="true">▶</span>';
   elements.playButton.setAttribute('aria-label', 'Video starten');
   elements.timeline.value = '0';
   elements.playbackTime.value = '0:00 / 0:00';
@@ -153,7 +153,7 @@ function resetPlaybackUI() {
 }
 
 function resetComparisonPlaybackUI() {
-  elements.comparisonPlayButton.innerHTML = '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.comparisonPlayButton.innerHTML = '<span aria-hidden="true">▶</span>';
   elements.comparisonPlayButton.setAttribute('aria-label', 'Leitbild starten');
   elements.comparisonTimeline.value = '0';
   elements.comparisonPlaybackTime.value = '0:00 / 0:00';
@@ -766,16 +766,16 @@ async function toggleComparisonPlayback() {
 function updatePlayButton() {
   const playing = !elements.videoPreview.paused && !elements.videoPreview.ended;
   elements.playButton.innerHTML = playing
-    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
-    : '<span aria-hidden="true">▶</span><span>Start</span>';
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
   elements.playButton.setAttribute('aria-label', playing ? 'Video pausieren' : 'Video starten');
 }
 
 function updateComparisonPlayButton() {
   const playing = !elements.comparisonVideo.paused && !elements.comparisonVideo.ended;
   elements.comparisonPlayButton.innerHTML = playing
-    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
-    : '<span aria-hidden="true">▶</span><span>Start</span>';
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
   elements.comparisonPlayButton.setAttribute('aria-label', playing ? 'Leitbild pausieren' : 'Leitbild starten');
 }
 

@@ -726,10 +726,11 @@ h2 {
 
 .play-button {
   display: inline-flex;
-  gap: 0.55rem;
   align-items: center;
+  justify-content: center;
+  min-width: 52px;
   min-height: 52px;
-  padding: 0.7rem 1rem;
+  padding: 0.7rem;
   color: white;
   font-weight: 800;
   cursor: pointer;
@@ -836,16 +837,6 @@ h2 {
 .speed-menu summary:focus-visible {
   outline: 3px solid var(--coral);
   outline-offset: 2px;
-}
-
-.speed-chevron {
-  display: inline-block;
-  font-size: 0.78rem;
-  transition: transform 150ms ease;
-}
-
-.speed-menu[open] .speed-chevron {
-  transform: rotate(180deg);
 }
 
 .speed-options {

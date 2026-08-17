@@ -434,6 +434,7 @@ try {
   await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
     && document.querySelector('#guide-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
+  assert.equal(await evaluate(`document.querySelector('#guide-play-button').textContent.trim()`), '▶');
   await waitFor(`document.querySelector('#guide-video').readyState >= 2`);
   await exerciseAnnotation('#guide-annotation-button', 'Pritschen seitlich');
   results.push('Leitbild-Frame mit Stift und Radierer annotieren und verwerfen');
@@ -499,6 +500,8 @@ try {
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 15_000);
   assert.equal(await evaluate(`document.querySelector('#video-preview').hasAttribute('controls')`), false);
   assert.equal(await evaluate(`document.querySelector('#playback-controls').hidden`), false);
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), '▶');
+  assert.equal(await evaluate(`document.querySelector('#speed-menu summary').textContent.trim()`), '1×');
   await waitFor(`document.querySelector('#video-preview').readyState >= 2`);
   await exerciseAnnotation('#video-annotation-button', 'Eigene Aufnahme');
   results.push('Frame der eigenen Aufnahme temporär annotieren');
@@ -637,8 +640,10 @@ try {
   await click('#play-button');
   await waitFor(`!document.querySelector('#video-preview').paused
     && document.querySelector('#comparison-video').paused`);
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), 'Ⅱ');
   await click('#play-button');
   await waitFor(`document.querySelector('#video-preview').paused`);
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), '▶');
 
   const ownSeek = await evaluate(`(() => {
     const timeline = document.querySelector('#timeline');
