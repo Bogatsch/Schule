@@ -218,6 +218,51 @@
   margin-top: 0.8rem;
 }
 
+.guide-player-tools {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-end;
+}
+
+.guide-player-tools .speed-control {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.guide-player-tools .speed-control legend {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.guide-player-tools .speed-control > div {
+  display: flex;
+  padding: 0.2rem;
+  background: #e8efed;
+  border-radius: 11px;
+}
+
+.guide-player-tools [data-guide-speed] {
+  min-height: 44px;
+  padding: 0.45rem 0.7rem;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+}
+
+.guide-player-tools [data-guide-speed][aria-pressed="true"] {
+  color: white;
+  background: var(--teal);
+}
+
 .video-page-panel > .preview-status {
   margin-top: 0.5rem;
 }
@@ -255,6 +300,15 @@
   .guide-video-stage {
     border-width: 2px;
     border-radius: 12px;
+  }
+
+  .guide-playback-controls {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .guide-player-tools {
+    grid-column: 1 / -1;
+    justify-self: end;
   }
 }
 

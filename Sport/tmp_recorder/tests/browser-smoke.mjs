@@ -309,6 +309,52 @@ async function click(selector) {
   await evaluate(`document.querySelector(${encoded}).click(); true`);
 }
 
+async function exerciseAnnotation(triggerSelector, expectedTitle) {
+  await click(triggerSelector);
+  await waitFor(`document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-frame-canvas').width > 0
+    && document.querySelector('#annotation-drawing-canvas').width > 0`);
+  assert.match(
+    await evaluate(`document.querySelector('#annotation-dialog-title').textContent`),
+    new RegExp(expectedTitle)
+  );
+  await click('[data-annotation-color="#ffd166"]');
+  assert.equal(
+    await evaluate(`document.querySelector('[data-annotation-tool="pen"]').getAttribute('aria-pressed')`),
+    'true'
+  );
+  const drawnAlpha = await evaluate(`(() => {
+    const canvas = document.querySelector('#annotation-drawing-canvas');
+    const bounds = canvas.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x, clientY: y }));
+    canvas.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x + 30, clientY: y + 15 }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x + 30, clientY: y + 15 }));
+    const sampleX = Math.floor(canvas.width / 2);
+    const sampleY = Math.floor(canvas.height / 2);
+    return canvas.getContext('2d').getImageData(sampleX, sampleY, 1, 1).data[3];
+  })()`);
+  assert.ok(drawnAlpha > 0, 'Der Stift hat keine sichtbare Annotation erzeugt');
+  await click('[data-annotation-tool="eraser"]');
+  const erasedAlpha = await evaluate(`(() => {
+    const canvas = document.querySelector('#annotation-drawing-canvas');
+    const bounds = canvas.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 8, pointerType: 'touch', clientX: x, clientY: y }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 8, pointerType: 'touch', clientX: x, clientY: y }));
+    const sampleX = Math.floor(canvas.width / 2);
+    const sampleY = Math.floor(canvas.height / 2);
+    return canvas.getContext('2d').getImageData(sampleX, sampleY, 1, 1).data[3];
+  })()`);
+  assert.equal(erasedAlpha, 0, 'Der Radierer hat die Annotation nicht entfernt');
+  await click('#annotation-close');
+  await waitFor(`!document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-frame-canvas').width === 0
+    && document.querySelector('#annotation-drawing-canvas').width === 0`);
+}
+
 async function navigate(url = appUrl) {
   const loaded = client.once('Page.loadEventFired');
   await client.send('Page.navigate', { url });
@@ -388,6 +434,9 @@ try {
   await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
     && document.querySelector('#guide-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
+  await waitFor(`document.querySelector('#guide-video').readyState >= 2`);
+  await exerciseAnnotation('#guide-annotation-button', 'Pritschen seitlich');
+  results.push('Leitbild-Frame mit Stift und Radierer annotieren und verwerfen');
   await click('[data-guide-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
   await click('.video-back');
@@ -450,6 +499,9 @@ try {
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 15_000);
   assert.equal(await evaluate(`document.querySelector('#video-preview').hasAttribute('controls')`), false);
   assert.equal(await evaluate(`document.querySelector('#playback-controls').hidden`), false);
+  await waitFor(`document.querySelector('#video-preview').readyState >= 2`);
+  await exerciseAnnotation('#video-annotation-button', 'Eigene Aufnahme');
+  results.push('Frame der eigenen Aufnahme temporär annotieren');
   await click('#video-download-button');
   await waitFor(`document.querySelector('#download-dialog').open`);
   await evaluate(`(() => {
@@ -513,6 +565,9 @@ try {
     && !document.querySelector('#comparison-picker').open
     && document.querySelector('#comparison-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#comparison-video').muted`), true);
+  await waitFor(`document.querySelector('#comparison-video').readyState >= 2`);
+  await exerciseAnnotation('#comparison-annotation-button', 'Pritschen seitlich');
+  results.push('Frame des daneben geschalteten Leitbilds temporär annotieren');
   assert.equal(await evaluate(`document.querySelector('#preview-stage').classList.contains('comparing')`), true);
   const comparisonPlayerLayout = await evaluate(`(() => {
     const own = document.querySelector('#playback-controls').getBoundingClientRect();
@@ -545,6 +600,25 @@ try {
   assert.ok(compactLandscapeLayout.ownHeight < 155);
   assert.ok(compactLandscapeLayout.guideHeight < 155);
   assert.equal(compactLandscapeLayout.speedRightOfTimeline, true);
+  await click('#comparison-annotation-button');
+  await waitFor(`document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-canvas-stage').clientWidth > 0`);
+  const compactAnnotationLayout = await evaluate(`(() => {
+    const dialog = document.querySelector('#annotation-dialog').getBoundingClientRect();
+    const stage = document.querySelector('#annotation-canvas-stage').getBoundingClientRect();
+    return {
+      fitsViewport: dialog.left >= 0 && dialog.top >= 0 && dialog.right <= innerWidth && dialog.bottom <= innerHeight,
+      usefulCanvas: stage.width > 200 && stage.height > 100,
+      overflow: document.documentElement.scrollWidth > innerWidth
+    };
+  })()`);
+  assert.equal(compactAnnotationLayout.fitsViewport, true);
+  assert.equal(compactAnnotationLayout.usefulCanvas, true);
+  assert.equal(compactAnnotationLayout.overflow, false);
+  const compactAnnotationScreenshot = await screenshot('annotation-landscape.png');
+  await click('#annotation-close');
+  await waitFor(`!document.querySelector('#annotation-dialog').open`);
+  results.push('Annotationsfenster passt vollständig ins Handy-Querformat');
   await click('#comparison-speed-menu summary');
   await waitFor(`document.querySelector('#comparison-speed-menu').open`);
   const upwardSpeedMenu = await evaluate(`(() => {
@@ -797,6 +871,7 @@ try {
   }
   console.log(`SCREENSHOT_PORTRAIT=${portraitScreenshot}`);
   console.log(`SCREENSHOT_PREVIEW=${videoPreviewScreenshot}`);
+  console.log(`SCREENSHOT_ANNOTATION=${compactAnnotationScreenshot}`);
   console.log(`SCREENSHOT_LANDSCAPE=${landscapeScreenshot}`);
   console.log(`SCREENSHOT_CAMERA_LANDSCAPE=${landscapeCameraScreenshot}`);
   console.log(`SCREENSHOT_MOBILE=${mobileScreenshot}`);

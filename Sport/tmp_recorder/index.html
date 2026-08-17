@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=24">
-    <script type="module" src="./app.js?v=26"></script>
+    <link rel="stylesheet" href="./styles.css?v=27">
+    <script type="module" src="./app.js?v=27"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -165,6 +165,11 @@
                     <path d="M12 3v12M7 10l5 5 5-5M4 19h16"></path>
                   </svg>
                 </button>
+                <button id="video-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame der eigenen Aufnahme annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
+                  </svg>
+                </button>
               </div>
             </div>
 
@@ -178,16 +183,23 @@
                 <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
                 <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
               </div>
-              <details id="comparison-speed-menu" class="speed-menu">
-                <summary aria-label="Tempo des Leitbilds ändern">
-                  <span id="comparison-speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
-                </summary>
-                <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
-                  <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
-                  <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
-                  <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
-                </div>
-              </details>
+              <div class="player-tools">
+                <details id="comparison-speed-menu" class="speed-menu">
+                  <summary aria-label="Tempo des Leitbilds ändern">
+                    <span id="comparison-speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
+                  </summary>
+                  <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
+                    <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
+                    <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
+                    <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
+                  </div>
+                </details>
+                <button id="comparison-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame des Leitbilds annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -326,6 +338,44 @@
                 <button id="download-cancel" class="secondary-action" type="button">Abbruch</button>
               </div>
             </form>
+          </dialog>
+
+          <dialog id="annotation-dialog" class="annotation-dialog" aria-labelledby="annotation-dialog-title">
+            <div class="annotation-dialog-shell">
+              <header class="annotation-dialog-header">
+                <div>
+                  <p class="eyebrow">Frame annotieren</p>
+                  <h2 id="annotation-dialog-title">Videoframe annotieren</h2>
+                </div>
+                <button id="annotation-close" class="comparison-close" type="button" aria-label="Annotation schließen">×</button>
+              </header>
+              <div class="annotation-toolbar">
+                <div class="annotation-tool-group" role="group" aria-label="Zeichenwerkzeug">
+                  <button type="button" data-annotation-tool="pen" aria-pressed="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path></svg>
+                    <span>Stift</span>
+                  </button>
+                  <button type="button" data-annotation-tool="eraser" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 18h11M4.8 13.2l7.7-7.7a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L12 18H9l-4.2-4.8z"></path></svg>
+                    <span>Radierer</span>
+                  </button>
+                </div>
+                <fieldset class="annotation-colors">
+                  <legend>Farbe</legend>
+                  <div role="group" aria-label="Stiftfarbe">
+                    <button type="button" data-annotation-color="#ef4f3f" aria-label="Rot" aria-pressed="true"></button>
+                    <button type="button" data-annotation-color="#ffd166" aria-label="Gelb" aria-pressed="false"></button>
+                    <button type="button" data-annotation-color="#118a8b" aria-label="Türkis" aria-pressed="false"></button>
+                    <button type="button" data-annotation-color="#ffffff" aria-label="Weiß" aria-pressed="false"></button>
+                    <button type="button" data-annotation-color="#071d24" aria-label="Dunkelblau" aria-pressed="false"></button>
+                  </div>
+                </fieldset>
+              </div>
+              <div id="annotation-canvas-stage" class="annotation-canvas-stage">
+                <canvas id="annotation-frame-canvas" aria-hidden="true"></canvas>
+                <canvas id="annotation-drawing-canvas" aria-label="Zeichenfläche für den aktuellen Videoframe"></canvas>
+              </div>
+            </div>
           </dialog>
 
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>

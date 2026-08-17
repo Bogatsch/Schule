@@ -4,6 +4,7 @@ import {
   formatRecordingTime,
   selectSupportedVideoMimeType
 } from './media-utils.js?v=26';
+import { setupVideoAnnotation } from './annotation.js?v=27';
 
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
@@ -47,6 +48,7 @@ const elements = {
   speedMenu: document.querySelector('#speed-menu'),
   speedValue: document.querySelector('#speed-value'),
   videoDownloadButton: document.querySelector('#video-download-button'),
+  videoAnnotationButton: document.querySelector('#video-annotation-button'),
   comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
   comparisonPlayButton: document.querySelector('#comparison-play-button'),
@@ -54,6 +56,7 @@ const elements = {
   comparisonPlaybackTime: document.querySelector('#comparison-playback-time'),
   comparisonSpeedMenu: document.querySelector('#comparison-speed-menu'),
   comparisonSpeedValue: document.querySelector('#comparison-speed-value'),
+  comparisonAnnotationButton: document.querySelector('#comparison-annotation-button'),
   comparisonControls: document.querySelector('#comparison-controls'),
   comparisonButton: document.querySelector('#comparison-button'),
   comparisonButtonLabel: document.querySelector('#comparison-button-label'),
@@ -104,6 +107,7 @@ let operationId = 0;
 let selectedComparisonCategory = 'spielsportarten';
 let downloadMediaKind = 'video';
 let downloadTrigger = null;
+const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -397,6 +401,7 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   elements.photoDownloadControls.hidden = true;
   elements.playbackControls.hidden = true;
   closeDownloadDialog({ restoreFocus: false });
+  annotation.close({ restoreFocus: false });
   resetPlaybackUI();
   resetCanvas();
 
@@ -813,6 +818,16 @@ elements.photoDownloadButton.addEventListener('click', () => {
 });
 elements.videoDownloadButton.addEventListener('click', () => {
   openDownloadDialog('video', elements.videoDownloadButton);
+});
+elements.videoAnnotationButton.addEventListener('click', () => {
+  annotation.open(elements.videoPreview, 'Eigene Aufnahme', elements.videoAnnotationButton);
+});
+elements.comparisonAnnotationButton.addEventListener('click', () => {
+  annotation.open(
+    elements.comparisonVideo,
+    elements.comparisonPlayerLabel.textContent,
+    elements.comparisonAnnotationButton
+  );
 });
 elements.downloadCancel.addEventListener('click', () => closeDownloadDialog());
 elements.downloadForm.addEventListener('submit', (event) => {

@@ -933,7 +933,8 @@ h2 {
 }
 
 .comparison-dialog::backdrop,
-.download-dialog::backdrop {
+.download-dialog::backdrop,
+.annotation-dialog::backdrop {
   background: rgb(7 29 36 / 58%);
   backdrop-filter: blur(4px);
 }
@@ -1007,6 +1008,149 @@ h2 {
 
 .download-dialog-actions button {
   min-height: 48px;
+}
+
+.annotation-dialog {
+  width: min(calc(100% - 1rem), 1120px);
+  max-width: none;
+  max-height: calc(100dvh - 1rem);
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgb(7 29 36 / 32%);
+}
+
+.annotation-dialog-shell {
+  display: grid;
+  gap: 0.8rem;
+  max-height: calc(100dvh - 1rem);
+  padding: clamp(0.8rem, 2vw, 1.4rem);
+  overflow: auto;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+.annotation-dialog-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.annotation-dialog-header .eyebrow {
+  margin: 0 0 0.25rem;
+}
+
+.annotation-dialog-header h2 {
+  margin: 0;
+  color: var(--teal);
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.annotation-toolbar,
+.annotation-tool-group,
+.annotation-colors > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.annotation-toolbar {
+  justify-content: space-between;
+}
+
+.annotation-tool-group button {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  color: var(--teal);
+  font-weight: 800;
+  cursor: pointer;
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+}
+
+.annotation-tool-group button[aria-pressed="true"] {
+  color: white;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.annotation-tool-group svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.annotation-colors {
+  padding: 0;
+  border: 0;
+}
+
+.annotation-colors legend {
+  float: left;
+  margin-right: 0.6rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.annotation-colors button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  cursor: pointer;
+  background: var(--annotation-color);
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.annotation-colors button[data-annotation-color="#ef4f3f"] { --annotation-color: #ef4f3f; }
+.annotation-colors button[data-annotation-color="#ffd166"] { --annotation-color: #ffd166; }
+.annotation-colors button[data-annotation-color="#118a8b"] { --annotation-color: #118a8b; }
+.annotation-colors button[data-annotation-color="#ffffff"] { --annotation-color: #ffffff; }
+.annotation-colors button[data-annotation-color="#071d24"] { --annotation-color: #071d24; }
+
+.annotation-colors button[aria-pressed="true"] {
+  box-shadow: 0 0 0 3px var(--teal);
+}
+
+.annotation-canvas-stage {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
+  background: #071d24;
+  border: 2px solid var(--teal);
+  border-radius: 14px;
+  aspect-ratio: var(--annotation-aspect-ratio, 16 / 9);
+}
+
+.annotation-canvas-stage canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#annotation-drawing-canvas {
+  cursor: crosshair;
+  touch-action: none;
 }
 
 .comparison-dialog-shell {
@@ -1438,6 +1582,41 @@ noscript {
   .speed-menu summary {
     min-width: 60px;
     padding-inline: 0.55rem;
+  }
+
+  .download-icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .annotation-dialog-shell {
+    gap: 0.55rem;
+  }
+
+  .annotation-toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .annotation-tool-group button {
+    min-height: 40px;
+    padding: 0.45rem 0.6rem;
+  }
+
+  .annotation-tool-group button span {
+    display: none;
+  }
+
+  .annotation-colors legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .annotation-colors button {
+    width: 30px;
+    height: 30px;
   }
 
   .preview-actions {

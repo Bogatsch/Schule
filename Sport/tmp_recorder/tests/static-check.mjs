@@ -10,6 +10,7 @@ const requiredFiles = [
   'index.html',
   'styles.css',
   'app.js',
+  'annotation.js',
   'media-utils.js',
   'manifest.webmanifest',
   'sw.js',
@@ -49,9 +50,10 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml] = await Promise.all([
+const [html, app, annotationApp, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml] = await Promise.all([
   read('index.html'),
   read('app.js'),
+  read('annotation.js'),
   read('sw.js'),
   read('styles.css'),
   read('manifest.webmanifest'),
@@ -90,12 +92,18 @@ assert.match(html, /data-comparison-sport="volleyball"/, 'Sportart-Schritt der V
 assert.match(html, /id="speed-menu"/, 'kompakte Tempoauswahl der eigenen Aufnahme fehlt');
 assert.match(html, /id="comparison-speed-menu"/, 'kompakte Tempoauswahl des Leitbilds fehlt');
 assert.match(html, /id="video-download-button"/, 'Download-Button für Videos fehlt');
+assert.match(html, /id="video-annotation-button"/, 'Annotations-Button für die eigene Aufnahme fehlt');
+assert.match(html, /id="comparison-annotation-button"/, 'Annotations-Button für das Leitbild fehlt');
 assert.match(html, /id="photo-download-button"/, 'Download-Button für Bilder fehlt');
 assert.match(html, /<dialog id="download-dialog"/, 'Namensdialog für den Download fehlt');
+assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt');
+assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
+assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
+assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(html, />Download<\/button>/, 'Download-Bestätigung fehlt');
 assert.match(html, />Abbruch<\/button>/, 'Download-Abbruch fehlt');
-assert.match(html, /styles\.css\?v=24/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=26/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=27/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=27/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
 assert.match(app, /showModal/, 'modales Öffnen der Leitbildauswahl fehlt');
 assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
@@ -103,6 +111,12 @@ assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Le
 assert.match(app, /link\.download\s*=/, 'lokaler Download der Aufnahme fehlt');
 assert.match(app, /sanitizeDownloadName/, 'sichere Dateinamensverarbeitung fehlt');
 assert.match(app, /startsWith\('video\/mp4'\) \? 'mp4' : 'webm'/, 'Download-Endung folgt nicht dem tatsächlichen Aufnahmeformat');
+assert.match(app, /annotation\.open\(elements\.videoPreview/, 'Annotation der eigenen Aufnahme ist nicht verbunden');
+assert.match(app, /elements\.comparisonVideo/, 'Annotation des Leitbilds ist nicht verbunden');
+assert.match(annotationApp, /drawImage\(video/, 'Aktueller Videoframe wird nicht extrahiert');
+assert.match(annotationApp, /pointerdown/, 'Freihandzeichnen per Stift oder Finger fehlt');
+assert.match(annotationApp, /destination-out/, 'Radierer entfernt keine Zeichnung');
+assert.match(annotationApp, /frameCanvas\.width = 0/, 'Frame wird beim Schließen nicht verworfen');
 assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
 
 [html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {
@@ -130,23 +144,29 @@ assert.match(playerHtml, /Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/A
 assert.match(playerHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiedergabe fehlt');
 assert.match(playerHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
 assert.match(playerHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');
+assert.match(playerHtml, /id="guide-annotation-button"/, 'Annotations-Button des Angriffsschlags fehlt');
+assert.match(playerHtml, /<dialog id="annotation-dialog"/, 'Annotationsfenster des Angriffsschlags fehlt');
 assert.doesNotMatch(playerHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Leitbild verwendet native Videosteuerung');
 assert.match(playerHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Angriffsschlag muss stummgeschaltet sein');
 assert.doesNotMatch(playerHtml, /https?:\/\//i, 'Player-Seite enthält eine externe Ressource');
 assert.doesNotMatch(playerApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Player-Code enthält eine Netzwerk- oder Speicher-API');
 assert.match(playerApp, /playbackRate/, 'Geschwindigkeitssteuerung für Leitbilder fehlt');
+assert.match(playerApp, /annotation\.open/, 'Annotationsfunktion für Leitbilder fehlt');
 
 assert.match(pritschenHtml, /Content-Security-Policy/i, 'CSP der Pritschen-Seite fehlt');
 assert.match(pritschenHtml, /Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4/, 'Pritschen-Leitbild fehlt');
 assert.match(pritschenHtml, /data-guide-speed="0\.25"/, 'langsame Pritschen-Wiedergabe fehlt');
 assert.match(pritschenHtml, /data-guide-speed="0\.5"/, 'mittlere Pritschen-Wiedergabe fehlt');
 assert.match(pritschenHtml, /data-guide-speed="1"/, 'normale Pritschen-Wiedergabe fehlt');
+assert.match(pritschenHtml, /id="guide-annotation-button"/, 'Annotations-Button des Pritschen-Leitbilds fehlt');
+assert.match(pritschenHtml, /<dialog id="annotation-dialog"/, 'Annotationsfenster des Pritschen-Leitbilds fehlt');
 assert.doesNotMatch(pritschenHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Pritschen-Player verwendet native Videosteuerung');
 assert.match(pritschenHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Pritschen muss stummgeschaltet sein');
 assert.doesNotMatch(pritschenHtml, /https?:\/\//i, 'Pritschen-Seite enthält eine externe Ressource');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');
+assert.doesNotMatch(annotationApp, forbiddenAppApis, 'Annotations-Code enthält eine verbotene Übertragungs- oder Speicher-API');
 assert.match(app, /audio:\s*false/, 'Mikrofon muss ausdrücklich deaktiviert sein');
 assert.match(app, /URL\.revokeObjectURL/, 'Object URLs werden nicht freigegeben');
 assert.match(app, /mediaChunks\.splice/, 'Recorder-Fragmente werden nicht zentral geleert');
