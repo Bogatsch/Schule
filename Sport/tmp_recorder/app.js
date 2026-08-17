@@ -32,6 +32,8 @@ const elements = {
   previewBack: document.querySelector('#preview-back'),
   previewStage: document.querySelector('#preview-stage'),
   photoPreview: document.querySelector('#photo-preview'),
+  photoDownloadControls: document.querySelector('#photo-download-controls'),
+  photoDownloadButton: document.querySelector('#photo-download-button'),
   ownVideoPane: document.querySelector('#own-video-pane'),
   videoPreview: document.querySelector('#video-preview'),
   comparisonPane: document.querySelector('#comparison-pane'),
@@ -44,6 +46,7 @@ const elements = {
   playbackTime: document.querySelector('#playback-time'),
   speedMenu: document.querySelector('#speed-menu'),
   speedValue: document.querySelector('#speed-value'),
+  videoDownloadButton: document.querySelector('#video-download-button'),
   comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
   comparisonPlayButton: document.querySelector('#comparison-play-button'),
@@ -62,6 +65,13 @@ const elements = {
   comparisonActive: document.querySelector('#comparison-active'),
   comparisonActiveLabel: document.querySelector('#comparison-active-label'),
   comparisonRemove: document.querySelector('#comparison-remove'),
+  downloadDialog: document.querySelector('#download-dialog'),
+  downloadForm: document.querySelector('#download-form'),
+  downloadDialogTitle: document.querySelector('#download-dialog-title'),
+  downloadNameLabel: document.querySelector('#download-name-label'),
+  downloadName: document.querySelector('#download-name'),
+  downloadExtension: document.querySelector('#download-extension'),
+  downloadCancel: document.querySelector('#download-cancel'),
   previewStatus: document.querySelector('#preview-status'),
   discardButton: document.querySelector('#discard-button'),
   newRecordingButton: document.querySelector('#new-recording-button'),
@@ -92,6 +102,8 @@ let recordingLimitTimer = null;
 let isRecording = false;
 let operationId = 0;
 let selectedComparisonCategory = 'spielsportarten';
+let downloadMediaKind = 'video';
+let downloadTrigger = null;
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -196,6 +208,83 @@ function closeComparisonPicker({ restoreFocus = false } = {}) {
   if (restoreFocus) {
     elements.comparisonButton.focus({ preventScroll: true });
   }
+}
+
+function getDownloadExtension() {
+  if (downloadMediaKind === 'photo') {
+    return 'jpg';
+  }
+  return currentBlob?.type?.toLowerCase().startsWith('video/mp4') ? 'mp4' : 'webm';
+}
+
+function sanitizeDownloadName(value, fallback) {
+  const name = value
+    .trim()
+    .normalize('NFKC')
+    .replace(/\.(?:jpe?g|mp4|webm)$/i, '')
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^[. ]+|[. ]+$/g, '')
+    .slice(0, 80)
+    .replace(/[. ]+$/g, '');
+  return name || fallback;
+}
+
+function closeDownloadDialog({ restoreFocus = true } = {}) {
+  const trigger = downloadTrigger;
+  downloadTrigger = null;
+  if (elements.downloadDialog.open) {
+    elements.downloadDialog.close();
+  } else {
+    elements.downloadDialog.removeAttribute('open');
+  }
+  if (restoreFocus && trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
+  }
+}
+
+function openDownloadDialog(kind, trigger) {
+  if (!currentBlob || !currentObjectUrl) {
+    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
+    return;
+  }
+
+  downloadMediaKind = kind;
+  downloadTrigger = trigger;
+  const isPhoto = kind === 'photo';
+  const extension = getDownloadExtension();
+  elements.downloadDialogTitle.textContent = isPhoto ? 'Bild herunterladen' : 'Video herunterladen';
+  elements.downloadNameLabel.textContent = isPhoto ? 'Name für das Bild' : 'Name für das Video';
+  elements.downloadName.value = isPhoto ? 'Sportkamera-Foto' : 'Sportkamera-Video';
+  elements.downloadExtension.textContent = `Dateiformat: .${extension}`;
+
+  if (typeof elements.downloadDialog.showModal === 'function') {
+    elements.downloadDialog.showModal();
+  } else {
+    elements.downloadDialog.setAttribute('open', '');
+  }
+  window.requestAnimationFrame(() => elements.downloadName.select());
+}
+
+function startDownload() {
+  if (!currentBlob || !currentObjectUrl) {
+    closeDownloadDialog();
+    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
+    return;
+  }
+
+  const extension = getDownloadExtension();
+  const fallback = downloadMediaKind === 'photo' ? 'Sportkamera-Foto' : 'Sportkamera-Video';
+  const name = sanitizeDownloadName(elements.downloadName.value, fallback);
+  const link = document.createElement('a');
+  link.href = currentObjectUrl;
+  link.download = `${name}.${extension}`;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  closeDownloadDialog();
+  elements.previewStatus.textContent = `Download von ${name}.${extension} wurde gestartet.`;
 }
 
 function resetComparison() {
@@ -305,7 +394,9 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   elements.photoPreview.removeAttribute('src');
   elements.photoPreview.alt = '';
   elements.photoPreview.hidden = true;
+  elements.photoDownloadControls.hidden = true;
   elements.playbackControls.hidden = true;
+  closeDownloadDialog({ restoreFocus: false });
   resetPlaybackUI();
   resetCanvas();
 
@@ -484,6 +575,7 @@ async function takePhoto() {
     elements.photoPreview.src = currentObjectUrl;
     elements.photoPreview.alt = 'Dein gerade aufgenommenes Foto';
     elements.photoPreview.hidden = false;
+    elements.photoDownloadControls.hidden = false;
     elements.videoPreview.hidden = true;
     elements.ownVideoPane.hidden = true;
     elements.playbackControls.hidden = true;
@@ -509,6 +601,7 @@ function showVideoPreview(blob) {
   elements.videoPreview.hidden = false;
   elements.ownVideoPane.hidden = false;
   elements.photoPreview.hidden = true;
+  elements.photoDownloadControls.hidden = true;
   elements.playbackControls.hidden = false;
   elements.comparisonControls.hidden = false;
   elements.videoPreview.playbackRate = 1;
@@ -715,6 +808,29 @@ elements.retryButton.addEventListener('click', () => void beginNewSession(curren
 elements.errorHomeButton.addEventListener('click', () => cleanupMedia({ nextView: 'start' }));
 elements.playButton.addEventListener('click', () => void togglePlayback());
 elements.comparisonPlayButton.addEventListener('click', () => void toggleComparisonPlayback());
+elements.photoDownloadButton.addEventListener('click', () => {
+  openDownloadDialog('photo', elements.photoDownloadButton);
+});
+elements.videoDownloadButton.addEventListener('click', () => {
+  openDownloadDialog('video', elements.videoDownloadButton);
+});
+elements.downloadCancel.addEventListener('click', () => closeDownloadDialog());
+elements.downloadForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  startDownload();
+});
+elements.downloadDialog.addEventListener('close', () => {
+  const trigger = downloadTrigger;
+  downloadTrigger = null;
+  if (trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
+  }
+});
+elements.downloadDialog.addEventListener('click', (event) => {
+  if (event.target === elements.downloadDialog) {
+    closeDownloadDialog();
+  }
+});
 
 elements.timeline.addEventListener('input', () => {
   const duration = elements.videoPreview.duration;

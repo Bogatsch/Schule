@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=22">
-    <script type="module" src="./app.js?v=23"></script>
+    <link rel="stylesheet" href="./styles.css?v=24">
+    <script type="module" src="./app.js?v=24"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -130,6 +130,14 @@
             </div>
           </div>
 
+          <div id="photo-download-controls" class="photo-download-controls" hidden>
+            <button id="photo-download-button" class="download-icon-button" type="button" aria-label="Foto herunterladen" aria-haspopup="dialog" aria-controls="download-dialog" title="Foto herunterladen">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 3v12M7 10l5 5 5-5M4 19h16"></path>
+              </svg>
+            </button>
+          </div>
+
           <div id="preview-player-grid" class="preview-player-grid">
             <div id="playback-controls" class="playback-controls" aria-label="Wiedergabe der eigenen Aufnahme" hidden>
               <p class="player-control-label">Eigene Aufnahme</p>
@@ -141,16 +149,23 @@
                 <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
                 <output id="playback-time" for="timeline">0:00 / 0:00</output>
               </div>
-              <details id="speed-menu" class="speed-menu">
-                <summary aria-label="Tempo der eigenen Aufnahme ändern">
-                  <span id="speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
-                </summary>
-                <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
-                  <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
-                  <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
-                  <button type="button" data-speed="1" aria-pressed="true">1×</button>
-                </div>
-              </details>
+              <div class="player-tools">
+                <details id="speed-menu" class="speed-menu">
+                  <summary aria-label="Tempo der eigenen Aufnahme ändern">
+                    <span id="speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
+                  </summary>
+                  <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
+                    <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
+                    <button type="button" data-speed="0.5" aria-pressed="false">0,5×</button>
+                    <button type="button" data-speed="1" aria-pressed="true">1×</button>
+                  </div>
+                </details>
+                <button id="video-download-button" class="download-icon-button" type="button" aria-label="Video herunterladen" aria-haspopup="dialog" aria-controls="download-dialog" title="Video herunterladen">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12 3v12M7 10l5 5 5-5M4 19h16"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div id="comparison-playback-controls" class="playback-controls" aria-label="Wiedergabe des Leitbilds" hidden>
@@ -297,6 +312,20 @@
                 </div>
               </section>
             </div>
+          </dialog>
+
+          <dialog id="download-dialog" class="download-dialog" aria-labelledby="download-dialog-title">
+            <form id="download-form" class="download-dialog-shell">
+              <p class="eyebrow">Aufnahme speichern</p>
+              <h2 id="download-dialog-title">Video herunterladen</h2>
+              <label id="download-name-label" for="download-name">Name für das Video</label>
+              <input id="download-name" name="download-name" type="text" maxlength="80" autocomplete="off" required>
+              <p id="download-extension" class="download-extension">Dateiformat: .webm</p>
+              <div class="download-dialog-actions">
+                <button class="primary-action" type="submit">Download</button>
+                <button id="download-cancel" class="secondary-action" type="button">Abbruch</button>
+              </div>
+            </form>
           </dialog>
 
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>

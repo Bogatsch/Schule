@@ -4,13 +4,13 @@ Eine installierbare, datensparsame Progressive Web App für direktes Foto- und V
 
 ## Datenschutz in Kürze
 
-Aufnahmen bleiben nur vorübergehend auf diesem Gerät. Sie werden nicht hochgeladen oder dauerhaft von dieser App gespeichert. Beim Verwerfen, bei einer neuen Aufnahme oder beim Verlassen der App wird die aktuelle Aufnahme entfernt.
+Aufnahmen bleiben nur vorübergehend in der App. Sie werden nicht hochgeladen oder automatisch dauerhaft gespeichert. Nur wenn **Download** ausdrücklich gewählt wird, speichert der Browser eine benannte Kopie auf dem Gerät. Beim Verwerfen, bei einer neuen Aufnahme oder beim Verlassen der App wird die aktuelle Aufnahme aus der App entfernt; bereits heruntergeladene Dateien bleiben davon unberührt.
 
 - Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
 - Fotos werden kurzzeitig in einem Canvas verarbeitet und als Blob im Arbeitsspeicher gehalten.
 - Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder` und liegen ebenfalls nur als Blob im Arbeitsspeicher.
-- Es gibt keine Upload-, Download-, Speicher- oder Teilen-Funktion und keine externen Ressourcen, Analysen oder API-Aufrufe.
-- Medien werden nicht in `localStorage`, `sessionStorage`, IndexedDB, Cache Storage oder im Dateisystem gespeichert.
+- Es gibt keine Upload- oder Teilen-Funktion und keine externen Ressourcen, Analysen oder API-Aufrufe. Ein Download findet ausschließlich nach einem ausdrücklichen Tippen auf **Download** statt.
+- Medien werden von der App nicht in `localStorage`, `sessionStorage`, IndexedDB oder Cache Storage gespeichert. Nur ein bewusst gestarteter Download legt über die Browserfunktion eine Datei im Download-Ordner ab.
 - Der Service Worker speichert ausschließlich den statischen App-Rahmen (HTML, CSS, JavaScript, Manifest und Symbole) für den Offline-Start.
 - Beim Bereinigen stoppt die App die Kamera, leert ihre Fragmente, widerruft Object URLs und entfernt alle eigenen Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser; die App behauptet nicht, Speicherbereiche sofort physisch zu überschreiben.
 
@@ -36,7 +36,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse und das Fehlen verbotener Übertragungs-, Speicher- und Download-Funktionen.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse sowie die lokale Download-Funktion ohne Upload.
 
 ## GitHub Pages aktivieren
 
@@ -67,6 +67,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - **Video** zeichnet maximal 3 Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
 - In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
+- Der Download-Button speichert die eigene Foto- oder Videoaufnahme unter einem frei wählbaren Namen. Vor dem Speichern kann der Vorgang mit **Abbruch** beendet werden.
 - Mit **Leitbild daneben** lässt sich ein Leitbild direkt neben die eigene Aufnahme schalten. Die Auswahl öffnet sich als dreistufiges Fenster für Sportartengruppe, Sportart und Leitbild. Beide Videos haben eigene Bedienelemente für Start/Pause, Zeitleiste und Wiedergabegeschwindigkeit.
 - Unter **Leitbilder ansehen → Spielsportarten → Volleyball** steht eine Liste der Leitbilder. **Angriffsschlag** und **Pritschen seitlich** öffnen jeweils einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
 - Alle Leitbild-Videos werden grundsätzlich ohne Ton wiedergegeben.

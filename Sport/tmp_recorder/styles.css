@@ -718,6 +718,12 @@ h2 {
   align-content: start;
 }
 
+.player-tools {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
 .play-button {
   display: inline-flex;
   gap: 0.55rem;
@@ -765,6 +771,44 @@ h2 {
 .speed-menu {
   position: relative;
   z-index: 5;
+}
+
+.download-icon-button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  color: var(--teal);
+  cursor: pointer;
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: 11px;
+  place-items: center;
+}
+
+.download-icon-button:hover,
+.download-icon-button:focus-visible {
+  color: white;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.download-icon-button svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.photo-download-controls {
+  display: flex;
+  justify-content: flex-end;
+  max-width: 1040px;
+  margin: 0.65rem auto 0;
 }
 
 .speed-menu summary {
@@ -888,9 +932,81 @@ h2 {
   box-shadow: 0 24px 80px rgb(7 29 36 / 32%);
 }
 
-.comparison-dialog::backdrop {
+.comparison-dialog::backdrop,
+.download-dialog::backdrop {
   background: rgb(7 29 36 / 58%);
   backdrop-filter: blur(4px);
+}
+
+.download-dialog {
+  width: min(calc(100% - 2rem), 520px);
+  max-width: none;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgb(7 29 36 / 32%);
+}
+
+.download-dialog-shell {
+  display: grid;
+  gap: 0.8rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+.download-dialog .eyebrow {
+  margin: 0;
+}
+
+.download-dialog h2 {
+  margin: 0 0 0.4rem;
+  color: var(--teal);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  letter-spacing: -0.04em;
+}
+
+.download-dialog label {
+  color: var(--teal);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.download-dialog input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.7rem 0.85rem;
+  color: var(--ink);
+  font: inherit;
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: 11px;
+}
+
+.download-dialog input:focus {
+  border-color: var(--teal-2);
+  outline: 3px solid rgb(17 138 139 / 18%);
+}
+
+.download-extension {
+  margin: -0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.download-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+}
+
+.download-dialog-actions button {
+  min-height: 48px;
 }
 
 .comparison-dialog-shell {

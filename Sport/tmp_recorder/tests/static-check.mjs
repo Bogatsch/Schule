@@ -75,7 +75,6 @@ assert.doesNotMatch(app, /Foto aufgenommen|Video aufgenommen/, 'entfernter Aufna
 assert.doesNotMatch(html + app, /Bereit für dein Video|Bereit für dein Foto|Tippe auf den Kreis|Kamera wird vorbereitet/, 'entfernte Kamera-Hinweise sind noch vorhanden');
 assert.doesNotMatch(html + app, /capture-hint|captureHint/, 'entferntes Hinweis-Element ist noch vorhanden');
 assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteuerung ist verboten');
-assert.doesNotMatch(html, /\sdownload(?:\s|=|>)/i, 'Download-Funktion ist verboten');
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
 assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite fehlt');
 assert.match(html, /id="comparison-button"/, 'Button für den Leitbildvergleich fehlt');
@@ -90,12 +89,19 @@ assert.match(html, /data-comparison-category="spielsportarten"/, 'Spielsport-Sch
 assert.match(html, /data-comparison-sport="volleyball"/, 'Sportart-Schritt der Vergleichsauswahl fehlt');
 assert.match(html, /id="speed-menu"/, 'kompakte Tempoauswahl der eigenen Aufnahme fehlt');
 assert.match(html, /id="comparison-speed-menu"/, 'kompakte Tempoauswahl des Leitbilds fehlt');
-assert.match(html, /styles\.css\?v=22/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=23/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /id="video-download-button"/, 'Download-Button für Videos fehlt');
+assert.match(html, /id="photo-download-button"/, 'Download-Button für Bilder fehlt');
+assert.match(html, /<dialog id="download-dialog"/, 'Namensdialog für den Download fehlt');
+assert.match(html, />Download<\/button>/, 'Download-Bestätigung fehlt');
+assert.match(html, />Abbruch<\/button>/, 'Download-Abbruch fehlt');
+assert.match(html, /styles\.css\?v=24/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=24/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
 assert.match(app, /showModal/, 'modales Öffnen der Leitbildauswahl fehlt');
 assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
 assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Leitbilds fehlt');
+assert.match(app, /link\.download\s*=/, 'lokaler Download der Aufnahme fehlt');
+assert.match(app, /sanitizeDownloadName/, 'sichere Dateinamensverarbeitung fehlt');
 assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
 
 [html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {

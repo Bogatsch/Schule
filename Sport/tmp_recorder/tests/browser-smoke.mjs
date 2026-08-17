@@ -413,6 +413,12 @@ try {
   await click('#capture-button');
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#photo-preview').src.startsWith('blob:')`);
   assert.equal(await evaluate(`document.querySelector('#photo-preview').hidden`), false);
+  assert.equal(await evaluate(`document.querySelector('#photo-download-controls').hidden`), false);
+  await click('#photo-download-button');
+  await waitFor(`document.querySelector('#download-dialog').open`);
+  assert.equal(await evaluate(`document.querySelector('#download-dialog-title').textContent`), 'Bild herunterladen');
+  await click('#download-cancel');
+  await waitFor(`!document.querySelector('#download-dialog').open`);
   results.push('Foto aufnehmen und als temporären Blob anzeigen');
 
   await click('#discard-button');
@@ -444,6 +450,31 @@ try {
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 15_000);
   assert.equal(await evaluate(`document.querySelector('#video-preview').hasAttribute('controls')`), false);
   assert.equal(await evaluate(`document.querySelector('#playback-controls').hidden`), false);
+  await click('#video-download-button');
+  await waitFor(`document.querySelector('#download-dialog').open`);
+  await evaluate(`(() => {
+    document.querySelector('#download-name').value = 'Mein Testvideo';
+    window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
+    window.__sportkameraDownload = null;
+    HTMLAnchorElement.prototype.click = function captureDownload() {
+      if (this.download) {
+        window.__sportkameraDownload = { filename: this.download, href: this.href };
+        return;
+      }
+      return window.__sportkameraOriginalAnchorClick.call(this);
+    };
+  })()`);
+  await click('#download-form button[type="submit"]');
+  await waitFor(`window.__sportkameraDownload !== null && !document.querySelector('#download-dialog').open`);
+  const videoDownload = await evaluate(`(() => {
+    const result = window.__sportkameraDownload;
+    HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
+    delete window.__sportkameraOriginalAnchorClick;
+    delete window.__sportkameraDownload;
+    return result;
+  })()`);
+  assert.match(videoDownload.filename, /^Mein Testvideo\.(?:mp4|webm)$/);
+  assert.match(videoDownload.href, /^blob:/);
   results.push('Video manuell stoppen und mit eigenen Steuerelementen anzeigen');
 
   await click('#speed-menu summary');
