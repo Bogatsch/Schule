@@ -64,10 +64,10 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 ## Bedienung
 
 - **Foto** erstellt einen einzelnen Schnappschuss über Canvas.
-- **Video** zeichnet maximal 3 Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher.
+- **Video** zeichnet maximal 3 Minuten ohne Ton als MP4 auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Unterstützt der Browser keine direkte MP4-Aufnahme, bleibt die Fotoaufnahme verfügbar.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
 - In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
-- Der Download-Button speichert die eigene Foto- oder Videoaufnahme unter einem frei wählbaren Namen. Vor dem Speichern kann der Vorgang mit **Abbruch** beendet werden.
+- Der Download-Button speichert die eigene Fotoaufnahme als JPG und die Videoaufnahme als echtes MP4 unter einem frei wählbaren Namen. Vor dem Speichern kann der Vorgang mit **Abbruch** beendet werden.
 - Mit **Leitbild daneben** lässt sich ein Leitbild direkt neben die eigene Aufnahme schalten. Die Auswahl öffnet sich als dreistufiges Fenster für Sportartengruppe, Sportart und Leitbild. Beide Videos haben eigene Bedienelemente für Start/Pause, Zeitleiste und Wiedergabegeschwindigkeit.
 - Unter **Leitbilder ansehen → Spielsportarten → Volleyball** steht eine Liste der Leitbilder. **Angriffsschlag** und **Pritschen seitlich** öffnen jeweils einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
 - Alle Leitbild-Videos werden grundsätzlich ohne Ton wiedergegeben.

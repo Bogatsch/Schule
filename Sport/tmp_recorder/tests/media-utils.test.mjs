@@ -19,15 +19,15 @@ test('bevorzugt ein Safari-kompatibles MP4-Format', () => {
   };
 
   assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
-  assert.deepEqual(checked, VIDEO_MIME_CANDIDATES.slice(0, 2));
+  assert.deepEqual(checked, VIDEO_MIME_CANDIDATES);
 });
 
-test('fällt auf WebM zurück, wenn MP4 nicht verfügbar ist', () => {
+test('lehnt einen Browser mit ausschließlicher WebM-Unterstützung ab', () => {
   const recorder = {
     isTypeSupported: (type) => type === 'video/webm;codecs=vp8'
   };
 
-  assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm;codecs=vp8');
+  assert.equal(selectSupportedVideoMimeType(recorder), null);
 });
 
 test('meldet ein nicht unterstütztes Aufnahmeformat', () => {
@@ -39,14 +39,19 @@ test('meldet ein nicht unterstütztes Aufnahmeformat', () => {
 test('überspringt Browserfehler bei der Formatprüfung', () => {
   const recorder = {
     isTypeSupported(type) {
-      if (type.startsWith('video/mp4')) {
+      if (type.includes('avc1')) {
         throw new Error('nicht verfügbar');
       }
-      return type === 'video/webm';
+      return type === 'video/mp4';
     }
   };
 
-  assert.equal(selectSupportedVideoMimeType(recorder), 'video/webm');
+  assert.equal(selectSupportedVideoMimeType(recorder), 'video/mp4');
+});
+
+test('enthält ausschließlich echte MP4-Aufnahmeformate', () => {
+  assert.ok(VIDEO_MIME_CANDIDATES.length > 0);
+  assert.ok(VIDEO_MIME_CANDIDATES.every((type) => type.startsWith('video/mp4')));
 });
 
 test('formatiert und begrenzt den Aufnahmezähler auf 3 Minuten', () => {

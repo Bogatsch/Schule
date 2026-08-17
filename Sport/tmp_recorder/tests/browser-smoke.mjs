@@ -473,7 +473,7 @@ try {
     delete window.__sportkameraDownload;
     return result;
   })()`);
-  assert.match(videoDownload.filename, /^Mein Testvideo\.(?:mp4|webm)$/);
+  assert.equal(videoDownload.filename, 'Mein Testvideo.mp4');
   assert.match(videoDownload.href, /^blob:/);
   results.push('Video manuell stoppen und mit eigenen Steuerelementen anzeigen');
 
@@ -779,7 +779,7 @@ try {
   await reload();
   await click('[data-start-mode="video"]');
   await waitFor(`document.body.dataset.view === 'error'`);
-  assert.match(await evaluate(`document.querySelector('#error-message').textContent`), /MP4- oder WebM/);
+  assert.match(await evaluate(`document.querySelector('#error-message').textContent`), /direkt als MP4/);
   await client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: injection.identifier });
   results.push('Verständlicher Fehler bei nicht unterstütztem Recorder-Format');
 

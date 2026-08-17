@@ -2,10 +2,8 @@ export const MAX_RECORDING_MS = 3 * 60_000;
 
 export const VIDEO_MIME_CANDIDATES = Object.freeze([
   'video/mp4;codecs=avc1.42E01E',
-  'video/mp4',
-  'video/webm;codecs=vp9',
-  'video/webm;codecs=vp8',
-  'video/webm'
+  'video/mp4;codecs=avc1.42001E',
+  'video/mp4'
 ]);
 
 export function selectSupportedVideoMimeType(MediaRecorderClass) {
