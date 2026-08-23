@@ -1,21 +1,29 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v26`;
+const CACHE_NAME = `${CACHE_PREFIX}v29`;
 
 // Nur diese statischen Dateien dürfen in Cache Storage gelangen.
 const APP_SHELL = Object.freeze([
   './',
   './index.html',
-  './styles.css?v=24',
+  './styles.css?v=29',
+  './annotation.js',
+  './annotation.js?v=27',
+  './annotation.js?v=29',
+  './media-store.js',
+  './media-store.js?v=29',
+  './teacher-auth.js',
+  './teacher-auth.js?v=29',
   './media-utils.js',
   './media-utils.js?v=26',
-  './app.js?v=26',
+  './media-utils.js?v=29',
+  './app.js?v=29',
   './manifest.webmanifest',
   './pages/leitbilder/index.html',
   './pages/leitbilder/styles.css',
   './pages/leitbilder/app.js',
   './pages/leitbilder/volleyball/index.html',
   './pages/leitbilder/volleyball/angriffsschlag/index.html',
-  './pages/leitbilder/volleyball/angriffsschlag/app.js',
+  './pages/leitbilder/volleyball/angriffsschlag/app.js?v=28',
   './pages/leitbilder/volleyball/pritschen-seitlich/index.html',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',

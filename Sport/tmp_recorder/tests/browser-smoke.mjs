@@ -113,6 +113,7 @@ await new Promise((resolve, reject) => {
 });
 const appPort = webServer.address().port;
 const appUrl = `http://127.0.0.1:${appPort}/`;
+const teacherPassword = process.env.SPORTKAMERA_TEST_TEACHER_PASSWORD || '';
 
 const debugPortServer = createServer();
 await new Promise((resolve, reject) => {
@@ -309,6 +310,52 @@ async function click(selector) {
   await evaluate(`document.querySelector(${encoded}).click(); true`);
 }
 
+async function exerciseAnnotation(triggerSelector, expectedTitle) {
+  await click(triggerSelector);
+  await waitFor(`document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-frame-canvas').width > 0
+    && document.querySelector('#annotation-drawing-canvas').width > 0`);
+  assert.match(
+    await evaluate(`document.querySelector('#annotation-dialog-title').textContent`),
+    new RegExp(expectedTitle)
+  );
+  await click('[data-annotation-color="#ffd166"]');
+  assert.equal(
+    await evaluate(`document.querySelector('[data-annotation-tool="pen"]').getAttribute('aria-pressed')`),
+    'true'
+  );
+  const drawnAlpha = await evaluate(`(() => {
+    const canvas = document.querySelector('#annotation-drawing-canvas');
+    const bounds = canvas.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x, clientY: y }));
+    canvas.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x + 30, clientY: y + 15 }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 7, pointerType: 'pen', clientX: x + 30, clientY: y + 15 }));
+    const sampleX = Math.floor(canvas.width / 2);
+    const sampleY = Math.floor(canvas.height / 2);
+    return canvas.getContext('2d').getImageData(sampleX, sampleY, 1, 1).data[3];
+  })()`);
+  assert.ok(drawnAlpha > 0, 'Der Stift hat keine sichtbare Annotation erzeugt');
+  await click('[data-annotation-tool="eraser"]');
+  const erasedAlpha = await evaluate(`(() => {
+    const canvas = document.querySelector('#annotation-drawing-canvas');
+    const bounds = canvas.getBoundingClientRect();
+    const x = bounds.left + bounds.width / 2;
+    const y = bounds.top + bounds.height / 2;
+    canvas.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 8, pointerType: 'touch', clientX: x, clientY: y }));
+    canvas.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 8, pointerType: 'touch', clientX: x, clientY: y }));
+    const sampleX = Math.floor(canvas.width / 2);
+    const sampleY = Math.floor(canvas.height / 2);
+    return canvas.getContext('2d').getImageData(sampleX, sampleY, 1, 1).data[3];
+  })()`);
+  assert.equal(erasedAlpha, 0, 'Der Radierer hat die Annotation nicht entfernt');
+  await click('#annotation-close');
+  await waitFor(`!document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-frame-canvas').width === 0
+    && document.querySelector('#annotation-drawing-canvas').width === 0`);
+}
+
 async function navigate(url = appUrl) {
   const loaded = client.once('Page.loadEventFired');
   await client.send('Page.navigate', { url });
@@ -388,6 +435,10 @@ try {
   await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
     && document.querySelector('#guide-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
+  assert.equal(await evaluate(`document.querySelector('#guide-play-button').textContent.trim()`), '▶');
+  await waitFor(`document.querySelector('#guide-video').readyState >= 2`);
+  await exerciseAnnotation('#guide-annotation-button', 'Pritschen seitlich');
+  results.push('Leitbild-Frame mit Stift und Radierer annotieren und verwerfen');
   await click('[data-guide-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
   await click('.video-back');
@@ -413,13 +464,10 @@ try {
   await click('#capture-button');
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#photo-preview').src.startsWith('blob:')`);
   assert.equal(await evaluate(`document.querySelector('#photo-preview').hidden`), false);
-  assert.equal(await evaluate(`document.querySelector('#photo-download-controls').hidden`), false);
-  await click('#photo-download-button');
-  await waitFor(`document.querySelector('#download-dialog').open`);
-  assert.equal(await evaluate(`document.querySelector('#download-dialog-title').textContent`), 'Bild herunterladen');
-  await click('#download-cancel');
-  await waitFor(`!document.querySelector('#download-dialog').open`);
-  results.push('Foto aufnehmen und als temporären Blob anzeigen');
+  assert.equal(await evaluate(`document.querySelector('#photo-save-controls').hidden`), false);
+  await click('#photo-save-button');
+  await waitFor(`document.querySelector('#photo-save-button').getAttribute('aria-pressed') === 'true'`);
+  results.push('Foto aufnehmen und dauerhaft in der lokalen Galerie speichern');
 
   await click('#discard-button');
   await waitFor(`document.body.dataset.view === 'start'`);
@@ -450,32 +498,14 @@ try {
   await waitFor(`document.body.dataset.view === 'preview' && document.querySelector('#video-preview').src.startsWith('blob:')`, 15_000);
   assert.equal(await evaluate(`document.querySelector('#video-preview').hasAttribute('controls')`), false);
   assert.equal(await evaluate(`document.querySelector('#playback-controls').hidden`), false);
-  await click('#video-download-button');
-  await waitFor(`document.querySelector('#download-dialog').open`);
-  await evaluate(`(() => {
-    document.querySelector('#download-name').value = 'Mein Testvideo';
-    window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
-    window.__sportkameraDownload = null;
-    HTMLAnchorElement.prototype.click = function captureDownload() {
-      if (this.download) {
-        window.__sportkameraDownload = { filename: this.download, href: this.href };
-        return;
-      }
-      return window.__sportkameraOriginalAnchorClick.call(this);
-    };
-  })()`);
-  await click('#download-form button[type="submit"]');
-  await waitFor(`window.__sportkameraDownload !== null && !document.querySelector('#download-dialog').open`);
-  const videoDownload = await evaluate(`(() => {
-    const result = window.__sportkameraDownload;
-    HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
-    delete window.__sportkameraOriginalAnchorClick;
-    delete window.__sportkameraDownload;
-    return result;
-  })()`);
-  assert.match(videoDownload.filename, /^Mein Testvideo\.(?:webm|mp4)$/);
-  assert.match(videoDownload.href, /^blob:/);
-  results.push('Video manuell stoppen und mit eigenen Steuerelementen anzeigen');
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), '▶');
+  assert.equal(await evaluate(`document.querySelector('#speed-menu summary').textContent.trim()`), '1×');
+  await waitFor(`document.querySelector('#video-preview').readyState >= 2`);
+  await exerciseAnnotation('#video-annotation-button', 'Eigene Aufnahme');
+  results.push('Frame der eigenen Aufnahme temporär annotieren');
+  await click('#video-save-button');
+  await waitFor(`document.querySelector('#video-save-button').getAttribute('aria-pressed') === 'true'`);
+  results.push('Video manuell stoppen, lokal speichern und mit eigenen Steuerelementen anzeigen');
 
   await click('#speed-menu summary');
   await waitFor(`document.querySelector('#speed-menu').open`);
@@ -513,6 +543,9 @@ try {
     && !document.querySelector('#comparison-picker').open
     && document.querySelector('#comparison-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#comparison-video').muted`), true);
+  await waitFor(`document.querySelector('#comparison-video').readyState >= 2`);
+  await exerciseAnnotation('#comparison-annotation-button', 'Pritschen seitlich');
+  results.push('Frame des daneben geschalteten Leitbilds temporär annotieren');
   assert.equal(await evaluate(`document.querySelector('#preview-stage').classList.contains('comparing')`), true);
   const comparisonPlayerLayout = await evaluate(`(() => {
     const own = document.querySelector('#playback-controls').getBoundingClientRect();
@@ -545,6 +578,25 @@ try {
   assert.ok(compactLandscapeLayout.ownHeight < 155);
   assert.ok(compactLandscapeLayout.guideHeight < 155);
   assert.equal(compactLandscapeLayout.speedRightOfTimeline, true);
+  await click('#comparison-annotation-button');
+  await waitFor(`document.querySelector('#annotation-dialog').open
+    && document.querySelector('#annotation-canvas-stage').clientWidth > 0`);
+  const compactAnnotationLayout = await evaluate(`(() => {
+    const dialog = document.querySelector('#annotation-dialog').getBoundingClientRect();
+    const stage = document.querySelector('#annotation-canvas-stage').getBoundingClientRect();
+    return {
+      fitsViewport: dialog.left >= 0 && dialog.top >= 0 && dialog.right <= innerWidth && dialog.bottom <= innerHeight,
+      usefulCanvas: stage.width > 200 && stage.height > 100,
+      overflow: document.documentElement.scrollWidth > innerWidth
+    };
+  })()`);
+  assert.equal(compactAnnotationLayout.fitsViewport, true);
+  assert.equal(compactAnnotationLayout.usefulCanvas, true);
+  assert.equal(compactAnnotationLayout.overflow, false);
+  const compactAnnotationScreenshot = await screenshot('annotation-landscape.png');
+  await click('#annotation-close');
+  await waitFor(`!document.querySelector('#annotation-dialog').open`);
+  results.push('Annotationsfenster passt vollständig ins Handy-Querformat');
   await click('#comparison-speed-menu summary');
   await waitFor(`document.querySelector('#comparison-speed-menu').open`);
   const upwardSpeedMenu = await evaluate(`(() => {
@@ -563,8 +615,10 @@ try {
   await click('#play-button');
   await waitFor(`!document.querySelector('#video-preview').paused
     && document.querySelector('#comparison-video').paused`);
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), 'Ⅱ');
   await click('#play-button');
   await waitFor(`document.querySelector('#video-preview').paused`);
+  assert.equal(await evaluate(`document.querySelector('#play-button').textContent.trim()`), '▶');
 
   const ownSeek = await evaluate(`(() => {
     const timeline = document.querySelector('#timeline');
@@ -656,6 +710,70 @@ try {
   assert.equal(await evaluate(`document.querySelector('#photo-preview').getAttribute('src')`), null);
   results.push('Neuladen stellt keine frühere Aufnahme wieder her');
 
+  if (teacherPassword) {
+    await waitFor(`!document.querySelector('#teacher-mode-button').disabled`);
+    await click('#teacher-mode-button');
+    await waitFor(`document.querySelector('#teacher-login-dialog').open`);
+    await evaluate(`(() => {
+      document.querySelector('#teacher-password').value = ${JSON.stringify(teacherPassword)};
+    })()`);
+    await click('#teacher-login-form button[type="submit"]');
+    await waitFor(`document.querySelector('#teacher-mode-button').getAttribute('aria-pressed') === 'true'
+      || !document.querySelector('#teacher-enrollment-step').hidden`);
+    if (await evaluate(`!document.querySelector('#teacher-enrollment-step').hidden`)) {
+      await click('#teacher-enrollment-skip');
+    }
+    await waitFor(`document.querySelector('#teacher-mode-button').getAttribute('aria-pressed') === 'true'
+      && !document.querySelector('#gallery-entry').hidden`);
+    await click('#gallery-entry');
+    await waitFor(`document.body.dataset.view === 'gallery'
+      && document.querySelectorAll('.gallery-card').length >= 2`);
+    const dates = await evaluate(`[...document.querySelectorAll('.gallery-card time')]
+      .map((element) => Date.parse(element.dateTime))`);
+    assert.deepEqual(dates, [...dates].sort((left, right) => right - left));
+
+    await click('.gallery-card[data-kind="video"] [data-gallery-action="view"]');
+    await waitFor(`document.querySelector('#gallery-viewer-dialog').open
+      && document.querySelector('#gallery-viewer-video').src.startsWith('blob:')`);
+    await click('#gallery-play-button');
+    await waitFor(`document.querySelector('#gallery-viewer-video').readyState >= 2`);
+    await exerciseAnnotation('#gallery-annotation-button', 'Gespeichertes Video');
+
+    await evaluate(`(() => {
+      window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
+      window.__sportkameraDownload = null;
+      HTMLAnchorElement.prototype.click = function captureDownload() {
+        if (this.download) {
+          window.__sportkameraDownload = { filename: this.download, href: this.href };
+          return;
+        }
+        return window.__sportkameraOriginalAnchorClick.call(this);
+      };
+    })()`);
+    await click('#gallery-download-button');
+    await waitFor(`window.__sportkameraDownload !== null`);
+    const galleryDownload = await evaluate(`(() => {
+      const result = window.__sportkameraDownload;
+      HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraDownload;
+      return result;
+    })()`);
+    assert.match(galleryDownload.filename, /^Sportkamera-Video-.*\.(?:webm|mp4)$/);
+    assert.match(galleryDownload.href, /^blob:/);
+    await click('#gallery-viewer-close');
+    await waitFor(`!document.querySelector('#gallery-viewer-dialog').open`);
+
+    await click('#gallery-select-all');
+    await waitFor(`!document.querySelector('#gallery-delete-selected').disabled`);
+    await click('#gallery-delete-selected');
+    await waitFor(`document.querySelector('#gallery-delete-dialog').open`);
+    await click('#gallery-delete-confirm');
+    await waitFor(`document.querySelectorAll('.gallery-card').length === 0
+      && !document.querySelector('#gallery-empty').hidden`);
+    results.push('Lehrermodus, persistente Galerie, Einzel-Download, Annotation und Mehrfachlöschung');
+  }
+
   const workerState = await evaluate(`navigator.serviceWorker.ready.then((registration) => ({
     scope: registration.scope,
     state: registration.active && registration.active.state
@@ -676,11 +794,14 @@ try {
   }))`);
   assert.equal(storageState.localStorageLength, 0);
   assert.equal(storageState.sessionStorageLength, 0);
-  assert.deepEqual(storageState.databases, []);
+  assert.ok(storageState.databases.every((name) => [
+    'sportkamera-media-idb-v1',
+    'sportkamera-teacher-auth-idb-v1'
+  ].includes(name)));
   assert.equal(storageState.cacheState.names.length, 1);
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
-  results.push('Browser-Speicher und Service-Worker-Cache enthalten keine Medien');
+  results.push('Web Storage und Service-Worker-Cache enthalten keine Nutzermedien; lokale Galerie bleibt isoliert');
 
   if (!(await evaluate(`navigator.serviceWorker.controller !== null`))) {
     await navigate(`${appUrl}?installed=1`);
@@ -797,6 +918,7 @@ try {
   }
   console.log(`SCREENSHOT_PORTRAIT=${portraitScreenshot}`);
   console.log(`SCREENSHOT_PREVIEW=${videoPreviewScreenshot}`);
+  console.log(`SCREENSHOT_ANNOTATION=${compactAnnotationScreenshot}`);
   console.log(`SCREENSHOT_LANDSCAPE=${landscapeScreenshot}`);
   console.log(`SCREENSHOT_CAMERA_LANDSCAPE=${landscapeCameraScreenshot}`);
   console.log(`SCREENSHOT_MOBILE=${mobileScreenshot}`);

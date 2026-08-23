@@ -2,33 +2,43 @@
 
 Eine installierbare, datensparsame Progressive Web App für direktes Foto- und Video-Feedback im Sportunterricht. Die Anwendung besteht nur aus lokalem HTML, CSS und JavaScript, benötigt keinen Build-Schritt und ist für GitHub Pages vorbereitet.
 
-## Datenschutz in Kürze
+## Datenschutz und lokale Speicherung
 
-Aufnahmen bleiben nur vorübergehend in der App. Sie werden nicht hochgeladen oder automatisch dauerhaft gespeichert. Nur wenn **Download** ausdrücklich gewählt wird, speichert der Browser eine benannte Kopie auf dem Gerät. Beim Verwerfen, bei einer neuen Aufnahme oder beim Verlassen der App wird die aktuelle Aufnahme aus der App entfernt; bereits heruntergeladene Dateien bleiben davon unberührt.
+Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale Lehrergalerie. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
 
 - Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
-- Fotos werden kurzzeitig in einem Canvas verarbeitet und als Blob im Arbeitsspeicher gehalten.
-- Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder` und liegen ebenfalls nur als Blob im Arbeitsspeicher.
-- Es gibt keine Upload- oder Teilen-Funktion und keine externen Ressourcen, Analysen oder API-Aufrufe. Ein Download findet ausschließlich nach einem ausdrücklichen Tippen auf **Download** statt.
-- Medien werden von der App nicht in `localStorage`, `sessionStorage`, IndexedDB oder Cache Storage gespeichert. Nur ein bewusst gestarteter Download legt über die Browserfunktion eine Datei im Download-Ordner ab.
-- Der Service Worker speichert ausschließlich den statischen App-Rahmen (HTML, CSS, JavaScript, Manifest und Symbole) für den Offline-Start.
-- Beim Bereinigen stoppt die App die Kamera, leert ihre Fragmente, widerruft Object URLs und entfernt alle eigenen Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser; die App behauptet nicht, Speicherbereiche sofort physisch zu überschreiben.
+- Fotos werden kurzzeitig in einem Canvas verarbeitet. Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder`.
+- Nur ausdrücklich gespeicherte Aufnahmen bleiben nach dem Schließen oder Neuladen der App erhalten. Nicht gespeicherte Aufnahmen werden beim Verwerfen, bei einer neuen Aufnahme sowie beim Verlassen oder Wechseln in den Hintergrund aus der App entfernt.
+- Gespeicherte Medien liegen ausschließlich im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
+- OPFS und IndexedDB sind beständig, aber kein Ersatz für ein Backup. Das Löschen der Websitedaten, eine Speicherbereinigung durch das Betriebssystem oder das Entfernen der Web-App kann die Galerie löschen. Die App bittet den Browser nach Möglichkeit um dauerhafte Speicherung und zeigt an, wenn der Browser sie nicht zugesichert hat.
+- Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
+- Eine Datei wird nur über den Download-Button in der Lehrergalerie an die Downloadfunktion des Browsers übergeben. In der Aufnahmeansicht gibt es keinen Download mehr.
+- Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
+- Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 
-Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, etwa zum Abruf von HTML, CSS, JavaScript und Symbolen. GitHub beziehungsweise beteiligte Netzbetreiber können dabei übliche technische Verbindungsdaten wie IP-Adresse, Zeitpunkt und User-Agent verarbeiten. Bild- oder Videodaten werden von der App bei diesen Aufrufen nicht übertragen.
+Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, etwa zum Abruf von HTML, CSS, JavaScript und Symbolen. GitHub beziehungsweise beteiligte Netzbetreiber können dabei übliche Verbindungsdaten wie IP-Adresse, Zeitpunkt und User-Agent verarbeiten. Bild- oder Videodaten werden bei diesen Aufrufen nicht übertragen.
 
 Screenshots und Bildschirmaufnahmen durch iPadOS, andere Betriebssystemfunktionen oder Personen mit Zugriff auf das Gerät kann eine Web-App nicht verhindern.
 
+## Lehrermodus und Anmeldung
+
+Auf der Startseite öffnet **Lehrermodus** die lokale Anmeldung. Nach erfolgreicher Prüfung erscheint zusätzlich der Bereich **Galerie**. Ein erneutes Tippen beendet den Lehrermodus; beim nächsten Öffnen ist immer wieder eine Identifikation nötig. Beim Wechsel in den Hintergrund wird der Lehrermodus ebenfalls gesperrt.
+
+Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann die Anmeldung per WebAuthn mit dem Plattform-Authentifikator erfolgen. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal nach einer erfolgreichen Anmeldung und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
+
+Als Rückfall steht eine lokale Passwortprüfung zur Verfügung. Im ausgelieferten JavaScript steht nicht das Klartextpasswort, sondern nur ein mit PBKDF2 abgeleiteter Prüfwert. Das erschwert ein zufälliges Ablesen, macht das Passwort bei einer vollständig öffentlichen statischen App aber nicht zu einem echten Geheimnis: Code und lokale Daten können von technisch versierten Personen untersucht oder verändert werden. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Der Lehrermodus ist daher eine praktische Bedienhürde für ein beaufsichtigtes Gerät, keine belastbare Zugriffskontrolle. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+
 ## Lokal testen
 
-Ein Doppelklick auf `index.html` reicht nicht aus: Kamerazugriff und Service Worker sind aus Sicherheitsgründen nur in einem sicheren Kontext verfügbar. Browser behandeln `http://localhost` für die Entwicklung als sicheren Kontext; im Internet ist HTTPS erforderlich.
+Ein Doppelklick auf `index.html` reicht nicht aus: Kamera, WebAuthn, lokaler App-Speicher und Service Worker sind nur in einem sicheren Kontext zuverlässig verfügbar. Browser behandeln `http://localhost` für die Entwicklung als sicheren Kontext; im Internet ist HTTPS erforderlich.
 
-Im Ordner `Random/tmp_recorder` einen lokalen Server starten:
+Im Ordner `Sport/tmp_recorder` einen lokalen Server starten:
 
 ```powershell
 python -m http.server 8080 --bind 127.0.0.1
 ```
 
-Dann `http://127.0.0.1:8080/` im Browser öffnen. Alternativ kann der Server im Repository-Stamm gestartet und `http://127.0.0.1:8080/Random/tmp_recorder/` geöffnet werden.
+Dann `http://127.0.0.1:8080/` im Browser öffnen. Alternativ kann der Server im Repository-Stamm gestartet und `http://127.0.0.1:8080/Sport/tmp_recorder/` geöffnet werden.
 
 Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine Installation externer Pakete:
 
@@ -36,7 +46,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse sowie die lokale Download-Funktion ohne Upload.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, lokale Lehreranmeldung sowie das Fehlen des Klartextpassworts und von Uploadfunktionen.
 
 ## GitHub Pages aktivieren
 
@@ -46,60 +56,66 @@ Da alle Pfade relativ sind, kann die App direkt aus diesem Repository-Unterordne
 2. In GitHub **Settings → Pages** öffnen.
 3. Unter **Build and deployment** als Quelle **Deploy from a branch** wählen.
 4. Den Hauptbranch und den Ordner **/(root)** auswählen, dann **Save** wählen.
-5. Nach der Bereitstellung die Adresse `https://BENUTZERNAME.github.io/REPOSITORY/Random/tmp_recorder/` öffnen. Bei einem anderen Repository-Namen ändert sich nur dieser Teil der Adresse.
+5. Nach der Bereitstellung `https://BENUTZERNAME.github.io/REPOSITORY/Sport/tmp_recorder/` öffnen.
 
-Diese Variante verändert die bestehende Repository-Struktur nicht. GitHub Pages liefert die App automatisch per HTTPS aus. Bei einem privaten Repository hängt die Pages-Verfügbarkeit vom verwendeten GitHub-Tarif ab.
+GitHub Pages liefert die App automatisch per HTTPS aus. Bei einem privaten Repository hängt die Pages-Verfügbarkeit vom verwendeten GitHub-Tarif ab.
 
 ## Auf dem iPad öffnen und installieren
 
-1. Die oben genannte HTTPS-Adresse in **Safari** auf dem iPad öffnen.
-2. **Foto** oder **Video** wählen.
-3. Die Safari-Abfrage für den Kamerazugriff mit **Erlauben** bestätigen. Für Video wird ausdrücklich kein Mikrofonzugriff benötigt.
-4. Zum Installieren in Safari die **Teilen**-Schaltfläche öffnen und **Zum Home-Bildschirm** wählen.
-5. Falls iPadOS die Option anbietet, **Als Web-App öffnen** aktiviert lassen und mit **Hinzufügen** bestätigen.
-6. Die Sportkamera anschließend über ihr Symbol auf dem Home-Bildschirm starten. Nach einem ersten erfolgreichen Online-Start steht der statische App-Rahmen auch offline bereit; die Kamera selbst arbeitet lokal.
+1. Die HTTPS-Adresse in **Safari** auf dem iPad öffnen.
+2. **Foto** oder **Video** wählen und die Kameraabfrage mit **Erlauben** bestätigen. Für Video ist kein Mikrofonzugriff nötig.
+3. Zum Installieren die Safari-Schaltfläche **Teilen** und anschließend **Zum Home-Bildschirm** wählen.
+4. Falls iPadOS die Option anbietet, **Als Web-App öffnen** aktiviert lassen und mit **Hinzufügen** bestätigen.
+5. Die Sportkamera über ihr Symbol starten. Nach einem vollständigen Online-Start steht der statische App-Rahmen auch offline bereit.
 
-Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seiteneinstellungen (Symbol links in der Adressleiste) **Website-Einstellungen → Kamera → Erlauben** wählen und die Seite neu laden.
+Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seiteneinstellungen links in der Adressleiste **Website-Einstellungen → Kamera → Erlauben** wählen und die Seite neu laden.
 
 ## Bedienung
 
-- **Foto** erstellt einen einzelnen Schnappschuss über Canvas.
-- **Video** zeichnet maximal 3 Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 automatisch als Fallback, wenn der Browser WebM nicht aufnehmen kann.
-- **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei sicher alle vorhandenen Aufnahmedaten.
-- In der Videovorschau stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
-- Der Download-Button speichert die eigene Fotoaufnahme als JPG und die Videoaufnahme im tatsächlich aufgenommenen Format (WebM oder MP4) unter einem frei wählbaren Namen. Vor dem Speichern kann der Vorgang mit **Abbruch** beendet werden.
-- Mit **Leitbild daneben** lässt sich ein Leitbild direkt neben die eigene Aufnahme schalten. Die Auswahl öffnet sich als dreistufiges Fenster für Sportartengruppe, Sportart und Leitbild. Beide Videos haben eigene Bedienelemente für Start/Pause, Zeitleiste und Wiedergabegeschwindigkeit.
-- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** steht eine Liste der Leitbilder. **Angriffsschlag** und **Pritschen seitlich** öffnen jeweils einen eigenen Player mit Start/Pause, Zeitleiste sowie 0,25×, 0,5× und 1×.
-- Alle Leitbild-Videos werden grundsätzlich ohne Ton wiedergegeben.
-- **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle Aufnahme vor dem Ansichtswechsel.
-- Beim Wechsel in den Hintergrund, Neuladen oder Verlassen wird die aktuelle Aufnahme ebenfalls entfernt. Eine frühere Aufnahme wird nach dem Laden nie wiederhergestellt.
+- **Foto** erstellt einen Schnappschuss über Canvas.
+- **Video** zeichnet maximal drei Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 als Fallback, wenn der Browser WebM nicht aufnehmen kann.
+- **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei vorhandene, nicht gespeicherte Aufnahmedaten.
+- Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Es öffnet keine Downloadseite.
+- In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
+- Über den Stift-Button lässt sich der aktuelle Videoframe in einem temporären Annotationsfenster öffnen. Dort gibt es Freihandstift, fünf Farben und einen Radierer; beim Schließen wird die Annotation verworfen.
+- Mit **Leitbild daneben** lässt sich ein Leitbild neben die eigene Aufnahme schalten. Beide Videos besitzen unabhängige Bedienelemente.
+- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
+- **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
+
+Im Lehrermodus zeigt die Galerie gespeicherte Fotos und Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
 
 ## Manuelle Abnahme auf einem physischen iPad
 
-Eine echte iPad-Kamera und Safari-Berechtigungsdialoge lassen sich nicht zuverlässig in automatisierten Desktop-Tests nachbilden. Vor dem Einsatz im Unterricht sollten diese Punkte auf dem Zielgerät geprüft werden:
+Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikatoren lassen sich in automatisierten Desktop-Tests nicht vollständig nachbilden. Vor dem Unterrichtseinsatz sollten diese Punkte auf dem Zielgerät geprüft werden:
 
-1. Erster Start, verständlicher Datenschutzhinweis und Kameraberechtigung; sicherstellen, dass keine Mikrofonabfrage erscheint.
-2. Rück- und Frontkamera jeweils im Hoch- und Querformat; Frontbild und Fotoausrichtung vergleichen.
-3. Foto aufnehmen, anzeigen, verwerfen und mehrere Fotos nacheinander erstellen.
-4. Video manuell stoppen, abspielen, pausieren und mit 0,25×, 0,5× sowie 1× betrachten.
-5. Eine Videoaufnahme laufen lassen und prüfen, dass sie bei 3 Minuten automatisch endet.
-6. Während Livebild, laufender Aufnahme und Vorschau jeweils zum Home-Bildschirm wechseln; bei der Rückkehr muss die App sicher auf der Startansicht stehen und die Aufnahme entfernt sein.
-7. Seite mit einer Vorschau neu laden; keine Aufnahme darf wieder erscheinen.
-8. Nach einmaligem vollständigem Online-Start die Web-App schließen, die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
-9. In Safaris Web-Inspector kontrollieren, dass beim Aufnehmen keine Netzwerkrequests mit Bild- oder Videodaten entstehen und dass Application Storage nur den statischen App-Cache enthält.
-10. Kamerazugriff in den Website-Einstellungen verweigern und die verständliche Fehlermeldung prüfen.
+1. Erster Start, Datenschutzhinweis und Kameraberechtigung; sicherstellen, dass keine Mikrofonabfrage erscheint.
+2. Rück- und Frontkamera im Hoch- und Querformat testen; Frontbild und Fotoausrichtung vergleichen.
+3. Foto und Video aufnehmen, mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
+4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
+5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
+6. Lehrermodus per Passwort öffnen, wieder beenden und prüfen, dass ein erneutes Öffnen eine neue Anmeldung verlangt. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
+8. Gespeicherte Fotos und Videos in der Galerie öffnen, einzeln herunterladen und sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
+10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
+11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
+12. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
+13. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
-Die automatische Prüfung des nicht unterstützten Aufnahmeformats erfolgt über einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der konkret eingesetzten Safari-/iPadOS-Version geprüft werden.
+Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
 
 ## Dateien
 
 - `index.html` – semantische, barrierearme deutschsprachige Oberfläche
 - `styles.css` – responsive Touch-Gestaltung für Hoch- und Querformat samt Safe Areas
-- `app.js` – Kamera, Aufnahme, Wiedergabe und zentrale temporäre Medienbereinigung
+- `app.js` – Kamera, Aufnahme, Galerie und zentrale temporäre Medienbereinigung
+- `annotation.js` – lokale Annotation eines aktuellen Videoframes
+- `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
+- `teacher-auth.js` – lokale PBKDF2- und WebAuthn-Prüfung des Lehrermodus
 - `media-utils.js` – getestete Formatauswahl und Zeitformatierung
 - `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
 - `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos
 - `manifest.webmanifest` und `icons/` – Installation als PWA und Apple-Touch-Icon
 - `sw.js` – versionierter Offline-Cache ausschließlich für statische App-Dateien
 - `tests/` – automatisierte Funktions-, Datenschutz- und PWA-Prüfungen
-- `tools/generate-icons.ps1` – reproduzierbare, lokale Erzeugung der PNG-App-Symbole
+- `tools/generate-icons.ps1` – reproduzierbare lokale Erzeugung der PNG-App-Symbole

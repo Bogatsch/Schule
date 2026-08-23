@@ -4,6 +4,24 @@ import {
   formatRecordingTime,
   selectSupportedVideoMimeType
 } from './media-utils.js?v=26';
+import { setupVideoAnnotation } from './annotation.js?v=29';
+import {
+  deleteMedia,
+  getMedia,
+  getStorageEstimate,
+  isMediaStoreSupported,
+  listMedia,
+  requestPersistentStorage,
+  saveMedia
+} from './media-store.js?v=29';
+import {
+  authenticateWithPlatform,
+  enrollPlatformCredential,
+  forgetPlatformCredential,
+  getTeacherAuthState,
+  preloadTeacherAuth,
+  verifyTeacherPassword
+} from './teacher-auth.js?v=29';
 
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
@@ -15,7 +33,12 @@ const elements = {
   startView: document.querySelector('#start-view'),
   cameraView: document.querySelector('#camera-view'),
   previewView: document.querySelector('#preview-view'),
+  galleryView: document.querySelector('#gallery-view'),
   errorView: document.querySelector('#error-view'),
+  teacherModeButton: document.querySelector('#teacher-mode-button'),
+  teacherModeLabel: document.querySelector('#teacher-mode-label'),
+  teacherModeDescription: document.querySelector('#teacher-mode-description'),
+  galleryEntry: document.querySelector('#gallery-entry'),
   environmentStatus: document.querySelector('#environment-status'),
   cameraBack: document.querySelector('#camera-back'),
   cameraTitle: document.querySelector('#camera-title'),
@@ -32,8 +55,8 @@ const elements = {
   previewBack: document.querySelector('#preview-back'),
   previewStage: document.querySelector('#preview-stage'),
   photoPreview: document.querySelector('#photo-preview'),
-  photoDownloadControls: document.querySelector('#photo-download-controls'),
-  photoDownloadButton: document.querySelector('#photo-download-button'),
+  photoSaveControls: document.querySelector('#photo-save-controls'),
+  photoSaveButton: document.querySelector('#photo-save-button'),
   ownVideoPane: document.querySelector('#own-video-pane'),
   videoPreview: document.querySelector('#video-preview'),
   comparisonPane: document.querySelector('#comparison-pane'),
@@ -46,7 +69,8 @@ const elements = {
   playbackTime: document.querySelector('#playback-time'),
   speedMenu: document.querySelector('#speed-menu'),
   speedValue: document.querySelector('#speed-value'),
-  videoDownloadButton: document.querySelector('#video-download-button'),
+  videoSaveButton: document.querySelector('#video-save-button'),
+  videoAnnotationButton: document.querySelector('#video-annotation-button'),
   comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
   comparisonPlayButton: document.querySelector('#comparison-play-button'),
@@ -54,6 +78,7 @@ const elements = {
   comparisonPlaybackTime: document.querySelector('#comparison-playback-time'),
   comparisonSpeedMenu: document.querySelector('#comparison-speed-menu'),
   comparisonSpeedValue: document.querySelector('#comparison-speed-value'),
+  comparisonAnnotationButton: document.querySelector('#comparison-annotation-button'),
   comparisonControls: document.querySelector('#comparison-controls'),
   comparisonButton: document.querySelector('#comparison-button'),
   comparisonButtonLabel: document.querySelector('#comparison-button-label'),
@@ -65,13 +90,48 @@ const elements = {
   comparisonActive: document.querySelector('#comparison-active'),
   comparisonActiveLabel: document.querySelector('#comparison-active-label'),
   comparisonRemove: document.querySelector('#comparison-remove'),
-  downloadDialog: document.querySelector('#download-dialog'),
-  downloadForm: document.querySelector('#download-form'),
-  downloadDialogTitle: document.querySelector('#download-dialog-title'),
-  downloadNameLabel: document.querySelector('#download-name-label'),
-  downloadName: document.querySelector('#download-name'),
-  downloadExtension: document.querySelector('#download-extension'),
-  downloadCancel: document.querySelector('#download-cancel'),
+  galleryBack: document.querySelector('#gallery-back'),
+  galleryGrid: document.querySelector('#gallery-grid'),
+  galleryEmpty: document.querySelector('#gallery-empty'),
+  galleryStorageStatus: document.querySelector('#gallery-storage-status'),
+  gallerySelectAll: document.querySelector('#gallery-select-all'),
+  gallerySelectionCount: document.querySelector('#gallery-selection-count'),
+  galleryDeleteSelected: document.querySelector('#gallery-delete-selected'),
+  teacherLoginDialog: document.querySelector('#teacher-login-dialog'),
+  teacherLoginForm: document.querySelector('#teacher-login-form'),
+  teacherLoginStep: document.querySelector('#teacher-login-step'),
+  teacherLoginTitle: document.querySelector('#teacher-login-title'),
+  teacherBiometricSection: document.querySelector('#teacher-biometric-section'),
+  teacherBiometricDivider: document.querySelector('#teacher-biometric-divider'),
+  teacherBiometricButton: document.querySelector('#teacher-biometric-button'),
+  teacherPassword: document.querySelector('#teacher-password'),
+  teacherLoginStatus: document.querySelector('#teacher-login-status'),
+  teacherLoginCancel: document.querySelector('#teacher-login-cancel'),
+  teacherEnrollmentStep: document.querySelector('#teacher-enrollment-step'),
+  teacherEnrollmentButton: document.querySelector('#teacher-enrollment-button'),
+  teacherEnrollmentSkip: document.querySelector('#teacher-enrollment-skip'),
+  galleryViewerDialog: document.querySelector('#gallery-viewer-dialog'),
+  galleryViewerClose: document.querySelector('#gallery-viewer-close'),
+  galleryViewerTitle: document.querySelector('#gallery-viewer-title'),
+  galleryViewerDate: document.querySelector('#gallery-viewer-date'),
+  galleryViewerPhoto: document.querySelector('#gallery-viewer-photo'),
+  galleryViewerVideo: document.querySelector('#gallery-viewer-video'),
+  galleryPlaybackControls: document.querySelector('#gallery-playback-controls'),
+  galleryPlayButton: document.querySelector('#gallery-play-button'),
+  galleryTimeline: document.querySelector('#gallery-timeline'),
+  galleryPlaybackTime: document.querySelector('#gallery-playback-time'),
+  gallerySpeedMenu: document.querySelector('#gallery-speed-menu'),
+  gallerySpeedValue: document.querySelector('#gallery-speed-value'),
+  galleryAnnotationButton: document.querySelector('#gallery-annotation-button'),
+  galleryDownloadButton: document.querySelector('#gallery-download-button'),
+  galleryDeleteButton: document.querySelector('#gallery-delete-button'),
+  galleryViewerStatus: document.querySelector('#gallery-viewer-status'),
+  galleryDeleteDialog: document.querySelector('#gallery-delete-dialog'),
+  galleryDeleteForm: document.querySelector('#gallery-delete-form'),
+  galleryDeleteTitle: document.querySelector('#gallery-delete-title'),
+  galleryDeleteMessage: document.querySelector('#gallery-delete-message'),
+  galleryDeleteConfirm: document.querySelector('#gallery-delete-confirm'),
+  galleryDeleteCancel: document.querySelector('#gallery-delete-cancel'),
   previewStatus: document.querySelector('#preview-status'),
   discardButton: document.querySelector('#discard-button'),
   newRecordingButton: document.querySelector('#new-recording-button'),
@@ -85,6 +145,7 @@ const views = {
   start: elements.startView,
   camera: elements.cameraView,
   preview: elements.previewView,
+  gallery: elements.galleryView,
   error: elements.errorView
 };
 
@@ -102,8 +163,27 @@ let recordingLimitTimer = null;
 let isRecording = false;
 let operationId = 0;
 let selectedComparisonCategory = 'spielsportarten';
-let downloadMediaKind = 'video';
-let downloadTrigger = null;
+let currentSavedMediaId = null;
+let teacherMode = false;
+let teacherAuthVerified = false;
+let teacherAuthReady = false;
+let teacherAuthOperationId = 0;
+let teacherPlatformNeedsRepair = false;
+let galleryItems = [];
+let gallerySelectedIds = new Set();
+let galleryLoadId = 0;
+let galleryRenderId = 0;
+let galleryPreviewObserver = null;
+let galleryViewerItem = null;
+let galleryViewerObjectUrl = null;
+let galleryViewerTrigger = null;
+let galleryViewerRequestId = 0;
+let pendingDeleteIds = [];
+let pendingDeleteTrigger = null;
+const galleryCardObjectUrls = new Set();
+const galleryLoadedMedia = new Map();
+const delayedDownloadObjectUrls = new Set();
+const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -135,7 +215,7 @@ function updateFacingUI() {
 }
 
 function resetPlaybackUI() {
-  elements.playButton.innerHTML = '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.playButton.innerHTML = '<span aria-hidden="true">▶</span>';
   elements.playButton.setAttribute('aria-label', 'Video starten');
   elements.timeline.value = '0';
   elements.playbackTime.value = '0:00 / 0:00';
@@ -149,7 +229,7 @@ function resetPlaybackUI() {
 }
 
 function resetComparisonPlaybackUI() {
-  elements.comparisonPlayButton.innerHTML = '<span aria-hidden="true">▶</span><span>Start</span>';
+  elements.comparisonPlayButton.innerHTML = '<span aria-hidden="true">▶</span>';
   elements.comparisonPlayButton.setAttribute('aria-label', 'Leitbild starten');
   elements.comparisonTimeline.value = '0';
   elements.comparisonPlaybackTime.value = '0:00 / 0:00';
@@ -210,81 +290,64 @@ function closeComparisonPicker({ restoreFocus = false } = {}) {
   }
 }
 
-function getDownloadExtension() {
-  if (downloadMediaKind === 'photo') {
-    return 'jpg';
-  }
-  return currentBlob?.type?.toLowerCase().startsWith('video/mp4') ? 'mp4' : 'webm';
-}
-
 function sanitizeDownloadName(value, fallback) {
-  const name = value
+  const name = String(value || '')
     .trim()
     .normalize('NFKC')
-    .replace(/\.(?:jpe?g|mp4|webm)$/i, '')
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '-')
     .replace(/\s+/g, ' ')
     .replace(/^[. ]+|[. ]+$/g, '')
-    .slice(0, 80)
+    .slice(0, 120)
     .replace(/[. ]+$/g, '');
   return name || fallback;
 }
 
-function closeDownloadDialog({ restoreFocus = true } = {}) {
-  const trigger = downloadTrigger;
-  downloadTrigger = null;
-  if (elements.downloadDialog.open) {
-    elements.downloadDialog.close();
+function showModal(dialog) {
+  if (typeof dialog?.showModal === 'function') {
+    dialog.showModal();
   } else {
-    elements.downloadDialog.removeAttribute('open');
-  }
-  if (restoreFocus && trigger?.isConnected) {
-    trigger.focus({ preventScroll: true });
+    dialog?.setAttribute('open', '');
   }
 }
 
-function openDownloadDialog(kind, trigger) {
-  if (!currentBlob || !currentObjectUrl) {
-    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
+function closeModal(dialog) {
+  if (!dialog) {
     return;
   }
-
-  downloadMediaKind = kind;
-  downloadTrigger = trigger;
-  const isPhoto = kind === 'photo';
-  const extension = getDownloadExtension();
-  elements.downloadDialogTitle.textContent = isPhoto ? 'Bild herunterladen' : 'Video herunterladen';
-  elements.downloadNameLabel.textContent = isPhoto ? 'Name für das Bild' : 'Name für das Video';
-  elements.downloadName.value = isPhoto ? 'Sportkamera-Foto' : 'Sportkamera-Video';
-  elements.downloadExtension.textContent = `Dateiformat: .${extension}`;
-
-  if (typeof elements.downloadDialog.showModal === 'function') {
-    elements.downloadDialog.showModal();
+  if (dialog.open && typeof dialog.close === 'function') {
+    dialog.close();
   } else {
-    elements.downloadDialog.setAttribute('open', '');
+    dialog.removeAttribute('open');
   }
-  window.requestAnimationFrame(() => elements.downloadName.select());
 }
 
-function startDownload() {
-  if (!currentBlob || !currentObjectUrl) {
-    closeDownloadDialog();
-    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
-    return;
+function formatMediaDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Datum unbekannt';
   }
+  return new Intl.DateTimeFormat('de-DE', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+}
 
-  const extension = getDownloadExtension();
-  const fallback = downloadMediaKind === 'photo' ? 'Sportkamera-Foto' : 'Sportkamera-Video';
-  const name = sanitizeDownloadName(elements.downloadName.value, fallback);
-  const link = document.createElement('a');
-  link.href = currentObjectUrl;
-  link.download = `${name}.${extension}`;
-  link.hidden = true;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  closeDownloadDialog();
-  elements.previewStatus.textContent = `Download von ${name}.${extension} wurde gestartet.`;
+function formatBytes(value) {
+  const bytes = Number(value);
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    return '';
+  }
+  if (bytes < 1024) {
+    return `${Math.round(bytes)} B`;
+  }
+  const units = ['KB', 'MB', 'GB'];
+  let amount = bytes / 1024;
+  let unit = units[0];
+  for (let index = 1; index < units.length && amount >= 1024; index += 1) {
+    amount /= 1024;
+    unit = units[index];
+  }
+  return `${amount >= 10 ? amount.toFixed(0) : amount.toFixed(1)} ${unit}`.replace('.', ',');
 }
 
 function resetComparison() {
@@ -356,6 +419,19 @@ function releaseObjectUrl() {
   currentBlob = null;
 }
 
+function resetSaveButtons() {
+  currentSavedMediaId = null;
+  [elements.photoSaveButton, elements.videoSaveButton].forEach((button) => {
+    button.disabled = false;
+    button.classList.remove('saved');
+    button.removeAttribute('aria-pressed');
+  });
+  elements.photoSaveButton.setAttribute('aria-label', 'Foto in der Galerie speichern');
+  elements.photoSaveButton.title = 'Foto speichern';
+  elements.videoSaveButton.setAttribute('aria-label', 'Video in der Galerie speichern');
+  elements.videoSaveButton.title = 'Video speichern';
+}
+
 /**
  * Zentrale Aufräumfunktion. Sie entfernt alle App-Referenzen auf Kamera- und
  * Aufnahmedaten. Die endgültige Speicherfreigabe übernimmt anschließend der Browser.
@@ -384,6 +460,7 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   mediaChunks.splice(0, mediaChunks.length);
   stopCameraTracks();
   releaseObjectUrl();
+  resetSaveButtons();
 
   elements.videoPreview.pause();
   elements.videoPreview.srcObject = null;
@@ -394,9 +471,9 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   elements.photoPreview.removeAttribute('src');
   elements.photoPreview.alt = '';
   elements.photoPreview.hidden = true;
-  elements.photoDownloadControls.hidden = true;
+  elements.photoSaveControls.hidden = true;
   elements.playbackControls.hidden = true;
-  closeDownloadDialog({ restoreFocus: false });
+  annotation.close({ restoreFocus: false });
   resetPlaybackUI();
   resetCanvas();
 
@@ -533,6 +610,80 @@ function canvasToBlob(canvas, type, quality) {
   });
 }
 
+function mediaSaveErrorMessage(error) {
+  if (error?.code === 'quota-exceeded' || error?.name === 'QuotaExceededError') {
+    return 'Der lokale App-Speicher ist voll. Bitte lösche ältere Aufnahmen in der Lehrergalerie.';
+  }
+  if (error?.code === 'unsupported') {
+    return 'Dieser Browser bietet keinen privaten App-Speicher. Verwende eine aktuelle Safari-, Chrome-, Edge- oder Firefox-Version über HTTPS.';
+  }
+  return 'Die Aufnahme konnte nicht gespeichert werden. Sie bleibt noch in dieser Vorschau verfügbar.';
+}
+
+async function saveCurrentMedia(kind, button) {
+  if (currentSavedMediaId) {
+    elements.previewStatus.textContent = 'Diese Aufnahme ist bereits in der Galerie gespeichert.';
+    return;
+  }
+  if (!currentBlob || !currentObjectUrl) {
+    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
+    return;
+  }
+  if (!isMediaStoreSupported()) {
+    elements.previewStatus.textContent = mediaSaveErrorMessage({ code: 'unsupported' });
+    return;
+  }
+
+  const blob = currentBlob;
+  const thisOperation = operationId;
+  button.disabled = true;
+  elements.previewStatus.textContent = kind === 'photo'
+    ? 'Foto wird lokal gespeichert …'
+    : 'Video wird lokal gespeichert …';
+
+  const dimensions = kind === 'photo'
+    ? {
+        width: elements.photoPreview.naturalWidth,
+        height: elements.photoPreview.naturalHeight
+      }
+    : {
+        width: elements.videoPreview.videoWidth,
+        height: elements.videoPreview.videoHeight,
+        durationMs: Number.isFinite(elements.videoPreview.duration)
+          ? elements.videoPreview.duration * 1000
+          : null
+      };
+
+  try {
+    const persistenceRequest = requestPersistentStorage().catch(() => null);
+    const metadata = await saveMedia(blob, { kind, ...dimensions });
+    const persistence = await persistenceRequest;
+
+    if (thisOperation !== operationId || currentBlob !== blob) {
+      return;
+    }
+    currentSavedMediaId = metadata.id;
+    button.classList.add('saved');
+    button.setAttribute('aria-pressed', 'true');
+    button.setAttribute(
+      'aria-label',
+      kind === 'photo' ? 'Foto ist in der Galerie gespeichert' : 'Video ist in der Galerie gespeichert'
+    );
+    button.title = 'Gespeichert';
+    const persistenceNote = persistence?.persisted
+      ? ''
+      : ' Der Browser kann lokale Daten bei einer Speicherbereinigung trotzdem entfernen.';
+    elements.previewStatus.textContent = (kind === 'photo'
+      ? 'Foto wurde lokal in der Galerie gespeichert.'
+      : 'Video wurde lokal in der Galerie gespeichert.') + persistenceNote;
+  } catch (error) {
+    if (thisOperation === operationId && currentBlob === blob) {
+      button.disabled = false;
+      elements.previewStatus.textContent = mediaSaveErrorMessage(error);
+    }
+  }
+}
+
 async function takePhoto() {
   if (!cameraStream || elements.liveVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
     elements.cameraStatus.textContent = 'Das Kamerabild ist noch nicht bereit.';
@@ -575,7 +726,8 @@ async function takePhoto() {
     elements.photoPreview.src = currentObjectUrl;
     elements.photoPreview.alt = 'Dein gerade aufgenommenes Foto';
     elements.photoPreview.hidden = false;
-    elements.photoDownloadControls.hidden = false;
+    resetSaveButtons();
+    elements.photoSaveControls.hidden = false;
     elements.videoPreview.hidden = true;
     elements.ownVideoPane.hidden = true;
     elements.playbackControls.hidden = true;
@@ -601,10 +753,11 @@ function showVideoPreview(blob) {
   elements.videoPreview.hidden = false;
   elements.ownVideoPane.hidden = false;
   elements.photoPreview.hidden = true;
-  elements.photoDownloadControls.hidden = true;
+  elements.photoSaveControls.hidden = true;
   elements.playbackControls.hidden = false;
   elements.comparisonControls.hidden = false;
   elements.videoPreview.playbackRate = 1;
+  resetSaveButtons();
   resetPlaybackUI();
   elements.videoPreview.load();
   setView('preview');
@@ -761,17 +914,781 @@ async function toggleComparisonPlayback() {
 function updatePlayButton() {
   const playing = !elements.videoPreview.paused && !elements.videoPreview.ended;
   elements.playButton.innerHTML = playing
-    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
-    : '<span aria-hidden="true">▶</span><span>Start</span>';
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
   elements.playButton.setAttribute('aria-label', playing ? 'Video pausieren' : 'Video starten');
 }
 
 function updateComparisonPlayButton() {
   const playing = !elements.comparisonVideo.paused && !elements.comparisonVideo.ended;
   elements.comparisonPlayButton.innerHTML = playing
-    ? '<span aria-hidden="true">Ⅱ</span><span>Pause</span>'
-    : '<span aria-hidden="true">▶</span><span>Start</span>';
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
   elements.comparisonPlayButton.setAttribute('aria-label', playing ? 'Leitbild pausieren' : 'Leitbild starten');
+}
+
+function updateTeacherModeUI() {
+  elements.teacherModeButton.setAttribute('aria-pressed', String(teacherMode));
+  elements.teacherModeButton.setAttribute('aria-haspopup', teacherMode ? 'false' : 'dialog');
+  elements.teacherModeLabel.textContent = teacherMode ? 'Lehrermodus beenden' : 'Lehrermodus';
+  elements.teacherModeDescription.textContent = teacherMode
+    ? 'Galerie wieder sperren'
+    : 'Geschützte Galerie und Verwaltung öffnen';
+  elements.galleryEntry.hidden = !teacherMode;
+}
+
+function resetTeacherLoginDialog() {
+  teacherAuthVerified = false;
+  teacherPlatformNeedsRepair = false;
+  elements.teacherLoginForm.reset();
+  elements.teacherLoginStatus.textContent = '';
+  elements.teacherLoginStep.hidden = false;
+  elements.teacherEnrollmentStep.hidden = true;
+  const state = getTeacherAuthState();
+  const showPlatformLogin = state.ready && state.platformAvailable && state.platformEnrolled;
+  elements.teacherBiometricSection.hidden = !showPlatformLogin;
+  elements.teacherBiometricDivider.hidden = !showPlatformLogin;
+  elements.teacherBiometricButton.disabled = false;
+  elements.teacherEnrollmentButton.disabled = false;
+  elements.teacherEnrollmentButton.textContent = 'Gerätebestätigung einrichten';
+}
+
+function openTeacherLogin() {
+  if (!teacherAuthReady) {
+    elements.environmentStatus.textContent = 'Die Anmeldung wird noch vorbereitet. Bitte versuche es gleich erneut.';
+    return;
+  }
+  teacherAuthOperationId += 1;
+  resetTeacherLoginDialog();
+  showModal(elements.teacherLoginDialog);
+  window.requestAnimationFrame(() => {
+    if (!elements.teacherLoginDialog.open) {
+      return;
+    }
+    const state = getTeacherAuthState();
+    if (state.platformAvailable && state.platformEnrolled) {
+      elements.teacherBiometricButton.focus({ preventScroll: true });
+    } else {
+      elements.teacherPassword.focus({ preventScroll: true });
+    }
+  });
+}
+
+function activateTeacherMode() {
+  teacherAuthVerified = false;
+  teacherMode = true;
+  updateTeacherModeUI();
+  setView('start');
+  window.setTimeout(() => elements.galleryEntry.focus({ preventScroll: true }), 0);
+}
+
+function completeTeacherLogin(authOperation = teacherAuthOperationId) {
+  if (
+    authOperation !== teacherAuthOperationId
+    || !elements.teacherLoginDialog.open
+    || document.visibilityState !== 'visible'
+  ) {
+    return false;
+  }
+  closeModal(elements.teacherLoginDialog);
+  activateTeacherMode();
+  return true;
+}
+
+function teacherAuthErrorMessage(error) {
+  if (error?.code === 'cancelled') {
+    return 'Die Gerätebestätigung wurde abgebrochen. Du kannst stattdessen das Passwort verwenden.';
+  }
+  if (error?.code === 'not-enrolled') {
+    return 'Für dieses App-Profil ist noch keine Gerätebestätigung eingerichtet.';
+  }
+  if (error?.code === 'platform-unavailable') {
+    return 'Die Gerätebestätigung ist hier nicht verfügbar. Verwende bitte das Passwort.';
+  }
+  return 'Die Gerätebestätigung ist fehlgeschlagen. Verwende bitte das Passwort.';
+}
+
+function authenticateTeacherWithPlatform() {
+  if (elements.teacherBiometricButton.disabled) {
+    return;
+  }
+  const authOperation = teacherAuthOperationId;
+  elements.teacherBiometricButton.disabled = true;
+  elements.teacherLoginStatus.textContent = 'Gerätebestätigung wird geöffnet …';
+  let authentication;
+  try {
+    authentication = authenticateWithPlatform();
+  } catch (error) {
+    elements.teacherBiometricButton.disabled = false;
+    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
+    return;
+  }
+  authentication.then(() => {
+    completeTeacherLogin(authOperation);
+  }).catch((error) => {
+    if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+      return;
+    }
+    teacherPlatformNeedsRepair = !['cancelled', 'platform-unavailable', 'not-ready'].includes(error?.code);
+    elements.teacherBiometricButton.disabled = false;
+    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
+    elements.teacherPassword.focus({ preventScroll: true });
+  });
+}
+
+async function authenticateTeacherWithPassword() {
+  if (elements.teacherPassword.disabled) {
+    return;
+  }
+  const authOperation = teacherAuthOperationId;
+  const candidate = elements.teacherPassword.value;
+  elements.teacherPassword.disabled = true;
+  elements.teacherLoginStatus.textContent = 'Passwort wird geprüft …';
+  let verified = false;
+  try {
+    verified = await verifyTeacherPassword(candidate);
+  } catch {
+    verified = false;
+  }
+  elements.teacherPassword.value = '';
+  elements.teacherPassword.disabled = false;
+
+  if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+    return;
+  }
+
+  if (!verified) {
+    elements.teacherLoginStatus.textContent = 'Das Passwort ist nicht korrekt.';
+    elements.teacherPassword.focus({ preventScroll: true });
+    return;
+  }
+
+  const state = getTeacherAuthState();
+  if (
+    state.platformAvailable
+    && state.storageAvailable
+    && (!state.platformEnrolled || teacherPlatformNeedsRepair)
+  ) {
+    if (teacherPlatformNeedsRepair && state.platformEnrolled) {
+      try {
+        await forgetPlatformCredential({ preserveEnrollmentAuthorization: true });
+      } catch {
+        completeTeacherLogin(authOperation);
+        return;
+      }
+      if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+        return;
+      }
+      elements.teacherEnrollmentButton.textContent = 'Gerätebestätigung neu einrichten';
+    }
+    teacherAuthVerified = true;
+    elements.teacherLoginStep.hidden = true;
+    elements.teacherEnrollmentStep.hidden = false;
+    elements.teacherLoginStatus.textContent = '';
+    elements.teacherEnrollmentButton.focus({ preventScroll: true });
+    return;
+  }
+  completeTeacherLogin(authOperation);
+}
+
+function enrollTeacherPlatformCredential() {
+  if (!teacherAuthVerified) {
+    elements.teacherLoginStatus.textContent = 'Bitte melde dich erneut mit dem Passwort an.';
+    return;
+  }
+  if (elements.teacherEnrollmentButton.disabled) {
+    return;
+  }
+  const authOperation = teacherAuthOperationId;
+  elements.teacherEnrollmentButton.disabled = true;
+  elements.teacherLoginStatus.textContent = 'Gerätebestätigung wird eingerichtet …';
+  let enrollment;
+  try {
+    enrollment = enrollPlatformCredential();
+  } catch (error) {
+    elements.teacherEnrollmentButton.disabled = false;
+    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
+    return;
+  }
+  enrollment.then(() => {
+    completeTeacherLogin(authOperation);
+  }).catch((error) => {
+    if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+      return;
+    }
+    elements.teacherEnrollmentButton.disabled = false;
+    elements.teacherLoginStatus.textContent = error?.code === 'cancelled'
+      ? 'Die Einrichtung wurde abgebrochen. Du kannst sie überspringen.'
+      : 'Die Gerätebestätigung konnte nicht eingerichtet werden. Du kannst sie überspringen.';
+    elements.teacherEnrollmentSkip.focus({ preventScroll: true });
+  });
+}
+
+function releaseGalleryCardObjectUrls() {
+  galleryPreviewObserver?.disconnect();
+  galleryPreviewObserver = null;
+  galleryCardObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  galleryCardObjectUrls.clear();
+  galleryLoadedMedia.clear();
+}
+
+function updateGallerySelectionUI() {
+  const availableIds = new Set(galleryItems.map((item) => item.id));
+  gallerySelectedIds = new Set(
+    [...gallerySelectedIds].filter((id) => availableIds.has(id))
+  );
+  const selectedCount = gallerySelectedIds.size;
+  const allSelected = galleryItems.length > 0 && selectedCount === galleryItems.length;
+  elements.gallerySelectAll.checked = allSelected;
+  elements.gallerySelectAll.indeterminate = selectedCount > 0 && !allSelected;
+  elements.gallerySelectAll.disabled = galleryItems.length === 0;
+  elements.gallerySelectionCount.textContent = selectedCount === 0
+    ? 'Keine Auswahl'
+    : `${selectedCount} ${selectedCount === 1 ? 'Aufnahme' : 'Aufnahmen'} ausgewählt`;
+  elements.galleryDeleteSelected.disabled = selectedCount === 0;
+
+  elements.galleryGrid.querySelectorAll('.gallery-card').forEach((card) => {
+    const selected = gallerySelectedIds.has(card.dataset.mediaId);
+    card.classList.toggle('is-selected', selected);
+    card.setAttribute('aria-selected', String(selected));
+    const checkbox = card.querySelector('.gallery-card-selection input');
+    if (checkbox) {
+      checkbox.checked = selected;
+    }
+  });
+}
+
+async function updateGalleryStorageStatus(expectedLoadId = galleryLoadId) {
+  const isCurrentGallery = () => (
+    expectedLoadId === galleryLoadId
+    && teacherMode
+    && document.body.dataset.view === 'gallery'
+  );
+  if (!isCurrentGallery()) {
+    return;
+  }
+  if (!isMediaStoreSupported()) {
+    elements.galleryStorageStatus.textContent = 'Lokaler App-Speicher wird von diesem Browser nicht unterstützt.';
+    return;
+  }
+  try {
+    const estimate = await getStorageEstimate();
+    if (!isCurrentGallery()) {
+      return;
+    }
+    if (estimate.usage === null || estimate.quota === null) {
+      elements.galleryStorageStatus.textContent = 'Aufnahmen werden nur auf diesem Gerät gespeichert.';
+      return;
+    }
+    elements.galleryStorageStatus.textContent = `${formatBytes(estimate.usage)} von ${formatBytes(estimate.quota)} lokal belegt`;
+  } catch {
+    if (isCurrentGallery()) {
+      elements.galleryStorageStatus.textContent = 'Aufnahmen werden nur auf diesem Gerät gespeichert.';
+    }
+  }
+}
+
+function createGalleryActionButton({ action, id, label, symbol, danger = false }) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `gallery-icon-button${danger ? ' gallery-delete-button' : ''}`;
+  button.dataset.galleryAction = action;
+  button.dataset.mediaId = id;
+  button.setAttribute('aria-label', label);
+  button.title = label;
+  const icon = document.createElement('span');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = symbol;
+  button.append(icon);
+  return button;
+}
+
+async function hydrateGalleryCardPreview(item, previewButton, renderId) {
+  try {
+    const stored = await getMedia(item.id);
+    if (
+      !stored
+      || renderId !== galleryRenderId
+      || !teacherMode
+      || !previewButton.isConnected
+    ) {
+      return;
+    }
+    const url = URL.createObjectURL(stored.file);
+    galleryLoadedMedia.set(item.id, stored);
+    galleryCardObjectUrls.add(url);
+    const media = document.createElement(item.kind === 'photo' ? 'img' : 'video');
+    media.src = url;
+    media.setAttribute('aria-hidden', 'true');
+    media.tabIndex = -1;
+    if (item.kind === 'photo') {
+      media.alt = '';
+      media.loading = 'lazy';
+      media.draggable = false;
+    } else {
+      media.muted = true;
+      media.playsInline = true;
+      media.preload = 'metadata';
+      media.disablePictureInPicture = true;
+    }
+    previewButton.replaceChildren(media);
+  } catch {
+    const unavailable = document.createElement('span');
+    unavailable.className = 'gallery-preview-unavailable';
+    unavailable.textContent = 'Vorschau nicht verfügbar';
+    previewButton.replaceChildren(unavailable);
+  }
+}
+
+function renderGallery() {
+  const renderId = ++galleryRenderId;
+  releaseGalleryCardObjectUrls();
+  elements.galleryGrid.replaceChildren();
+  elements.galleryEmpty.hidden = galleryItems.length > 0;
+  elements.galleryGrid.hidden = galleryItems.length === 0;
+
+  const fragment = document.createDocumentFragment();
+  galleryItems.forEach((item) => {
+    const card = document.createElement('article');
+    card.className = 'gallery-card';
+    card.dataset.mediaId = item.id;
+    card.dataset.kind = item.kind;
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('aria-selected', 'false');
+
+    const selection = document.createElement('label');
+    selection.className = 'gallery-card-selection';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.dataset.galleryAction = 'select';
+    checkbox.dataset.mediaId = item.id;
+    checkbox.setAttribute('aria-label', `${item.kind === 'photo' ? 'Foto' : 'Video'} vom ${formatMediaDate(item.createdAt)} auswählen`);
+    selection.append(checkbox);
+
+    const preview = document.createElement('button');
+    preview.type = 'button';
+    preview.className = 'gallery-card-preview';
+    preview.dataset.galleryAction = 'view';
+    preview.dataset.mediaId = item.id;
+    preview.setAttribute('aria-label', `${item.kind === 'photo' ? 'Foto' : 'Video'} vom ${formatMediaDate(item.createdAt)} ansehen`);
+    const loading = document.createElement('span');
+    loading.className = 'spinner';
+    loading.setAttribute('aria-hidden', 'true');
+    preview.append(loading);
+
+    const body = document.createElement('div');
+    body.className = 'gallery-card-body';
+    const title = document.createElement('h2');
+    title.textContent = item.kind === 'photo' ? 'Foto' : 'Video';
+    const date = document.createElement('time');
+    date.dateTime = item.createdAt;
+    date.textContent = formatMediaDate(item.createdAt);
+    const size = document.createElement('small');
+    size.textContent = formatBytes(item.size);
+    body.append(title, date, size);
+
+    const actions = document.createElement('div');
+    actions.className = 'gallery-card-actions';
+    actions.append(
+      createGalleryActionButton({
+        action: 'view', id: item.id, label: 'Aufnahme ansehen', symbol: '▶'
+      }),
+      createGalleryActionButton({
+        action: 'download', id: item.id, label: 'Aufnahme herunterladen', symbol: '↓'
+      }),
+      createGalleryActionButton({
+        action: 'delete', id: item.id, label: 'Aufnahme löschen', symbol: '×', danger: true
+      })
+    );
+
+    card.append(selection, preview, body, actions);
+    fragment.append(card);
+  });
+  elements.galleryGrid.append(fragment);
+  const previews = [...elements.galleryGrid.querySelectorAll('.gallery-card-preview')];
+  const itemsById = new Map(galleryItems.map((item) => [item.id, item]));
+  if ('IntersectionObserver' in window) {
+    galleryPreviewObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+        observer.unobserve(entry.target);
+        const item = itemsById.get(entry.target.dataset.mediaId);
+        if (item) {
+          void hydrateGalleryCardPreview(item, entry.target, renderId);
+        }
+      });
+    }, { rootMargin: '240px 0px' });
+    previews.forEach((preview) => galleryPreviewObserver.observe(preview));
+  } else {
+    previews.forEach((preview) => {
+      const item = itemsById.get(preview.dataset.mediaId);
+      if (item) {
+        void hydrateGalleryCardPreview(item, preview, renderId);
+      }
+    });
+  }
+  updateGallerySelectionUI();
+}
+
+async function loadGallery() {
+  if (!teacherMode) {
+    return;
+  }
+  const loadId = ++galleryLoadId;
+  elements.galleryStorageStatus.textContent = 'Galerie wird geladen …';
+  try {
+    const items = await listMedia();
+    if (
+      loadId !== galleryLoadId
+      || !teacherMode
+      || document.body.dataset.view !== 'gallery'
+    ) {
+      return;
+    }
+    galleryItems = items;
+    renderGallery();
+    await updateGalleryStorageStatus(loadId);
+  } catch {
+    if (
+      loadId !== galleryLoadId
+      || !teacherMode
+      || document.body.dataset.view !== 'gallery'
+    ) {
+      return;
+    }
+    galleryItems = [];
+    renderGallery();
+    elements.galleryStorageStatus.textContent = 'Die Galerie konnte nicht gelesen werden.';
+  }
+}
+
+function openGallery() {
+  if (!teacherMode) {
+    openTeacherLogin();
+    return;
+  }
+  gallerySelectedIds.clear();
+  setView('gallery');
+  void loadGallery();
+  window.setTimeout(() => elements.galleryBack.focus({ preventScroll: true }), 0);
+}
+
+function resetGalleryPlaybackUI() {
+  elements.galleryViewerVideo.pause();
+  elements.galleryViewerVideo.playbackRate = 1;
+  elements.galleryPlayButton.innerHTML = '<span aria-hidden="true">▶</span>';
+  elements.galleryPlayButton.setAttribute('aria-label', 'Gespeichertes Video starten');
+  elements.galleryTimeline.value = '0';
+  elements.galleryPlaybackTime.value = '0:00 / 0:00';
+  elements.gallerySpeedMenu.open = false;
+  elements.gallerySpeedValue.textContent = '1×';
+  document.querySelectorAll('[data-gallery-speed]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.gallerySpeed === '1'));
+  });
+}
+
+function updateGalleryPlaybackUI() {
+  const duration = Number.isFinite(elements.galleryViewerVideo.duration)
+    ? elements.galleryViewerVideo.duration
+    : 0;
+  const currentTime = Number.isFinite(elements.galleryViewerVideo.currentTime)
+    ? elements.galleryViewerVideo.currentTime
+    : 0;
+  elements.galleryTimeline.value = duration
+    ? String(Math.round((currentTime / duration) * 1000))
+    : '0';
+  elements.galleryPlaybackTime.value = `${formatPlaybackTime(currentTime)} / ${formatPlaybackTime(duration)}`;
+}
+
+function updateGalleryPlayButton() {
+  const playing = !elements.galleryViewerVideo.paused && !elements.galleryViewerVideo.ended;
+  elements.galleryPlayButton.innerHTML = playing
+    ? '<span aria-hidden="true">Ⅱ</span>'
+    : '<span aria-hidden="true">▶</span>';
+  elements.galleryPlayButton.setAttribute(
+    'aria-label',
+    playing ? 'Gespeichertes Video pausieren' : 'Gespeichertes Video starten'
+  );
+}
+
+async function toggleGalleryPlayback() {
+  const video = elements.galleryViewerVideo;
+  if (video.paused || video.ended) {
+    if (video.ended) {
+      video.currentTime = 0;
+    }
+    try {
+      await video.play();
+    } catch {
+      video.pause();
+      elements.galleryViewerStatus.textContent = 'Das Video konnte nicht gestartet werden. Tippe erneut auf Start.';
+    }
+  } else {
+    video.pause();
+  }
+}
+
+function clearGalleryViewerMedia({ restoreFocus = false } = {}) {
+  galleryViewerRequestId += 1;
+  const trigger = galleryViewerTrigger;
+  galleryViewerTrigger = null;
+  galleryViewerItem = null;
+  elements.galleryViewerVideo.pause();
+  elements.galleryViewerVideo.removeAttribute('src');
+  elements.galleryViewerVideo.load();
+  elements.galleryViewerVideo.hidden = true;
+  elements.galleryViewerPhoto.removeAttribute('src');
+  elements.galleryViewerPhoto.alt = '';
+  elements.galleryViewerPhoto.hidden = true;
+  elements.galleryPlaybackControls.hidden = true;
+  elements.galleryAnnotationButton.hidden = true;
+  elements.galleryViewerStatus.textContent = '';
+  if (galleryViewerObjectUrl) {
+    URL.revokeObjectURL(galleryViewerObjectUrl);
+    galleryViewerObjectUrl = null;
+  }
+  resetGalleryPlaybackUI();
+  if (restoreFocus && trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
+  }
+}
+
+function closeGalleryViewer({ restoreFocus = true } = {}) {
+  const trigger = galleryViewerTrigger;
+  closeModal(elements.galleryViewerDialog);
+  clearGalleryViewerMedia({ restoreFocus: false });
+  if (restoreFocus && trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
+  }
+}
+
+async function openGalleryViewer(id, trigger) {
+  if (!teacherMode) {
+    return;
+  }
+  clearGalleryViewerMedia();
+  const requestId = ++galleryViewerRequestId;
+  galleryViewerTrigger = trigger;
+  elements.galleryViewerTitle.textContent = 'Aufnahme wird geladen …';
+  elements.galleryViewerDate.textContent = '';
+  elements.galleryDownloadButton.disabled = true;
+  elements.galleryDeleteButton.disabled = true;
+  elements.galleryAnnotationButton.hidden = true;
+  elements.galleryViewerStatus.textContent = '';
+  showModal(elements.galleryViewerDialog);
+
+  try {
+    const stored = galleryLoadedMedia.get(id) || await getMedia(id);
+    if (
+      !stored
+      || requestId !== galleryViewerRequestId
+      || !teacherMode
+      || !elements.galleryViewerDialog.open
+    ) {
+      throw new Error('unavailable');
+    }
+    galleryLoadedMedia.set(id, stored);
+    galleryViewerItem = stored;
+    galleryViewerObjectUrl = URL.createObjectURL(stored.file);
+    const { metadata } = stored;
+    const isVideo = metadata.kind === 'video';
+    elements.galleryViewerTitle.textContent = isVideo ? 'Video' : 'Foto';
+    elements.galleryViewerDate.textContent = `${formatMediaDate(metadata.createdAt)} · ${formatBytes(metadata.size)}`;
+    elements.galleryDownloadButton.disabled = false;
+    elements.galleryDeleteButton.disabled = false;
+    elements.galleryAnnotationButton.hidden = !isVideo;
+    elements.galleryPlaybackControls.hidden = !isVideo;
+
+    if (isVideo) {
+      elements.galleryViewerVideo.src = galleryViewerObjectUrl;
+      elements.galleryViewerVideo.hidden = false;
+      elements.galleryViewerVideo.load();
+      resetGalleryPlaybackUI();
+      window.setTimeout(() => {
+        if (requestId === galleryViewerRequestId && elements.galleryViewerDialog.open) {
+          elements.galleryPlayButton.focus({ preventScroll: true });
+        }
+      }, 0);
+    } else {
+      elements.galleryViewerPhoto.src = galleryViewerObjectUrl;
+      elements.galleryViewerPhoto.alt = `Gespeichertes Foto vom ${formatMediaDate(metadata.createdAt)}`;
+      elements.galleryViewerPhoto.hidden = false;
+      window.setTimeout(() => {
+        if (requestId === galleryViewerRequestId && elements.galleryViewerDialog.open) {
+          elements.galleryDownloadButton.focus({ preventScroll: true });
+        }
+      }, 0);
+    }
+  } catch {
+    if (requestId !== galleryViewerRequestId || !elements.galleryViewerDialog.open) {
+      return;
+    }
+    elements.galleryViewerTitle.textContent = 'Aufnahme nicht verfügbar';
+    elements.galleryViewerStatus.textContent = 'Die gespeicherte Aufnahme konnte nicht gelesen werden.';
+  }
+}
+
+function triggerGalleryDownload(stored, statusElement) {
+  const fallback = stored.metadata.kind === 'photo' ? 'Sportkamera-Foto.jpg' : 'Sportkamera-Video.webm';
+  const filename = sanitizeDownloadName(stored.metadata.suggestedDownloadName, fallback);
+  const downloadBlob = new Blob([stored.file], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(downloadBlob);
+  delayedDownloadObjectUrls.add(url);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.position = 'fixed';
+  link.style.left = '-10000px';
+  link.textContent = 'Download';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+    delayedDownloadObjectUrls.delete(url);
+  }, 60_000);
+  statusElement.textContent = `Download von ${filename} wurde gestartet.`;
+}
+
+function downloadGalleryItem(id, { button = null, statusElement = elements.galleryStorageStatus } = {}) {
+  if (!teacherMode) {
+    return Promise.resolve();
+  }
+  if (button) {
+    button.disabled = true;
+  }
+  statusElement.textContent = 'Download wird vorbereitet …';
+
+  const finish = () => {
+    if (button?.isConnected) {
+      button.disabled = false;
+    }
+  };
+  const cached = galleryViewerItem?.metadata.id === id
+    ? galleryViewerItem
+    : galleryLoadedMedia.get(id);
+  if (cached) {
+    try {
+      triggerGalleryDownload(cached, statusElement);
+    } catch {
+      statusElement.textContent = 'Der Download konnte nicht vorbereitet werden.';
+    }
+    finish();
+    return Promise.resolve();
+  }
+
+  return getMedia(id).then((stored) => {
+    if (!stored || !teacherMode) {
+      throw new Error('unavailable');
+    }
+    galleryLoadedMedia.set(id, stored);
+    triggerGalleryDownload(stored, statusElement);
+  }).catch(() => {
+    statusElement.textContent = 'Der Download konnte nicht vorbereitet werden.';
+  }).finally(finish);
+}
+
+function closeDeleteConfirmation({ restoreFocus = true } = {}) {
+  const trigger = pendingDeleteTrigger;
+  pendingDeleteIds = [];
+  pendingDeleteTrigger = null;
+  elements.galleryDeleteConfirm.disabled = false;
+  closeModal(elements.galleryDeleteDialog);
+  if (restoreFocus && trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
+  }
+}
+
+function openDeleteConfirmation(ids, trigger) {
+  if (!teacherMode) {
+    return;
+  }
+  const availableIds = new Set(galleryItems.map((item) => item.id));
+  pendingDeleteIds = [...new Set(ids)].filter((id) => availableIds.has(id));
+  if (!pendingDeleteIds.length) {
+    return;
+  }
+  pendingDeleteTrigger = trigger;
+  const count = pendingDeleteIds.length;
+  elements.galleryDeleteTitle.textContent = count === 1
+    ? 'Aufnahme wirklich löschen?'
+    : `${count} Aufnahmen wirklich löschen?`;
+  elements.galleryDeleteMessage.textContent = count === 1
+    ? 'Die ausgewählte Aufnahme wird dauerhaft aus der Galerie entfernt.'
+    : 'Die ausgewählten Aufnahmen werden dauerhaft aus der Galerie entfernt.';
+  elements.galleryDeleteConfirm.disabled = false;
+  if (typeof elements.galleryDeleteDialog.showModal === 'function') {
+    elements.galleryDeleteDialog.showModal();
+  } else {
+    elements.galleryDeleteDialog.setAttribute('open', '');
+  }
+  window.setTimeout(() => {
+    if (elements.galleryDeleteDialog.open) {
+      elements.galleryDeleteCancel.focus({ preventScroll: true });
+    }
+  }, 0);
+}
+
+async function confirmGalleryDeletion() {
+  if (!teacherMode || !pendingDeleteIds.length) {
+    closeDeleteConfirmation({ restoreFocus: false });
+    return;
+  }
+  const ids = [...pendingDeleteIds];
+  const trigger = pendingDeleteTrigger;
+  elements.galleryDeleteConfirm.disabled = true;
+  elements.galleryDeleteMessage.textContent = 'Aufnahmen werden gelöscht …';
+  try {
+    const result = await deleteMedia(ids);
+    const deleted = new Set([...result.deletedIds, ...result.missingIds]);
+    if (galleryViewerItem && deleted.has(galleryViewerItem.metadata.id)) {
+      closeGalleryViewer({ restoreFocus: false });
+    }
+    deleted.forEach((id) => gallerySelectedIds.delete(id));
+    pendingDeleteIds = [];
+    pendingDeleteTrigger = null;
+    closeModal(elements.galleryDeleteDialog);
+    await loadGallery();
+    if (result.errors.length) {
+      elements.galleryStorageStatus.textContent = 'Einige Aufnahmen konnten nicht gelöscht werden.';
+    } else {
+      elements.galleryStorageStatus.textContent = ids.length === 1
+        ? 'Die Aufnahme wurde gelöscht.'
+        : `${ids.length} Aufnahmen wurden gelöscht.`;
+    }
+    if (trigger === elements.galleryDeleteSelected) {
+      elements.galleryDeleteSelected.focus({ preventScroll: true });
+    } else {
+      elements.galleryBack.focus({ preventScroll: true });
+    }
+  } catch {
+    elements.galleryDeleteConfirm.disabled = false;
+    elements.galleryDeleteMessage.textContent = 'Die Aufnahme konnte nicht gelöscht werden. Bitte versuche es erneut.';
+  }
+}
+
+function exitTeacherMode({ restoreFocus = true } = {}) {
+  teacherAuthOperationId += 1;
+  teacherMode = false;
+  teacherAuthVerified = false;
+  gallerySelectedIds.clear();
+  galleryItems = [];
+  galleryLoadId += 1;
+  galleryRenderId += 1;
+  releaseGalleryCardObjectUrls();
+  annotation.close({ restoreFocus: false });
+  closeGalleryViewer({ restoreFocus: false });
+  closeDeleteConfirmation({ restoreFocus: false });
+  closeModal(elements.teacherLoginDialog);
+  elements.galleryGrid.replaceChildren();
+  elements.galleryEmpty.hidden = false;
+  updateTeacherModeUI();
+  setView('start');
+  if (restoreFocus) {
+    window.setTimeout(() => elements.teacherModeButton.focus({ preventScroll: true }), 0);
+  }
 }
 
 document.querySelectorAll('[data-start-mode]').forEach((button) => {
@@ -808,27 +1725,167 @@ elements.retryButton.addEventListener('click', () => void beginNewSession(curren
 elements.errorHomeButton.addEventListener('click', () => cleanupMedia({ nextView: 'start' }));
 elements.playButton.addEventListener('click', () => void togglePlayback());
 elements.comparisonPlayButton.addEventListener('click', () => void toggleComparisonPlayback());
-elements.photoDownloadButton.addEventListener('click', () => {
-  openDownloadDialog('photo', elements.photoDownloadButton);
+elements.photoSaveButton.addEventListener('click', () => {
+  void saveCurrentMedia('photo', elements.photoSaveButton);
 });
-elements.videoDownloadButton.addEventListener('click', () => {
-  openDownloadDialog('video', elements.videoDownloadButton);
+elements.videoSaveButton.addEventListener('click', () => {
+  void saveCurrentMedia('video', elements.videoSaveButton);
 });
-elements.downloadCancel.addEventListener('click', () => closeDownloadDialog());
-elements.downloadForm.addEventListener('submit', (event) => {
+elements.videoAnnotationButton.addEventListener('click', () => {
+  annotation.open(elements.videoPreview, 'Eigene Aufnahme', elements.videoAnnotationButton);
+});
+elements.comparisonAnnotationButton.addEventListener('click', () => {
+  annotation.open(
+    elements.comparisonVideo,
+    elements.comparisonPlayerLabel.textContent,
+    elements.comparisonAnnotationButton
+  );
+});
+
+elements.teacherModeButton.addEventListener('click', () => {
+  if (teacherMode) {
+    exitTeacherMode();
+  } else {
+    openTeacherLogin();
+  }
+});
+elements.galleryEntry.addEventListener('click', openGallery);
+elements.galleryBack.addEventListener('click', () => {
+  galleryLoadId += 1;
+  galleryRenderId += 1;
+  gallerySelectedIds.clear();
+  releaseGalleryCardObjectUrls();
+  elements.galleryGrid.replaceChildren();
+  setView('start');
+  elements.galleryEntry.focus({ preventScroll: true });
+});
+
+elements.teacherLoginForm.addEventListener('submit', (event) => {
   event.preventDefault();
-  startDownload();
+  void authenticateTeacherWithPassword();
 });
-elements.downloadDialog.addEventListener('close', () => {
-  const trigger = downloadTrigger;
-  downloadTrigger = null;
+elements.teacherBiometricButton.addEventListener('click', authenticateTeacherWithPlatform);
+elements.teacherEnrollmentButton.addEventListener('click', enrollTeacherPlatformCredential);
+elements.teacherEnrollmentSkip.addEventListener('click', () => {
+  if (teacherAuthVerified) {
+    completeTeacherLogin();
+  }
+});
+elements.teacherLoginCancel.addEventListener('click', () => {
+  closeModal(elements.teacherLoginDialog);
+  elements.teacherModeButton.focus({ preventScroll: true });
+});
+elements.teacherLoginDialog.addEventListener('close', () => {
+  teacherAuthOperationId += 1;
+  teacherAuthVerified = false;
+  elements.teacherPassword.value = '';
+  elements.teacherPassword.disabled = false;
+  elements.teacherLoginStatus.textContent = '';
+});
+elements.teacherLoginDialog.addEventListener('click', (event) => {
+  if (event.target === elements.teacherLoginDialog) {
+    closeModal(elements.teacherLoginDialog);
+    elements.teacherModeButton.focus({ preventScroll: true });
+  }
+});
+
+elements.galleryGrid.addEventListener('change', (event) => {
+  const checkbox = event.target.closest('[data-gallery-action="select"]');
+  if (!checkbox || !teacherMode) {
+    return;
+  }
+  if (checkbox.checked) {
+    gallerySelectedIds.add(checkbox.dataset.mediaId);
+  } else {
+    gallerySelectedIds.delete(checkbox.dataset.mediaId);
+  }
+  updateGallerySelectionUI();
+});
+elements.galleryGrid.addEventListener('click', (event) => {
+  const actionButton = event.target.closest('[data-gallery-action]');
+  if (!actionButton || !teacherMode) {
+    return;
+  }
+  const { galleryAction: action, mediaId: id } = actionButton.dataset;
+  if (action === 'view') {
+    void openGalleryViewer(id, actionButton);
+  } else if (action === 'download') {
+    void downloadGalleryItem(id, { button: actionButton });
+  } else if (action === 'delete') {
+    openDeleteConfirmation([id], actionButton);
+  }
+});
+elements.gallerySelectAll.addEventListener('change', () => {
+  gallerySelectedIds = elements.gallerySelectAll.checked
+    ? new Set(galleryItems.map((item) => item.id))
+    : new Set();
+  updateGallerySelectionUI();
+});
+elements.galleryDeleteSelected.addEventListener('click', () => {
+  openDeleteConfirmation([...gallerySelectedIds], elements.galleryDeleteSelected);
+});
+
+elements.galleryViewerClose.addEventListener('click', () => closeGalleryViewer());
+elements.galleryViewerDialog.addEventListener('close', () => clearGalleryViewerMedia({ restoreFocus: true }));
+elements.galleryViewerDialog.addEventListener('click', (event) => {
+  if (event.target === elements.galleryViewerDialog) {
+    closeGalleryViewer();
+  }
+});
+elements.galleryPlayButton.addEventListener('click', () => void toggleGalleryPlayback());
+elements.galleryTimeline.addEventListener('input', () => {
+  const duration = elements.galleryViewerVideo.duration;
+  if (Number.isFinite(duration) && duration > 0) {
+    elements.galleryViewerVideo.currentTime = (Number(elements.galleryTimeline.value) / 1000) * duration;
+    updateGalleryPlaybackUI();
+  }
+});
+document.querySelectorAll('[data-gallery-speed]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const rate = Number(button.dataset.gallerySpeed);
+    elements.galleryViewerVideo.playbackRate = rate;
+    document.querySelectorAll('[data-gallery-speed]').forEach((speedButton) => {
+      speedButton.setAttribute('aria-pressed', String(speedButton === button));
+    });
+    elements.gallerySpeedValue.textContent = button.textContent.trim();
+    elements.gallerySpeedMenu.open = false;
+    elements.galleryViewerStatus.textContent = `Wiedergabegeschwindigkeit ${button.textContent.trim()}.`;
+  });
+});
+elements.galleryAnnotationButton.addEventListener('click', () => {
+  annotation.open(elements.galleryViewerVideo, 'Gespeichertes Video', elements.galleryAnnotationButton, elements.galleryViewerStatus);
+});
+elements.galleryDownloadButton.addEventListener('click', () => {
+  if (galleryViewerItem) {
+    void downloadGalleryItem(galleryViewerItem.metadata.id, {
+      button: elements.galleryDownloadButton,
+      statusElement: elements.galleryViewerStatus
+    });
+  }
+});
+elements.galleryDeleteButton.addEventListener('click', () => {
+  if (galleryViewerItem) {
+    openDeleteConfirmation([galleryViewerItem.metadata.id], elements.galleryDeleteButton);
+  }
+});
+
+elements.galleryDeleteForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void confirmGalleryDeletion();
+});
+elements.galleryDeleteCancel.addEventListener('click', () => closeDeleteConfirmation());
+elements.galleryDeleteDialog.addEventListener('close', () => {
+  const trigger = pendingDeleteTrigger;
+  pendingDeleteIds = [];
+  pendingDeleteTrigger = null;
+  elements.galleryDeleteConfirm.disabled = false;
   if (trigger?.isConnected) {
     trigger.focus({ preventScroll: true });
   }
 });
-elements.downloadDialog.addEventListener('click', (event) => {
-  if (event.target === elements.downloadDialog) {
-    closeDownloadDialog();
+elements.galleryDeleteDialog.addEventListener('click', (event) => {
+  if (event.target === elements.galleryDeleteDialog) {
+    closeDeleteConfirmation();
   }
 });
 
@@ -963,17 +2020,64 @@ elements.comparisonVideo.addEventListener('error', () => {
 });
 elements.comparisonVideo.addEventListener('contextmenu', (event) => event.preventDefault());
 elements.photoPreview.addEventListener('contextmenu', (event) => event.preventDefault());
+elements.galleryViewerVideo.addEventListener('play', updateGalleryPlayButton);
+elements.galleryViewerVideo.addEventListener('pause', updateGalleryPlayButton);
+elements.galleryViewerVideo.addEventListener('ended', updateGalleryPlayButton);
+elements.galleryViewerVideo.addEventListener('timeupdate', updateGalleryPlaybackUI);
+elements.galleryViewerVideo.addEventListener('durationchange', updateGalleryPlaybackUI);
+elements.galleryViewerVideo.addEventListener('loadedmetadata', updateGalleryPlaybackUI);
+elements.galleryViewerVideo.addEventListener('error', () => {
+  if (elements.galleryViewerVideo.hasAttribute('src')) {
+    elements.galleryViewerStatus.textContent = 'Das gespeicherte Video konnte nicht geladen werden.';
+  }
+});
+elements.galleryViewerVideo.addEventListener('contextmenu', (event) => event.preventDefault());
+elements.galleryViewerPhoto.addEventListener('contextmenu', (event) => event.preventDefault());
 
-window.addEventListener('pagehide', () => cleanupMedia({ nextView: 'start' }));
-window.addEventListener('beforeunload', () => cleanupMedia({ nextView: 'start' }));
+window.addEventListener('pagehide', () => {
+  teacherAuthOperationId += 1;
+  teacherAuthVerified = false;
+  closeModal(elements.teacherLoginDialog);
+  cleanupMedia({ nextView: 'start' });
+  if (teacherMode) {
+    exitTeacherMode({ restoreFocus: false });
+  }
+});
+window.addEventListener('beforeunload', () => {
+  teacherAuthOperationId += 1;
+  teacherAuthVerified = false;
+  closeModal(elements.teacherLoginDialog);
+  cleanupMedia({ nextView: 'start' });
+  if (teacherMode) {
+    exitTeacherMode({ restoreFocus: false });
+  }
+});
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
+    teacherAuthOperationId += 1;
+    teacherAuthVerified = false;
     cleanupMedia({ nextView: 'start' });
+    if (teacherMode) {
+      exitTeacherMode({ restoreFocus: false });
+    } else {
+      closeModal(elements.teacherLoginDialog);
+    }
   }
 });
 
 function initialize() {
   cleanupMedia({ nextView: 'start' });
+  teacherMode = false;
+  teacherAuthReady = false;
+  elements.teacherModeButton.disabled = true;
+  updateTeacherModeUI();
+  preloadTeacherAuth().then(() => {
+    teacherAuthReady = true;
+    elements.teacherModeButton.disabled = false;
+  }).catch(() => {
+    teacherAuthReady = true;
+    elements.teacherModeButton.disabled = false;
+  });
   const supportMessage = browserSupportMessage('photo');
   if (supportMessage) {
     elements.environmentStatus.textContent = supportMessage;

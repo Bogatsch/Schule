@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=24">
-    <script type="module" src="./app.js?v=26"></script>
+    <link rel="stylesheet" href="./styles.css?v=29">
+    <script type="module" src="./app.js?v=29"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -49,6 +49,11 @@
                   <span class="mode-text"><strong>Video</strong><small>Bis zu 3 Minuten · ohne Ton</small></span>
                   <span class="arrow" aria-hidden="true">→</span>
                 </button>
+                <button id="gallery-entry" class="mode-card gallery-mode-card" type="button" hidden>
+                  <span class="mode-icon gallery-mode-icon" aria-hidden="true"><span></span></span>
+                  <span class="mode-text"><strong>Galerie</strong><small>Gespeicherte Aufnahmen verwalten</small></span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </button>
               </div>
               <p id="environment-status" class="environment-status" role="status" aria-live="polite"></p>
             </div>
@@ -61,6 +66,15 @@
               </span>
               <span class="arrow" aria-hidden="true">→</span>
             </a>
+
+            <button id="teacher-mode-button" class="teacher-mode-entry" type="button" aria-pressed="false" aria-haspopup="dialog" aria-controls="teacher-login-dialog">
+              <span class="teacher-mode-icon" aria-hidden="true"><span></span></span>
+              <span class="teacher-mode-copy">
+                <strong id="teacher-mode-label">Lehrermodus</strong>
+                <small id="teacher-mode-description">Geschützte Galerie und Verwaltung öffnen</small>
+              </span>
+              <span class="arrow" aria-hidden="true">→</span>
+            </button>
           </div>
         </section>
 
@@ -130,11 +144,9 @@
             </div>
           </div>
 
-          <div id="photo-download-controls" class="photo-download-controls" hidden>
-            <button id="photo-download-button" class="download-icon-button" type="button" aria-label="Foto herunterladen" aria-haspopup="dialog" aria-controls="download-dialog" title="Foto herunterladen">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M12 3v12M7 10l5 5 5-5M4 19h16"></path>
-              </svg>
+          <div id="photo-save-controls" class="photo-save-controls" hidden>
+            <button id="photo-save-button" class="save-icon-button" type="button" aria-label="Foto in der Galerie speichern" title="Foto speichern">
+              <span class="save-icon" aria-hidden="true"></span>
             </button>
           </div>
 
@@ -142,7 +154,7 @@
             <div id="playback-controls" class="playback-controls" aria-label="Wiedergabe der eigenen Aufnahme" hidden>
               <p class="player-control-label">Eigene Aufnahme</p>
               <button id="play-button" class="play-button" type="button" aria-label="Eigene Aufnahme starten">
-                <span aria-hidden="true">▶</span><span>Start</span>
+                <span aria-hidden="true">▶</span>
               </button>
               <div class="timeline-wrap">
                 <label class="visually-hidden" for="timeline">Wiedergabeposition der eigenen Aufnahme</label>
@@ -152,7 +164,7 @@
               <div class="player-tools">
                 <details id="speed-menu" class="speed-menu">
                   <summary aria-label="Tempo der eigenen Aufnahme ändern">
-                    <span id="speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
+                    <span id="speed-value">1×</span>
                   </summary>
                   <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit der eigenen Aufnahme">
                     <button type="button" data-speed="0.25" aria-pressed="false">0,25×</button>
@@ -160,9 +172,12 @@
                     <button type="button" data-speed="1" aria-pressed="true">1×</button>
                   </div>
                 </details>
-                <button id="video-download-button" class="download-icon-button" type="button" aria-label="Video herunterladen" aria-haspopup="dialog" aria-controls="download-dialog" title="Video herunterladen">
+                <button id="video-save-button" class="save-icon-button" type="button" aria-label="Video in der Galerie speichern" title="Video speichern">
+                  <span class="save-icon" aria-hidden="true"></span>
+                </button>
+                <button id="video-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame der eigenen Aufnahme annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M12 3v12M7 10l5 5 5-5M4 19h16"></path>
+                    <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
                   </svg>
                 </button>
               </div>
@@ -171,23 +186,30 @@
             <div id="comparison-playback-controls" class="playback-controls" aria-label="Wiedergabe des Leitbilds" hidden>
               <p id="comparison-player-label" class="player-control-label">Leitbild</p>
               <button id="comparison-play-button" class="play-button" type="button" aria-label="Leitbild starten">
-                <span aria-hidden="true">▶</span><span>Start</span>
+                <span aria-hidden="true">▶</span>
               </button>
               <div class="timeline-wrap">
                 <label class="visually-hidden" for="comparison-timeline">Wiedergabeposition des Leitbilds</label>
                 <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
                 <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
               </div>
-              <details id="comparison-speed-menu" class="speed-menu">
-                <summary aria-label="Tempo des Leitbilds ändern">
-                  <span id="comparison-speed-value">1×</span><span class="speed-chevron" aria-hidden="true">⌃</span>
-                </summary>
-                <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
-                  <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
-                  <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
-                  <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
-                </div>
-              </details>
+              <div class="player-tools">
+                <details id="comparison-speed-menu" class="speed-menu">
+                  <summary aria-label="Tempo des Leitbilds ändern">
+                    <span id="comparison-speed-value">1×</span>
+                  </summary>
+                  <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des Leitbilds">
+                    <button type="button" data-comparison-speed="0.25" aria-pressed="false">0,25×</button>
+                    <button type="button" data-comparison-speed="0.5" aria-pressed="false">0,5×</button>
+                    <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
+                  </div>
+                </details>
+                <button id="comparison-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame des Leitbilds annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -314,20 +336,6 @@
             </div>
           </dialog>
 
-          <dialog id="download-dialog" class="download-dialog" aria-labelledby="download-dialog-title">
-            <form id="download-form" class="download-dialog-shell">
-              <p class="eyebrow">Aufnahme speichern</p>
-              <h2 id="download-dialog-title">Video herunterladen</h2>
-              <label id="download-name-label" for="download-name">Name für das Video</label>
-              <input id="download-name" name="download-name" type="text" maxlength="80" autocomplete="off" required>
-              <p id="download-extension" class="download-extension">Dateiformat: .webm</p>
-              <div class="download-dialog-actions">
-                <button class="primary-action" type="submit">Download</button>
-                <button id="download-cancel" class="secondary-action" type="button">Abbruch</button>
-              </div>
-            </form>
-          </dialog>
-
           <p id="preview-status" class="preview-status" role="status" aria-live="polite"></p>
 
           <div class="preview-actions">
@@ -338,6 +346,42 @@
               Neue Aufnahme <span aria-hidden="true">→</span>
             </button>
           </div>
+        </section>
+
+        <section id="gallery-view" class="view gallery-view" aria-labelledby="gallery-title" hidden>
+          <div class="view-toolbar gallery-toolbar">
+            <button id="gallery-back" class="text-button" type="button">
+              <span aria-hidden="true">←</span> Zurück
+            </button>
+          </div>
+
+          <header class="gallery-heading">
+            <div>
+              <p class="eyebrow">Lehrermodus</p>
+              <h1 id="gallery-title">Galerie</h1>
+              <p>Gespeicherte Fotos und Videos – neueste Aufnahmen zuerst.</p>
+            </div>
+            <p id="gallery-storage-status" class="gallery-storage-status" role="status" aria-live="polite">Speicher wird geprüft …</p>
+          </header>
+
+          <div class="gallery-selection-bar" aria-label="Mehrfachauswahl">
+            <label class="gallery-select-all-control" for="gallery-select-all">
+              <input id="gallery-select-all" type="checkbox">
+              <span>Alle auswählen</span>
+            </label>
+            <span id="gallery-selection-count" class="gallery-selection-count" role="status" aria-live="polite">Keine Auswahl</span>
+            <button id="gallery-delete-selected" class="secondary-action danger-action" type="button" disabled>
+              Auswahl löschen
+            </button>
+          </div>
+
+          <div id="gallery-empty" class="gallery-empty" role="status">
+            <span class="gallery-empty-icon" aria-hidden="true"><span></span></span>
+            <h2>Noch keine Aufnahmen gespeichert</h2>
+            <p>Gespeicherte Fotos und Videos erscheinen hier nach Datum sortiert.</p>
+          </div>
+
+          <div id="gallery-grid" class="gallery-grid" role="list" aria-label="Gespeicherte Aufnahmen"></div>
         </section>
 
         <section id="error-view" class="view error-view" aria-labelledby="error-title" hidden>
@@ -353,6 +397,156 @@
           </div>
         </section>
       </main>
+
+      <dialog id="teacher-login-dialog" class="teacher-login-dialog" aria-labelledby="teacher-login-title">
+        <form id="teacher-login-form" class="teacher-login-dialog-shell">
+          <div id="teacher-login-step">
+            <p class="eyebrow">Geschützter Bereich</p>
+            <h2 id="teacher-login-title">Lehrermodus öffnen</h2>
+            <p class="dialog-copy">Bitte bestätige, dass du die Lehrkraft bist. Der Lehrermodus wird beim Verlassen wieder gesperrt.</p>
+
+            <section id="teacher-biometric-section" class="teacher-biometric-section" aria-label="Geräteauthentifizierung" hidden>
+              <button id="teacher-biometric-button" class="primary-action teacher-biometric-button" type="button">
+                <span class="biometric-icon" aria-hidden="true"></span>
+                Mit diesem Gerät bestätigen
+              </button>
+              <p>Je nach Gerät erfolgt die Bestätigung mit Touch ID, Face ID oder Gerätecode.</p>
+            </section>
+
+            <div id="teacher-biometric-divider" class="teacher-login-divider" aria-hidden="true" hidden><span>oder</span></div>
+
+            <div class="teacher-password-field">
+              <label for="teacher-password">Passwort</label>
+              <input id="teacher-password" name="teacher-password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" required>
+            </div>
+
+            <div class="dialog-actions">
+              <button id="teacher-password-button" class="primary-action" type="submit">Einloggen</button>
+              <button id="teacher-login-cancel" class="secondary-action" type="button">Abbrechen</button>
+            </div>
+          </div>
+
+          <section id="teacher-enrollment-step" class="teacher-enrollment-step" aria-labelledby="teacher-enrollment-title" hidden>
+            <span class="enrollment-icon" aria-hidden="true"></span>
+            <p class="eyebrow">Optional</p>
+            <h2 id="teacher-enrollment-title">Schneller mit diesem Gerät anmelden</h2>
+            <p class="dialog-copy">Richte die Gerätebestätigung für spätere Zugänge zum Lehrermodus ein.</p>
+            <div class="dialog-actions">
+              <button id="teacher-enrollment-button" class="primary-action" type="button">Gerätebestätigung einrichten</button>
+              <button id="teacher-enrollment-skip" class="secondary-action" type="button">Jetzt nicht</button>
+            </div>
+          </section>
+
+          <p id="teacher-login-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </form>
+      </dialog>
+
+      <dialog id="gallery-viewer-dialog" class="gallery-viewer-dialog" aria-labelledby="gallery-viewer-title">
+        <div class="gallery-viewer-dialog-shell">
+          <header class="gallery-viewer-header">
+            <div>
+              <p class="eyebrow">Gespeicherte Aufnahme</p>
+              <h2 id="gallery-viewer-title">Aufnahme ansehen</h2>
+              <p id="gallery-viewer-date" class="gallery-viewer-date"></p>
+            </div>
+            <button id="gallery-viewer-close" class="comparison-close" type="button" aria-label="Aufnahme schließen">×</button>
+          </header>
+
+          <div class="gallery-viewer-media">
+            <img id="gallery-viewer-photo" alt="" draggable="false" hidden>
+            <video id="gallery-viewer-video" playsinline muted preload="metadata" aria-label="Gespeichertes Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture hidden></video>
+          </div>
+
+          <div id="gallery-playback-controls" class="playback-controls gallery-playback-controls" aria-label="Wiedergabe der gespeicherten Aufnahme" hidden>
+            <button id="gallery-play-button" class="play-button" type="button" aria-label="Gespeichertes Video starten">
+              <span aria-hidden="true">▶</span>
+            </button>
+            <div class="timeline-wrap">
+              <label class="visually-hidden" for="gallery-timeline">Wiedergabeposition des gespeicherten Videos</label>
+              <input id="gallery-timeline" type="range" min="0" max="1000" value="0" step="1">
+              <output id="gallery-playback-time" for="gallery-timeline">0:00 / 0:00</output>
+            </div>
+            <details id="gallery-speed-menu" class="speed-menu">
+              <summary aria-label="Tempo des gespeicherten Videos ändern">
+                <span id="gallery-speed-value">1×</span>
+              </summary>
+              <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des gespeicherten Videos">
+                <button type="button" data-gallery-speed="0.25" aria-pressed="false">0,25×</button>
+                <button type="button" data-gallery-speed="0.5" aria-pressed="false">0,5×</button>
+                <button type="button" data-gallery-speed="1" aria-pressed="true">1×</button>
+              </div>
+            </details>
+          </div>
+
+          <div class="gallery-viewer-actions">
+            <button id="gallery-annotation-button" class="gallery-icon-button" type="button" aria-haspopup="dialog" aria-controls="annotation-dialog">
+              <span class="annotation-action-icon" aria-hidden="true"></span>
+              Annotieren
+            </button>
+            <button id="gallery-download-button" class="gallery-icon-button" type="button">
+              <span class="download-action-icon" aria-hidden="true"></span>
+              Download
+            </button>
+            <button id="gallery-delete-button" class="gallery-icon-button gallery-delete-button" type="button" aria-haspopup="dialog" aria-controls="gallery-delete-dialog">
+              <span class="delete-action-icon" aria-hidden="true"></span>
+              Löschen
+            </button>
+          </div>
+
+          <p id="gallery-viewer-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </div>
+      </dialog>
+
+      <dialog id="gallery-delete-dialog" class="gallery-delete-dialog" aria-labelledby="gallery-delete-title" aria-describedby="gallery-delete-message">
+        <form id="gallery-delete-form" class="gallery-delete-dialog-shell">
+          <span class="delete-confirmation-icon" aria-hidden="true">!</span>
+          <p class="eyebrow">Bitte bestätigen</p>
+          <h2 id="gallery-delete-title">Aufnahme wirklich löschen?</h2>
+          <p id="gallery-delete-message" class="dialog-copy">Die ausgewählte Aufnahme wird dauerhaft aus der Galerie entfernt.</p>
+          <div class="dialog-actions">
+            <button id="gallery-delete-confirm" class="primary-action destructive-action" type="submit">Endgültig löschen</button>
+            <button id="gallery-delete-cancel" class="secondary-action" type="button" autofocus>Abbrechen</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="annotation-dialog" class="annotation-dialog" aria-labelledby="annotation-dialog-title">
+        <div class="annotation-dialog-shell">
+          <header class="annotation-dialog-header">
+            <div>
+              <p class="eyebrow">Frame annotieren</p>
+              <h2 id="annotation-dialog-title">Videoframe annotieren</h2>
+            </div>
+            <button id="annotation-close" class="comparison-close" type="button" aria-label="Annotation schließen">×</button>
+          </header>
+          <div class="annotation-toolbar">
+            <div class="annotation-tool-group" role="group" aria-label="Zeichenwerkzeug">
+              <button type="button" data-annotation-tool="pen" aria-pressed="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path></svg>
+                <span>Stift</span>
+              </button>
+              <button type="button" data-annotation-tool="eraser" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 18h11M4.8 13.2l7.7-7.7a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L12 18H9l-4.2-4.8z"></path></svg>
+                <span>Radierer</span>
+              </button>
+            </div>
+            <fieldset class="annotation-colors">
+              <legend>Farbe</legend>
+              <div role="group" aria-label="Stiftfarbe">
+                <button type="button" data-annotation-color="#ef4f3f" aria-label="Rot" aria-pressed="true"></button>
+                <button type="button" data-annotation-color="#ffd166" aria-label="Gelb" aria-pressed="false"></button>
+                <button type="button" data-annotation-color="#118a8b" aria-label="Türkis" aria-pressed="false"></button>
+                <button type="button" data-annotation-color="#ffffff" aria-label="Weiß" aria-pressed="false"></button>
+                <button type="button" data-annotation-color="#071d24" aria-label="Dunkelblau" aria-pressed="false"></button>
+              </div>
+            </fieldset>
+          </div>
+          <div id="annotation-canvas-stage" class="annotation-canvas-stage">
+            <canvas id="annotation-frame-canvas" aria-hidden="true"></canvas>
+            <canvas id="annotation-drawing-canvas" aria-label="Zeichenfläche für den aktuellen Videoframe"></canvas>
+          </div>
+        </div>
+      </dialog>
 
     </div>
 
