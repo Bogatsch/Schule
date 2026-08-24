@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=30">
-    <script type="module" src="./app.js?v=30"></script>
+    <link rel="stylesheet" href="./styles.css?v=31">
+    <script type="module" src="./app.js?v=31"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -392,6 +392,26 @@
           </div>
         </section>
       </main>
+
+      <dialog id="video-name-dialog" class="video-name-dialog" aria-labelledby="video-name-dialog-title" aria-describedby="video-name-description">
+        <form id="video-name-form" class="video-name-dialog-shell">
+          <div>
+            <p class="eyebrow">In Galerie speichern</p>
+            <h2 id="video-name-dialog-title">Video benennen</h2>
+          </div>
+          <p id="video-name-description" class="dialog-copy">Der Name wird in der Galerie angezeigt und später als Dateiname für den Download verwendet.</p>
+          <div class="account-password-field">
+            <label for="video-name">Name des Videos</label>
+            <input id="video-name" name="video-name" type="text" maxlength="80" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" spellcheck="true" required>
+            <small>Bis zu 80 Zeichen.</small>
+          </div>
+          <div class="dialog-actions">
+            <button id="video-name-submit" class="primary-action" type="submit">Speichern</button>
+            <button id="video-name-cancel" class="secondary-action" type="button">Abbrechen</button>
+          </div>
+          <p id="video-name-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </form>
+      </dialog>
 
       <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-dialog-title">
         <div class="account-dialog-shell">

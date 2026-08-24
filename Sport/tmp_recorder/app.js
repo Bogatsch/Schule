@@ -14,7 +14,7 @@ import {
   requestPersistentStorage,
   resetMediaStore,
   saveMedia
-} from './media-store.js?v=30';
+} from './media-store.js?v=31';
 import {
   authenticateWithPlatform,
   enrollPlatformCredential,
@@ -71,6 +71,12 @@ const elements = {
   speedMenu: document.querySelector('#speed-menu'),
   speedValue: document.querySelector('#speed-value'),
   videoSaveButton: document.querySelector('#video-save-button'),
+  videoNameDialog: document.querySelector('#video-name-dialog'),
+  videoNameForm: document.querySelector('#video-name-form'),
+  videoNameInput: document.querySelector('#video-name'),
+  videoNameSubmit: document.querySelector('#video-name-submit'),
+  videoNameCancel: document.querySelector('#video-name-cancel'),
+  videoNameStatus: document.querySelector('#video-name-status'),
   videoAnnotationButton: document.querySelector('#video-annotation-button'),
   comparisonPlaybackControls: document.querySelector('#comparison-playback-controls'),
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
@@ -178,6 +184,8 @@ let isRecording = false;
 let operationId = 0;
 let selectedComparisonCategory = 'spielsportarten';
 let currentSavedMediaId = null;
+let videoNameSaving = false;
+let videoNameRestoreFocus = true;
 let teacherMode = false;
 let teacherAuthVerified = false;
 let teacherAuthReady = false;
@@ -355,6 +363,51 @@ function formatMediaDate(value) {
   }).format(date);
 }
 
+function normalizeVideoTitle(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80)
+    .trim();
+}
+
+function openVideoNameDialog() {
+  if (elements.videoNameDialog.open) {
+    return;
+  }
+  if (currentSavedMediaId) {
+    elements.previewStatus.textContent = 'Diese Aufnahme ist bereits in der Galerie gespeichert.';
+    return;
+  }
+  if (!currentBlob || !currentObjectUrl || currentMode !== 'video') {
+    elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
+    return;
+  }
+  if (!isMediaStoreSupported()) {
+    elements.previewStatus.textContent = mediaSaveErrorMessage({ code: 'unsupported' });
+    return;
+  }
+
+  elements.videoPreview.pause();
+  elements.videoNameForm.reset();
+  elements.videoNameInput.value = `Video ${formatMediaDate(Date.now())}`;
+  elements.videoNameStatus.textContent = '';
+  elements.videoNameStatus.dataset.status = '';
+  videoNameRestoreFocus = true;
+  showModal(elements.videoNameDialog);
+  window.setTimeout(() => {
+    elements.videoNameInput.focus({ preventScroll: true });
+    elements.videoNameInput.select();
+  }, 0);
+}
+
+function closeVideoNameDialog({ restoreFocus = true } = {}) {
+  videoNameRestoreFocus = restoreFocus;
+  closeModal(elements.videoNameDialog);
+}
+
 function formatBytes(value) {
   const bytes = Number(value);
   if (!Number.isFinite(bytes) || bytes < 0) {
@@ -483,6 +536,8 @@ function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   mediaChunks.splice(0, mediaChunks.length);
   stopCameraTracks();
   releaseObjectUrl();
+  videoNameSaving = false;
+  closeVideoNameDialog({ restoreFocus: false });
   resetSaveButtons();
 
   elements.videoPreview.pause();
@@ -643,18 +698,18 @@ function mediaSaveErrorMessage(error) {
   return 'Die Aufnahme konnte nicht gespeichert werden. Sie bleibt noch in dieser Vorschau verfügbar.';
 }
 
-async function saveCurrentMedia(kind, button) {
+async function saveCurrentMedia(kind, button, { title = null } = {}) {
   if (currentSavedMediaId) {
     elements.previewStatus.textContent = 'Diese Aufnahme ist bereits in der Galerie gespeichert.';
-    return;
+    return null;
   }
   if (!currentBlob || !currentObjectUrl) {
     elements.previewStatus.textContent = 'Die Aufnahme ist nicht mehr verfügbar.';
-    return;
+    return null;
   }
   if (!isMediaStoreSupported()) {
     elements.previewStatus.textContent = mediaSaveErrorMessage({ code: 'unsupported' });
-    return;
+    return null;
   }
 
   const blob = currentBlob;
@@ -679,11 +734,11 @@ async function saveCurrentMedia(kind, button) {
 
   try {
     const persistenceRequest = requestPersistentStorage().catch(() => null);
-    const metadata = await saveMedia(blob, { kind, ...dimensions });
+    const metadata = await saveMedia(blob, { kind, ...dimensions, title });
     const persistence = await persistenceRequest;
 
     if (thisOperation !== operationId || currentBlob !== blob) {
-      return;
+      return null;
     }
     currentSavedMediaId = metadata.id;
     button.classList.add('saved');
@@ -699,11 +754,13 @@ async function saveCurrentMedia(kind, button) {
     elements.previewStatus.textContent = (kind === 'photo'
       ? 'Foto wurde lokal in der Galerie gespeichert.'
       : 'Video wurde lokal in der Galerie gespeichert.') + persistenceNote;
+    return metadata;
   } catch (error) {
     if (thisOperation === operationId && currentBlob === blob) {
       button.disabled = false;
       elements.previewStatus.textContent = mediaSaveErrorMessage(error);
     }
+    return null;
   }
 }
 
@@ -1425,6 +1482,8 @@ function renderGallery() {
 
   const fragment = document.createDocumentFragment();
   galleryItems.forEach((item) => {
+    const kindLabel = item.kind === 'photo' ? 'Foto' : 'Video';
+    const accessibleLabel = item.title ? `${kindLabel} „${item.title}“` : kindLabel;
     const card = document.createElement('article');
     card.className = 'gallery-card';
     card.dataset.mediaId = item.id;
@@ -1438,7 +1497,7 @@ function renderGallery() {
     checkbox.type = 'checkbox';
     checkbox.dataset.galleryAction = 'select';
     checkbox.dataset.mediaId = item.id;
-    checkbox.setAttribute('aria-label', `${item.kind === 'photo' ? 'Foto' : 'Video'} vom ${formatMediaDate(item.createdAt)} auswählen`);
+    checkbox.setAttribute('aria-label', `${accessibleLabel} vom ${formatMediaDate(item.createdAt)} auswählen`);
     selection.append(checkbox);
 
     const preview = document.createElement('button');
@@ -1446,7 +1505,7 @@ function renderGallery() {
     preview.className = 'gallery-card-preview';
     preview.dataset.galleryAction = 'view';
     preview.dataset.mediaId = item.id;
-    preview.setAttribute('aria-label', `${item.kind === 'photo' ? 'Foto' : 'Video'} vom ${formatMediaDate(item.createdAt)} ansehen`);
+    preview.setAttribute('aria-label', `${accessibleLabel} vom ${formatMediaDate(item.createdAt)} ansehen`);
     const loading = document.createElement('span');
     loading.className = 'spinner';
     loading.setAttribute('aria-hidden', 'true');
@@ -1455,13 +1514,20 @@ function renderGallery() {
     const body = document.createElement('div');
     body.className = 'gallery-card-body';
     const title = document.createElement('h2');
-    title.textContent = item.kind === 'photo' ? 'Foto' : 'Video';
+    title.textContent = item.title || kindLabel;
+    const mediaKind = document.createElement('small');
+    mediaKind.className = 'gallery-card-kind';
+    mediaKind.textContent = kindLabel;
     const date = document.createElement('time');
     date.dateTime = item.createdAt;
     date.textContent = formatMediaDate(item.createdAt);
     const size = document.createElement('small');
     size.textContent = formatBytes(item.size);
-    body.append(title, date, size);
+    body.append(title);
+    if (item.title) {
+      body.append(mediaKind);
+    }
+    body.append(date, size);
 
     const actions = document.createElement('div');
     actions.className = 'gallery-card-actions';
@@ -1670,7 +1736,7 @@ async function openGalleryViewer(id, trigger) {
     galleryViewerObjectUrl = URL.createObjectURL(stored.file);
     const { metadata } = stored;
     const isVideo = metadata.kind === 'video';
-    elements.galleryViewerTitle.textContent = isVideo ? 'Video' : 'Foto';
+    elements.galleryViewerTitle.textContent = metadata.title || (isVideo ? 'Video' : 'Foto');
     elements.galleryViewerDate.textContent = `${formatMediaDate(metadata.createdAt)} · ${formatBytes(metadata.size)}`;
     elements.galleryDownloadButton.disabled = false;
     elements.galleryDeleteButton.disabled = false;
@@ -1905,7 +1971,75 @@ elements.photoSaveButton.addEventListener('click', () => {
   void saveCurrentMedia('photo', elements.photoSaveButton);
 });
 elements.videoSaveButton.addEventListener('click', () => {
-  void saveCurrentMedia('video', elements.videoSaveButton);
+  openVideoNameDialog();
+});
+elements.videoNameForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (videoNameSaving) {
+    return;
+  }
+  const title = normalizeVideoTitle(elements.videoNameInput.value);
+  if (!title) {
+    elements.videoNameStatus.textContent = 'Bitte gib dem Video einen Namen.';
+    elements.videoNameStatus.dataset.status = 'error';
+    elements.videoNameInput.focus();
+    return;
+  }
+
+  elements.videoNameInput.value = title;
+  videoNameSaving = true;
+  elements.videoNameInput.disabled = true;
+  elements.videoNameSubmit.disabled = true;
+  elements.videoNameCancel.disabled = true;
+  elements.videoNameStatus.textContent = 'Video wird lokal gespeichert …';
+  elements.videoNameStatus.dataset.status = '';
+  void saveCurrentMedia('video', elements.videoSaveButton, { title }).then((metadata) => {
+    videoNameSaving = false;
+    elements.videoNameInput.disabled = false;
+    elements.videoNameSubmit.disabled = false;
+    elements.videoNameCancel.disabled = false;
+    if (metadata) {
+      closeVideoNameDialog();
+      return;
+    }
+    if (elements.videoNameDialog.open) {
+      elements.videoNameStatus.textContent = elements.previewStatus.textContent;
+      elements.videoNameStatus.dataset.status = 'error';
+    }
+  });
+});
+elements.videoNameCancel.addEventListener('click', () => {
+  if (!videoNameSaving) {
+    closeVideoNameDialog();
+  }
+});
+elements.videoNameInput.addEventListener('input', () => {
+  elements.videoNameStatus.textContent = '';
+  elements.videoNameStatus.dataset.status = '';
+});
+elements.videoNameDialog.addEventListener('cancel', (event) => {
+  if (videoNameSaving) {
+    event.preventDefault();
+  }
+});
+elements.videoNameDialog.addEventListener('close', () => {
+  const restoreFocus = videoNameRestoreFocus;
+  elements.videoNameForm.reset();
+  elements.videoNameInput.disabled = false;
+  elements.videoNameSubmit.disabled = false;
+  elements.videoNameCancel.disabled = false;
+  elements.videoNameStatus.textContent = '';
+  elements.videoNameStatus.dataset.status = '';
+  videoNameSaving = false;
+  videoNameRestoreFocus = true;
+  if (restoreFocus && currentBlob && document.body.dataset.view === 'preview') {
+    elements.videoSaveButton.focus({ preventScroll: true });
+  }
+});
+elements.videoNameDialog.addEventListener('click', (event) => {
+  if (event.target === elements.videoNameDialog && !videoNameSaving) {
+    closeVideoNameDialog();
+  }
 });
 elements.videoAnnotationButton.addEventListener('click', () => {
   annotation.open(elements.videoPreview, 'Eigene Aufnahme', elements.videoAnnotationButton);
@@ -2063,7 +2197,11 @@ document.querySelectorAll('[data-gallery-speed]').forEach((button) => {
   });
 });
 elements.galleryAnnotationButton.addEventListener('click', () => {
-  annotation.open(elements.galleryViewerVideo, 'Gespeichertes Video', elements.galleryAnnotationButton, elements.galleryViewerStatus);
+  annotation.open(elements.galleryViewerVideo,
+    galleryViewerItem?.metadata.title || 'Gespeichertes Video',
+    elements.galleryAnnotationButton,
+    elements.galleryViewerStatus
+  );
 });
 elements.galleryDownloadButton.addEventListener('click', () => {
   if (galleryViewerItem) {

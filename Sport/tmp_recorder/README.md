@@ -4,7 +4,7 @@ Eine installierbare, datensparsame Progressive Web App für direktes Foto- und V
 
 ## Datenschutz und lokale Speicherung
 
-Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
+Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
 
 - Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
 - Fotos werden kurzzeitig in einem Canvas verarbeitet. Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder`.
@@ -79,14 +79,14 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - **Foto** erstellt einen Schnappschuss über Canvas.
 - **Video** zeichnet maximal drei Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 als Fallback, wenn der Browser WebM nicht aufnehmen kann.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei vorhandene, nicht gespeicherte Aufnahmedaten.
-- Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Es öffnet keine Downloadseite.
+- Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Bei Videos öffnet es zuvor ein Benennungsfenster; Fotos werden direkt gespeichert. Es öffnet keine Downloadseite.
 - In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
 - Über den Stift-Button lässt sich der aktuelle Videoframe in einem temporären Annotationsfenster öffnen. Dort gibt es Freihandstift, fünf Farben und einen Radierer; beim Schließen wird die Annotation verworfen.
 - Mit **Leitbild daneben** lässt sich ein Leitbild neben die eigene Aufnahme schalten. Beide Videos besitzen unabhängige Bedienelemente.
 - Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
 
-Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
+Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und benannte Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser und übernimmt bei Videos den zuvor vergebenen Namen. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
 
 ## Manuelle Abnahme auf einem physischen iPad
 
@@ -94,7 +94,7 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 
 1. Erster Start, Datenschutzhinweis und Kameraberechtigung; sicherstellen, dass keine Mikrofonabfrage erscheint.
 2. Rück- und Frontkamera im Hoch- und Querformat testen; Frontbild und Fotoausrichtung vergleichen.
-3. Foto und Video aufnehmen, mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
+3. Foto und Video aufnehmen, beim Video einen eigenen Namen vergeben, beide mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
 4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
 6. Über das Zahnrad beim ersten Anmelden ein eigenes Passwort festlegen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.

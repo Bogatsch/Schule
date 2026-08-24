@@ -381,6 +381,29 @@ function defaultMimeType(kind) {
   return kind === 'photo' ? 'image/jpeg' : 'video/webm';
 }
 
+function normalizeMediaTitle(value, kind) {
+  if (kind !== 'video' || typeof value !== 'string') {
+    return null;
+  }
+  const title = value
+    .normalize('NFKC')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80)
+    .trim();
+  return title || null;
+}
+
+function downloadStemForTitle(title) {
+  return title
+    .replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^[. ]+|[. ]+$/g, '')
+    .slice(0, 100)
+    .replace(/[. ]+$/g, '');
+}
+
 function createMetadata(blob, options) {
   const provisionalMimeType = String(blob.type || '').toLowerCase();
   const kind = normalizeKind(options.kind, provisionalMimeType);
@@ -396,6 +419,8 @@ function createMetadata(blob, options) {
   const id = createItemId();
   const extension = extensionFor(mimeType, kind);
   const datePart = createdAt.toISOString().replace(/[:.]/g, '-');
+  const title = normalizeMediaTitle(options.title, kind);
+  const titleDownloadStem = title ? downloadStemForTitle(title) : '';
   return {
     schemaVersion: STORE_SCHEMA_VERSION,
     id,
@@ -407,8 +432,11 @@ function createMetadata(blob, options) {
     width: normalizeNumber(options.width, { integer: true }),
     height: normalizeNumber(options.height, { integer: true }),
     durationMs: normalizeNumber(options.durationMs),
+    title,
     mediaFile: `media.${extension}`,
-    suggestedDownloadName: `Sportkamera-${kind === 'photo' ? 'Foto' : 'Video'}-${datePart}.${extension}`
+    suggestedDownloadName: titleDownloadStem
+      ? `${titleDownloadStem}.${extension}`
+      : `Sportkamera-${kind === 'photo' ? 'Foto' : 'Video'}-${datePart}.${extension}`
   };
 }
 
@@ -435,6 +463,9 @@ function validateMetadata(value, expectedId = null) {
   if (typeof value.mediaFile !== 'string' || !/^media\.[a-z0-9]{2,5}$/i.test(value.mediaFile)) {
     throw new MediaStoreError('invalid-metadata', 'Der gespeicherte Dateiname ist ungültig.');
   }
+  const title = normalizeMediaTitle(value.title, value.kind);
+  const extension = extensionFor(value.mimeType, value.kind);
+  const titleDownloadStem = title ? downloadStemForTitle(title) : '';
   return {
     schemaVersion: STORE_SCHEMA_VERSION,
     id: value.id,
@@ -446,10 +477,13 @@ function validateMetadata(value, expectedId = null) {
     width: normalizeNumber(value.width, { integer: true }),
     height: normalizeNumber(value.height, { integer: true }),
     durationMs: normalizeNumber(value.durationMs),
+    title,
     mediaFile: value.mediaFile,
-    suggestedDownloadName: typeof value.suggestedDownloadName === 'string'
+    suggestedDownloadName: titleDownloadStem
+      ? `${titleDownloadStem}.${extension}`
+      : typeof value.suggestedDownloadName === 'string'
       ? value.suggestedDownloadName
-      : `Sportkamera-${value.id}.${extensionFor(value.mimeType, value.kind)}`
+      : `Sportkamera-${value.id}.${extension}`
   };
 }
 

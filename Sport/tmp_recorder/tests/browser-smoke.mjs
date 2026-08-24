@@ -504,8 +504,16 @@ try {
   await exerciseAnnotation('#video-annotation-button', 'Eigene Aufnahme');
   results.push('Frame der eigenen Aufnahme temporär annotieren');
   await click('#video-save-button');
+  await waitFor(`document.querySelector('#video-name-dialog').open`);
+  await evaluate(`(() => {
+    const input = document.querySelector('#video-name');
+    input.value = 'Sprungwurf Test';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+  await click('#video-name-submit');
+  await waitFor(`!document.querySelector('#video-name-dialog').open`);
   await waitFor(`document.querySelector('#video-save-button').getAttribute('aria-pressed') === 'true'`);
-  results.push('Video manuell stoppen, lokal speichern und mit eigenen Steuerelementen anzeigen');
+  results.push('Video manuell stoppen, benennen, lokal speichern und mit eigenen Steuerelementen anzeigen');
 
   await click('#speed-menu summary');
   await waitFor(`document.querySelector('#speed-menu').open`);
@@ -738,13 +746,18 @@ try {
     const dates = await evaluate(`[...document.querySelectorAll('.gallery-card time')]
       .map((element) => Date.parse(element.dateTime))`);
     assert.deepEqual(dates, [...dates].sort((left, right) => right - left));
+    assert.equal(
+      await evaluate(`document.querySelector('.gallery-card[data-kind="video"] h2').textContent`),
+      'Sprungwurf Test'
+    );
 
     await click('.gallery-card[data-kind="video"] [data-gallery-action="view"]');
     await waitFor(`document.querySelector('#gallery-viewer-dialog').open
       && document.querySelector('#gallery-viewer-video').src.startsWith('blob:')`);
     await click('#gallery-play-button');
     await waitFor(`document.querySelector('#gallery-viewer-video').readyState >= 2`);
-    await exerciseAnnotation('#gallery-annotation-button', 'Gespeichertes Video');
+    assert.equal(await evaluate(`document.querySelector('#gallery-viewer-title').textContent`), 'Sprungwurf Test');
+    await exerciseAnnotation('#gallery-annotation-button', 'Sprungwurf Test');
 
     await evaluate(`(() => {
       window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
@@ -766,7 +779,7 @@ try {
       delete window.__sportkameraDownload;
       return result;
     })()`);
-    assert.match(galleryDownload.filename, /^Sportkamera-Video-.*\.(?:webm|mp4)$/);
+    assert.match(galleryDownload.filename, /^Sprungwurf Test\.(?:webm|mp4)$/);
     assert.match(galleryDownload.href, /^blob:/);
     await click('#gallery-viewer-close');
     await waitFor(`!document.querySelector('#gallery-viewer-dialog').open`);

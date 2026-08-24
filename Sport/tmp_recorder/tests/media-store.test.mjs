@@ -127,19 +127,26 @@ test('speichert, sortiert, liest und löscht Fotos und Videos im OPFS', async ()
   const video = await saveMedia(new Blob(['video'], { type: 'video/webm' }), {
     kind: 'video',
     createdAt: 1_700_000_001_000,
-    durationMs: 2500
+    durationMs: 2500,
+    title: '  Sprungwurf   8a  '
   });
   const mp4 = await saveMedia(new Blob(['mp4'], { type: 'video/mp4;codecs=avc1.42e01e' }), {
     kind: 'video',
-    createdAt: 1_700_000_002_000
+    createdAt: 1_700_000_002_000,
+    title: 'Aufschlag / Zeitlupe'
   });
 
   assert.deepEqual((await listMedia()).map((item) => item.id), [mp4.id, video.id, photo.id]);
   assert.deepEqual((await listMedia({ kind: 'photo' })).map((item) => item.id), [photo.id]);
-  assert.match(mp4.suggestedDownloadName, /\.mp4$/);
+  assert.equal(video.title, 'Sprungwurf 8a');
+  assert.equal(video.suggestedDownloadName, 'Sprungwurf 8a.webm');
+  assert.equal(mp4.title, 'Aufschlag / Zeitlupe');
+  assert.equal(mp4.suggestedDownloadName, 'Aufschlag - Zeitlupe.mp4');
 
   const storedVideo = await getMedia(video.id);
   assert.equal(storedVideo.metadata.kind, 'video');
+  assert.equal(storedVideo.metadata.title, 'Sprungwurf 8a');
+  assert.equal(storedVideo.metadata.suggestedDownloadName, 'Sprungwurf 8a.webm');
   assert.equal(storedVideo.file.type, 'video/webm');
   assert.equal(await storedVideo.file.text(), 'video');
 
