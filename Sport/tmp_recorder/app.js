@@ -12,16 +12,19 @@ import {
   isMediaStoreSupported,
   listMedia,
   requestPersistentStorage,
+  resetMediaStore,
   saveMedia
-} from './media-store.js?v=29';
+} from './media-store.js?v=30';
 import {
   authenticateWithPlatform,
   enrollPlatformCredential,
   forgetPlatformCredential,
   getTeacherAuthState,
   preloadTeacherAuth,
-  verifyTeacherPassword
-} from './teacher-auth.js?v=29';
+  resetAuthentication,
+  setInitialPassword,
+  verifyPassword
+} from './teacher-auth.js?v=30';
 
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
@@ -35,9 +38,7 @@ const elements = {
   previewView: document.querySelector('#preview-view'),
   galleryView: document.querySelector('#gallery-view'),
   errorView: document.querySelector('#error-view'),
-  teacherModeButton: document.querySelector('#teacher-mode-button'),
-  teacherModeLabel: document.querySelector('#teacher-mode-label'),
-  teacherModeDescription: document.querySelector('#teacher-mode-description'),
+  settingsButton: document.querySelector('#settings-button'),
   galleryEntry: document.querySelector('#gallery-entry'),
   environmentStatus: document.querySelector('#environment-status'),
   cameraBack: document.querySelector('#camera-back'),
@@ -97,19 +98,32 @@ const elements = {
   gallerySelectAll: document.querySelector('#gallery-select-all'),
   gallerySelectionCount: document.querySelector('#gallery-selection-count'),
   galleryDeleteSelected: document.querySelector('#gallery-delete-selected'),
-  teacherLoginDialog: document.querySelector('#teacher-login-dialog'),
-  teacherLoginForm: document.querySelector('#teacher-login-form'),
-  teacherLoginStep: document.querySelector('#teacher-login-step'),
-  teacherLoginTitle: document.querySelector('#teacher-login-title'),
-  teacherBiometricSection: document.querySelector('#teacher-biometric-section'),
-  teacherBiometricDivider: document.querySelector('#teacher-biometric-divider'),
-  teacherBiometricButton: document.querySelector('#teacher-biometric-button'),
-  teacherPassword: document.querySelector('#teacher-password'),
-  teacherLoginStatus: document.querySelector('#teacher-login-status'),
-  teacherLoginCancel: document.querySelector('#teacher-login-cancel'),
-  teacherEnrollmentStep: document.querySelector('#teacher-enrollment-step'),
-  teacherEnrollmentButton: document.querySelector('#teacher-enrollment-button'),
-  teacherEnrollmentSkip: document.querySelector('#teacher-enrollment-skip'),
+  accountDialog: document.querySelector('#account-dialog'),
+  accountClose: document.querySelector('#account-close'),
+  accountLoginTab: document.querySelector('#account-login-tab'),
+  accountResetTab: document.querySelector('#account-reset-tab'),
+  accountLoginForm: document.querySelector('#account-login-form'),
+  accountLoginPanel: document.querySelector('#account-login-panel'),
+  accountAuthenticatedStep: document.querySelector('#account-authenticated-step'),
+  accountSetupStep: document.querySelector('#account-setup-step'),
+  accountPasswordStep: document.querySelector('#account-password-step'),
+  accountNewPassword: document.querySelector('#account-new-password'),
+  accountConfirmPassword: document.querySelector('#account-confirm-password'),
+  accountSetupSubmit: document.querySelector('#account-setup-submit'),
+  accountPassword: document.querySelector('#account-password'),
+  accountPasswordSubmit: document.querySelector('#account-password-submit'),
+  accountBiometricSection: document.querySelector('#account-biometric-section'),
+  accountBiometricDivider: document.querySelector('#account-biometric-divider'),
+  accountBiometricButton: document.querySelector('#account-biometric-button'),
+  accountEnrollmentStep: document.querySelector('#account-enrollment-step'),
+  accountEnrollmentButton: document.querySelector('#account-enrollment-button'),
+  accountEnrollmentSkip: document.querySelector('#account-enrollment-skip'),
+  accountLogout: document.querySelector('#account-logout'),
+  accountResetForm: document.querySelector('#account-reset-form'),
+  accountResetPanel: document.querySelector('#account-reset-panel'),
+  accountResetConfirmation: document.querySelector('#account-reset-confirmation'),
+  accountResetSubmit: document.querySelector('#account-reset-submit'),
+  accountStatus: document.querySelector('#account-status'),
   galleryViewerDialog: document.querySelector('#gallery-viewer-dialog'),
   galleryViewerClose: document.querySelector('#gallery-viewer-close'),
   galleryViewerTitle: document.querySelector('#gallery-viewer-title'),
@@ -169,6 +183,7 @@ let teacherAuthVerified = false;
 let teacherAuthReady = false;
 let teacherAuthOperationId = 0;
 let teacherPlatformNeedsRepair = false;
+let accountResetInProgress = false;
 let galleryItems = [];
 let gallerySelectedIds = new Set();
 let galleryLoadId = 0;
@@ -184,6 +199,14 @@ const galleryCardObjectUrls = new Set();
 const galleryLoadedMedia = new Map();
 const delayedDownloadObjectUrls = new Set();
 const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
+let accountSyncChannel = null;
+if ('BroadcastChannel' in window) {
+  try {
+    accountSyncChannel = new BroadcastChannel('sportkamera-account-v1');
+  } catch {
+    accountSyncChannel = null;
+  }
+}
 
 function setView(name) {
   Object.entries(views).forEach(([viewName, element]) => {
@@ -612,7 +635,7 @@ function canvasToBlob(canvas, type, quality) {
 
 function mediaSaveErrorMessage(error) {
   if (error?.code === 'quota-exceeded' || error?.name === 'QuotaExceededError') {
-    return 'Der lokale App-Speicher ist voll. Bitte lösche ältere Aufnahmen in der Lehrergalerie.';
+    return 'Der lokale App-Speicher ist voll. Bitte lösche ältere Aufnahmen in der geschützten Galerie.';
   }
   if (error?.code === 'unsupported') {
     return 'Dieser Browser bietet keinen privaten App-Speicher. Verwende eine aktuelle Safari-, Chrome-, Edge- oder Firefox-Version über HTTPS.';
@@ -927,75 +950,132 @@ function updateComparisonPlayButton() {
   elements.comparisonPlayButton.setAttribute('aria-label', playing ? 'Leitbild pausieren' : 'Leitbild starten');
 }
 
-function updateTeacherModeUI() {
-  elements.teacherModeButton.setAttribute('aria-pressed', String(teacherMode));
-  elements.teacherModeButton.setAttribute('aria-haspopup', teacherMode ? 'false' : 'dialog');
-  elements.teacherModeLabel.textContent = teacherMode ? 'Lehrermodus beenden' : 'Lehrermodus';
-  elements.teacherModeDescription.textContent = teacherMode
-    ? 'Galerie wieder sperren'
-    : 'Geschützte Galerie und Verwaltung öffnen';
+function updateProtectedAccessUI() {
   elements.galleryEntry.hidden = !teacherMode;
+  elements.settingsButton.dataset.authenticated = String(teacherMode);
+  elements.settingsButton.setAttribute(
+    'aria-label',
+    teacherMode
+      ? 'Anmeldung und Einstellungen öffnen, derzeit angemeldet'
+      : 'Anmeldung und Einstellungen öffnen'
+  );
 }
 
-function resetTeacherLoginDialog() {
+function setAccountPanel(panel, { focus = false } = {}) {
+  const showLogin = panel === 'login';
+  elements.accountLoginForm.hidden = !showLogin;
+  elements.accountResetForm.hidden = showLogin;
+  elements.accountLoginTab.setAttribute('aria-selected', String(showLogin));
+  elements.accountResetTab.setAttribute('aria-selected', String(!showLogin));
+  elements.accountLoginTab.tabIndex = showLogin ? 0 : -1;
+  elements.accountResetTab.tabIndex = showLogin ? -1 : 0;
+  elements.accountStatus.textContent = '';
+  elements.accountStatus.dataset.status = '';
+  if (!focus || !elements.accountDialog.open) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    if (showLogin) {
+      const state = getTeacherAuthState();
+      if (teacherMode) {
+        elements.accountLogout.focus({ preventScroll: true });
+      } else if (!state.passwordConfigured) {
+        elements.accountNewPassword.focus({ preventScroll: true });
+      } else if (state.platformAvailable && state.platformEnrolled) {
+        elements.accountBiometricButton.focus({ preventScroll: true });
+      } else {
+        elements.accountPassword.focus({ preventScroll: true });
+      }
+    } else {
+      elements.accountResetConfirmation.focus({ preventScroll: true });
+    }
+  });
+}
+
+function selectAccountPanel(panel, { focus = true } = {}) {
+  if (accountResetInProgress) {
+    return;
+  }
+  teacherAuthOperationId += 1;
   teacherAuthVerified = false;
   teacherPlatformNeedsRepair = false;
-  elements.teacherLoginForm.reset();
-  elements.teacherLoginStatus.textContent = '';
-  elements.teacherLoginStep.hidden = false;
-  elements.teacherEnrollmentStep.hidden = true;
+  elements.accountEnrollmentStep.hidden = true;
   const state = getTeacherAuthState();
-  const showPlatformLogin = state.ready && state.platformAvailable && state.platformEnrolled;
-  elements.teacherBiometricSection.hidden = !showPlatformLogin;
-  elements.teacherBiometricDivider.hidden = !showPlatformLogin;
-  elements.teacherBiometricButton.disabled = false;
-  elements.teacherEnrollmentButton.disabled = false;
-  elements.teacherEnrollmentButton.textContent = 'Gerätebestätigung einrichten';
+  elements.accountAuthenticatedStep.hidden = !teacherMode;
+  elements.accountSetupStep.hidden = teacherMode || state.passwordConfigured;
+  elements.accountPasswordStep.hidden = teacherMode || !state.passwordConfigured;
+  setAccountPanel(panel, { focus });
 }
 
-function openTeacherLogin() {
+function resetAccountDialog() {
+  accountResetInProgress = false;
+  teacherAuthVerified = false;
+  teacherPlatformNeedsRepair = false;
+  elements.accountLoginForm.reset();
+  elements.accountResetForm.reset();
+  elements.accountStatus.textContent = '';
+  elements.accountStatus.dataset.status = '';
+  elements.accountEnrollmentStep.hidden = true;
+  const state = getTeacherAuthState();
+  elements.accountAuthenticatedStep.hidden = !teacherMode;
+  elements.accountSetupStep.hidden = teacherMode || state.passwordConfigured;
+  elements.accountPasswordStep.hidden = teacherMode || !state.passwordConfigured;
+  const showPlatformLogin = !teacherMode
+    && state.ready
+    && state.passwordConfigured
+    && state.platformAvailable
+    && state.platformEnrolled;
+  elements.accountBiometricSection.hidden = !showPlatformLogin;
+  elements.accountBiometricDivider.hidden = !showPlatformLogin;
+  elements.accountBiometricButton.disabled = false;
+  elements.accountEnrollmentButton.disabled = false;
+  elements.accountEnrollmentButton.textContent = 'Gerätebestätigung einrichten';
+  elements.accountNewPassword.disabled = false;
+  elements.accountConfirmPassword.disabled = false;
+  elements.accountSetupSubmit.disabled = false;
+  elements.accountPassword.disabled = false;
+  elements.accountPasswordSubmit.disabled = false;
+  elements.accountResetConfirmation.disabled = false;
+  elements.accountResetSubmit.disabled = true;
+  elements.accountLoginTab.disabled = false;
+  elements.accountResetTab.disabled = false;
+  elements.accountClose.disabled = false;
+  setAccountPanel('login');
+}
+
+function openAccountDialog() {
   if (!teacherAuthReady) {
     elements.environmentStatus.textContent = 'Die Anmeldung wird noch vorbereitet. Bitte versuche es gleich erneut.';
     return;
   }
   teacherAuthOperationId += 1;
-  resetTeacherLoginDialog();
-  showModal(elements.teacherLoginDialog);
-  window.requestAnimationFrame(() => {
-    if (!elements.teacherLoginDialog.open) {
-      return;
-    }
-    const state = getTeacherAuthState();
-    if (state.platformAvailable && state.platformEnrolled) {
-      elements.teacherBiometricButton.focus({ preventScroll: true });
-    } else {
-      elements.teacherPassword.focus({ preventScroll: true });
-    }
-  });
+  resetAccountDialog();
+  showModal(elements.accountDialog);
+  setAccountPanel('login', { focus: true });
 }
 
-function activateTeacherMode() {
+function activateProtectedAccess() {
   teacherAuthVerified = false;
   teacherMode = true;
-  updateTeacherModeUI();
-  setView('start');
+  cleanupMedia({ nextView: 'start' });
+  updateProtectedAccessUI();
   window.setTimeout(() => elements.galleryEntry.focus({ preventScroll: true }), 0);
 }
 
-function completeTeacherLogin(authOperation = teacherAuthOperationId) {
+function completeAuthentication(authOperation = teacherAuthOperationId) {
   if (
     authOperation !== teacherAuthOperationId
-    || !elements.teacherLoginDialog.open
+    || !elements.accountDialog.open
     || document.visibilityState !== 'visible'
   ) {
     return false;
   }
-  closeModal(elements.teacherLoginDialog);
-  activateTeacherMode();
+  closeModal(elements.accountDialog);
+  activateProtectedAccess();
   return true;
 }
 
-function teacherAuthErrorMessage(error) {
+function authenticationErrorMessage(error) {
   if (error?.code === 'cancelled') {
     return 'Die Gerätebestätigung wurde abgebrochen. Du kannst stattdessen das Passwort verwenden.';
   }
@@ -1008,58 +1088,97 @@ function teacherAuthErrorMessage(error) {
   return 'Die Gerätebestätigung ist fehlgeschlagen. Verwende bitte das Passwort.';
 }
 
-function authenticateTeacherWithPlatform() {
-  if (elements.teacherBiometricButton.disabled) {
+function authenticateWithDevice() {
+  if (elements.accountBiometricButton.disabled) {
     return;
   }
   const authOperation = teacherAuthOperationId;
-  elements.teacherBiometricButton.disabled = true;
-  elements.teacherLoginStatus.textContent = 'Gerätebestätigung wird geöffnet …';
+  elements.accountBiometricButton.disabled = true;
+  elements.accountStatus.textContent = 'Gerätebestätigung wird geöffnet …';
   let authentication;
   try {
     authentication = authenticateWithPlatform();
   } catch (error) {
-    elements.teacherBiometricButton.disabled = false;
-    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
+    elements.accountBiometricButton.disabled = false;
+    elements.accountStatus.textContent = authenticationErrorMessage(error);
     return;
   }
   authentication.then(() => {
-    completeTeacherLogin(authOperation);
+    completeAuthentication(authOperation);
   }).catch((error) => {
-    if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+    if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
       return;
     }
     teacherPlatformNeedsRepair = !['cancelled', 'platform-unavailable', 'not-ready'].includes(error?.code);
-    elements.teacherBiometricButton.disabled = false;
-    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
-    elements.teacherPassword.focus({ preventScroll: true });
+    elements.accountBiometricButton.disabled = false;
+    elements.accountStatus.textContent = authenticationErrorMessage(error);
+    elements.accountPassword.focus({ preventScroll: true });
   });
 }
 
-async function authenticateTeacherWithPassword() {
-  if (elements.teacherPassword.disabled) {
+async function submitAccountLogin() {
+  const setupMode = !elements.accountSetupStep.hidden;
+  const activePassword = setupMode ? elements.accountNewPassword : elements.accountPassword;
+  if (activePassword.disabled) {
     return;
   }
   const authOperation = teacherAuthOperationId;
-  const candidate = elements.teacherPassword.value;
-  elements.teacherPassword.disabled = true;
-  elements.teacherLoginStatus.textContent = 'Passwort wird geprüft …';
+  const candidate = activePassword.value;
+  if (setupMode) {
+    if (candidate.normalize('NFKC').length < 6) {
+      elements.accountStatus.textContent = 'Das Passwort muss mindestens 6 Zeichen lang sein.';
+      elements.accountStatus.dataset.status = 'error';
+      elements.accountNewPassword.focus({ preventScroll: true });
+      return;
+    }
+    if (candidate !== elements.accountConfirmPassword.value) {
+      elements.accountStatus.textContent = 'Die beiden Passwörter stimmen nicht überein.';
+      elements.accountStatus.dataset.status = 'error';
+      elements.accountConfirmPassword.focus({ preventScroll: true });
+      return;
+    }
+  }
+  elements.accountStatus.dataset.status = '';
+  elements.accountNewPassword.disabled = true;
+  elements.accountConfirmPassword.disabled = true;
+  elements.accountSetupSubmit.disabled = true;
+  elements.accountPassword.disabled = true;
+  elements.accountPasswordSubmit.disabled = true;
+  elements.accountStatus.textContent = setupMode
+    ? 'Passwort wird sicher eingerichtet …'
+    : 'Passwort wird geprüft …';
   let verified = false;
   try {
-    verified = await verifyTeacherPassword(candidate);
-  } catch {
+    verified = setupMode
+      ? await setInitialPassword(candidate)
+      : await verifyPassword(candidate);
+  } catch (error) {
+    if (error?.message) {
+      elements.accountStatus.textContent = error.message;
+    }
     verified = false;
   }
-  elements.teacherPassword.value = '';
-  elements.teacherPassword.disabled = false;
+  elements.accountNewPassword.value = '';
+  elements.accountConfirmPassword.value = '';
+  elements.accountPassword.value = '';
+  elements.accountNewPassword.disabled = false;
+  elements.accountConfirmPassword.disabled = false;
+  elements.accountSetupSubmit.disabled = false;
+  elements.accountPassword.disabled = false;
+  elements.accountPasswordSubmit.disabled = false;
 
-  if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+  if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
     return;
   }
 
   if (!verified) {
-    elements.teacherLoginStatus.textContent = 'Das Passwort ist nicht korrekt.';
-    elements.teacherPassword.focus({ preventScroll: true });
+    if (!elements.accountStatus.textContent || elements.accountStatus.textContent.includes('wird')) {
+      elements.accountStatus.textContent = setupMode
+        ? 'Das Passwort konnte nicht gespeichert werden.'
+        : 'Das Passwort ist nicht korrekt.';
+    }
+    elements.accountStatus.dataset.status = 'error';
+    activePassword.focus({ preventScroll: true });
     return;
   }
 
@@ -1073,55 +1192,112 @@ async function authenticateTeacherWithPassword() {
       try {
         await forgetPlatformCredential({ preserveEnrollmentAuthorization: true });
       } catch {
-        completeTeacherLogin(authOperation);
+        completeAuthentication(authOperation);
         return;
       }
-      if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+      if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
         return;
       }
-      elements.teacherEnrollmentButton.textContent = 'Gerätebestätigung neu einrichten';
+      elements.accountEnrollmentButton.textContent = 'Gerätebestätigung neu einrichten';
     }
     teacherAuthVerified = true;
-    elements.teacherLoginStep.hidden = true;
-    elements.teacherEnrollmentStep.hidden = false;
-    elements.teacherLoginStatus.textContent = '';
-    elements.teacherEnrollmentButton.focus({ preventScroll: true });
+    elements.accountSetupStep.hidden = true;
+    elements.accountPasswordStep.hidden = true;
+    elements.accountEnrollmentStep.hidden = false;
+    elements.accountStatus.textContent = '';
+    elements.accountStatus.dataset.status = '';
+    elements.accountEnrollmentButton.focus({ preventScroll: true });
     return;
   }
-  completeTeacherLogin(authOperation);
+  completeAuthentication(authOperation);
 }
 
-function enrollTeacherPlatformCredential() {
+function enrollAccountPlatformCredential() {
   if (!teacherAuthVerified) {
-    elements.teacherLoginStatus.textContent = 'Bitte melde dich erneut mit dem Passwort an.';
+    elements.accountStatus.textContent = 'Bitte melde dich erneut mit dem Passwort an.';
     return;
   }
-  if (elements.teacherEnrollmentButton.disabled) {
+  if (elements.accountEnrollmentButton.disabled) {
     return;
   }
   const authOperation = teacherAuthOperationId;
-  elements.teacherEnrollmentButton.disabled = true;
-  elements.teacherLoginStatus.textContent = 'Gerätebestätigung wird eingerichtet …';
+  elements.accountEnrollmentButton.disabled = true;
+  elements.accountStatus.textContent = 'Gerätebestätigung wird eingerichtet …';
   let enrollment;
   try {
     enrollment = enrollPlatformCredential();
   } catch (error) {
-    elements.teacherEnrollmentButton.disabled = false;
-    elements.teacherLoginStatus.textContent = teacherAuthErrorMessage(error);
+    elements.accountEnrollmentButton.disabled = false;
+    elements.accountStatus.textContent = authenticationErrorMessage(error);
     return;
   }
   enrollment.then(() => {
-    completeTeacherLogin(authOperation);
+    completeAuthentication(authOperation);
   }).catch((error) => {
-    if (authOperation !== teacherAuthOperationId || !elements.teacherLoginDialog.open) {
+    if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
       return;
     }
-    elements.teacherEnrollmentButton.disabled = false;
-    elements.teacherLoginStatus.textContent = error?.code === 'cancelled'
+    elements.accountEnrollmentButton.disabled = false;
+    elements.accountStatus.textContent = error?.code === 'cancelled'
       ? 'Die Einrichtung wurde abgebrochen. Du kannst sie überspringen.'
       : 'Die Gerätebestätigung konnte nicht eingerichtet werden. Du kannst sie überspringen.';
-    elements.teacherEnrollmentSkip.focus({ preventScroll: true });
+    elements.accountEnrollmentSkip.focus({ preventScroll: true });
   });
+}
+
+async function resetLocalAccess() {
+  if (elements.accountResetConfirmation.value !== 'Zurücksetzen') {
+    elements.accountStatus.textContent = 'Bitte gib „Zurücksetzen“ genau wie angezeigt ein.';
+    elements.accountStatus.dataset.status = 'error';
+    elements.accountResetConfirmation.focus({ preventScroll: true });
+    return;
+  }
+  teacherAuthOperationId += 1;
+  accountResetInProgress = true;
+  elements.accountLoginTab.disabled = true;
+  elements.accountResetTab.disabled = true;
+  elements.accountClose.disabled = true;
+  elements.accountResetConfirmation.disabled = true;
+  elements.accountResetSubmit.disabled = true;
+  elements.accountStatus.dataset.status = '';
+  elements.accountStatus.textContent = 'Gespeicherte Aufnahmen und Zugang werden gelöscht …';
+
+  try {
+    await resetMediaStore();
+    gallerySelectedIds.clear();
+    galleryItems = [];
+    galleryLoadId += 1;
+    galleryRenderId += 1;
+    releaseGalleryCardObjectUrls();
+    closeGalleryViewer({ restoreFocus: false });
+    closeDeleteConfirmation({ restoreFocus: false });
+    elements.galleryGrid.replaceChildren();
+    elements.galleryGrid.hidden = true;
+    elements.galleryEmpty.hidden = false;
+    await resetAuthentication();
+  } catch {
+    accountResetInProgress = false;
+    if (elements.accountDialog.open) {
+      elements.accountLoginTab.disabled = false;
+      elements.accountResetTab.disabled = false;
+      elements.accountClose.disabled = false;
+      elements.accountResetConfirmation.disabled = false;
+      elements.accountResetConfirmation.value = '';
+      elements.accountStatus.textContent = 'Das Zurücksetzen konnte nicht vollständig abgeschlossen werden. Bitte versuche es erneut.';
+      elements.accountStatus.dataset.status = 'error';
+      elements.accountResetConfirmation.focus({ preventScroll: true });
+    } else {
+      elements.environmentStatus.textContent = 'Das Zurücksetzen konnte nicht vollständig abgeschlossen werden. Öffne das Zahnrad und versuche es erneut.';
+    }
+    return;
+  }
+
+  accountResetInProgress = false;
+  teacherAuthReady = true;
+  accountSyncChannel?.postMessage({ type: 'reset' });
+  exitTeacherMode({ restoreFocus: false });
+  elements.environmentStatus.textContent = 'Alle gespeicherten Aufnahmen und Anmeldedaten wurden gelöscht. Beim nächsten Anmelden legst du ein neues Passwort fest.';
+  window.setTimeout(() => elements.settingsButton.focus({ preventScroll: true }), 0);
 }
 
 function releaseGalleryCardObjectUrls() {
@@ -1366,7 +1542,7 @@ async function loadGallery() {
 
 function openGallery() {
   if (!teacherMode) {
-    openTeacherLogin();
+    openAccountDialog();
     return;
   }
   gallerySelectedIds.clear();
@@ -1681,13 +1857,13 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
   annotation.close({ restoreFocus: false });
   closeGalleryViewer({ restoreFocus: false });
   closeDeleteConfirmation({ restoreFocus: false });
-  closeModal(elements.teacherLoginDialog);
+  closeModal(elements.accountDialog);
   elements.galleryGrid.replaceChildren();
   elements.galleryEmpty.hidden = false;
-  updateTeacherModeUI();
-  setView('start');
+  updateProtectedAccessUI();
+  cleanupMedia({ nextView: 'start' });
   if (restoreFocus) {
-    window.setTimeout(() => elements.teacherModeButton.focus({ preventScroll: true }), 0);
+    window.setTimeout(() => elements.settingsButton.focus({ preventScroll: true }), 0);
   }
 }
 
@@ -1742,13 +1918,7 @@ elements.comparisonAnnotationButton.addEventListener('click', () => {
   );
 });
 
-elements.teacherModeButton.addEventListener('click', () => {
-  if (teacherMode) {
-    exitTeacherMode();
-  } else {
-    openTeacherLogin();
-  }
-});
+elements.settingsButton.addEventListener('click', openAccountDialog);
 elements.galleryEntry.addEventListener('click', openGallery);
 elements.galleryBack.addEventListener('click', () => {
   galleryLoadId += 1;
@@ -1760,32 +1930,72 @@ elements.galleryBack.addEventListener('click', () => {
   elements.galleryEntry.focus({ preventScroll: true });
 });
 
-elements.teacherLoginForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  void authenticateTeacherWithPassword();
+elements.accountLoginTab.addEventListener('click', () => selectAccountPanel('login'));
+elements.accountResetTab.addEventListener('click', () => selectAccountPanel('reset'));
+[elements.accountLoginTab, elements.accountResetTab].forEach((tab) => {
+  tab.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const showReset = event.key === 'Home'
+      ? false
+      : event.key === 'End'
+        ? true
+        : tab === elements.accountLoginTab;
+    selectAccountPanel(showReset ? 'reset' : 'login', { focus: false });
+    (showReset ? elements.accountResetTab : elements.accountLoginTab).focus();
+  });
 });
-elements.teacherBiometricButton.addEventListener('click', authenticateTeacherWithPlatform);
-elements.teacherEnrollmentButton.addEventListener('click', enrollTeacherPlatformCredential);
-elements.teacherEnrollmentSkip.addEventListener('click', () => {
+elements.accountLoginForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void submitAccountLogin();
+});
+elements.accountBiometricButton.addEventListener('click', authenticateWithDevice);
+elements.accountEnrollmentButton.addEventListener('click', enrollAccountPlatformCredential);
+elements.accountEnrollmentSkip.addEventListener('click', () => {
   if (teacherAuthVerified) {
-    completeTeacherLogin();
+    completeAuthentication();
   }
 });
-elements.teacherLoginCancel.addEventListener('click', () => {
-  closeModal(elements.teacherLoginDialog);
-  elements.teacherModeButton.focus({ preventScroll: true });
+elements.accountLogout.addEventListener('click', () => exitTeacherMode());
+elements.accountResetConfirmation.addEventListener('input', () => {
+  elements.accountResetSubmit.disabled = elements.accountResetConfirmation.value !== 'Zurücksetzen';
+  elements.accountStatus.textContent = '';
+  elements.accountStatus.dataset.status = '';
 });
-elements.teacherLoginDialog.addEventListener('close', () => {
+elements.accountResetForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void resetLocalAccess();
+});
+elements.accountClose.addEventListener('click', () => {
+  if (accountResetInProgress) {
+    return;
+  }
+  closeModal(elements.accountDialog);
+  elements.settingsButton.focus({ preventScroll: true });
+});
+elements.accountDialog.addEventListener('close', () => {
   teacherAuthOperationId += 1;
   teacherAuthVerified = false;
-  elements.teacherPassword.value = '';
-  elements.teacherPassword.disabled = false;
-  elements.teacherLoginStatus.textContent = '';
+  elements.accountLoginForm.reset();
+  elements.accountResetForm.reset();
+  elements.accountNewPassword.disabled = false;
+  elements.accountConfirmPassword.disabled = false;
+  elements.accountPassword.disabled = false;
+  elements.accountResetConfirmation.disabled = false;
+  elements.accountStatus.textContent = '';
+  elements.accountStatus.dataset.status = '';
 });
-elements.teacherLoginDialog.addEventListener('click', (event) => {
-  if (event.target === elements.teacherLoginDialog) {
-    closeModal(elements.teacherLoginDialog);
-    elements.teacherModeButton.focus({ preventScroll: true });
+elements.accountDialog.addEventListener('cancel', (event) => {
+  if (accountResetInProgress) {
+    event.preventDefault();
+  }
+});
+elements.accountDialog.addEventListener('click', (event) => {
+  if (event.target === elements.accountDialog && !accountResetInProgress) {
+    closeModal(elements.accountDialog);
+    elements.settingsButton.focus({ preventScroll: true });
   }
 });
 
@@ -2034,10 +2244,20 @@ elements.galleryViewerVideo.addEventListener('error', () => {
 elements.galleryViewerVideo.addEventListener('contextmenu', (event) => event.preventDefault());
 elements.galleryViewerPhoto.addEventListener('contextmenu', (event) => event.preventDefault());
 
+accountSyncChannel?.addEventListener('message', (event) => {
+  if (event.data?.type !== 'reset') {
+    return;
+  }
+  teacherAuthOperationId += 1;
+  teacherAuthReady = false;
+  exitTeacherMode({ restoreFocus: false });
+  window.location.reload();
+});
+
 window.addEventListener('pagehide', () => {
   teacherAuthOperationId += 1;
   teacherAuthVerified = false;
-  closeModal(elements.teacherLoginDialog);
+  closeModal(elements.accountDialog);
   cleanupMedia({ nextView: 'start' });
   if (teacherMode) {
     exitTeacherMode({ restoreFocus: false });
@@ -2046,7 +2266,7 @@ window.addEventListener('pagehide', () => {
 window.addEventListener('beforeunload', () => {
   teacherAuthOperationId += 1;
   teacherAuthVerified = false;
-  closeModal(elements.teacherLoginDialog);
+  closeModal(elements.accountDialog);
   cleanupMedia({ nextView: 'start' });
   if (teacherMode) {
     exitTeacherMode({ restoreFocus: false });
@@ -2060,7 +2280,7 @@ document.addEventListener('visibilitychange', () => {
     if (teacherMode) {
       exitTeacherMode({ restoreFocus: false });
     } else {
-      closeModal(elements.teacherLoginDialog);
+      closeModal(elements.accountDialog);
     }
   }
 });
@@ -2069,14 +2289,14 @@ function initialize() {
   cleanupMedia({ nextView: 'start' });
   teacherMode = false;
   teacherAuthReady = false;
-  elements.teacherModeButton.disabled = true;
-  updateTeacherModeUI();
+  elements.settingsButton.disabled = true;
+  updateProtectedAccessUI();
   preloadTeacherAuth().then(() => {
     teacherAuthReady = true;
-    elements.teacherModeButton.disabled = false;
+    elements.settingsButton.disabled = false;
   }).catch(() => {
     teacherAuthReady = true;
-    elements.teacherModeButton.disabled = false;
+    elements.settingsButton.disabled = false;
   });
   const supportMessage = browserSupportMessage('photo');
   if (supportMessage) {

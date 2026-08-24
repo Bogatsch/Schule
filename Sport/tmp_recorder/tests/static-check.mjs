@@ -20,6 +20,7 @@ const requiredFiles = [
   'README.md',
   'tests/static-check.mjs',
   'tests/media-store.test.mjs',
+  'tests/auth.test.mjs',
   'tests/browser-smoke.mjs',
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
@@ -106,10 +107,9 @@ assert.match(html, /id="photo-save-button"[^>]*>\s*<span[^>]*aria-hidden="true"[
 assert.match(html, /id="video-save-button"[^>]*>\s*<span[^>]*aria-hidden="true"[^>]*><\/span>\s*<\/button>/, 'Video-Speichern muss eine reine Symboltaste sein');
 assert.doesNotMatch(html, /id="(?:photo|video)-download-button"/, 'In der Aufnahmeansicht ist noch ein Download-Button vorhanden');
 assert.doesNotMatch(html, /<dialog id="download-dialog"/, 'Alter Download-Namensdialog ist noch vorhanden');
-assert.match(html, /id="teacher-mode-button"/, 'Taste für den Lehrermodus fehlt');
-assert.match(html, /id="teacher-mode-label"/, 'Statusbeschriftung des Lehrermodus fehlt');
-assert.match(html, /id="teacher-mode-description"/, 'Beschreibung des Lehrermodus fehlt');
-assert.match(html, /id="gallery-entry"[^>]*hidden/, 'Galerie-Einstieg muss außerhalb des Lehrermodus verborgen sein');
+assert.match(html, /id="settings-button"/, 'Zahnrad für Anmeldung und Einstellungen fehlt');
+assert.match(html, /id="settings-button"[^>]*aria-label="Anmeldung und Einstellungen öffnen"/, 'Zahnrad ist nicht zugänglich beschriftet');
+assert.match(html, /id="gallery-entry"[^>]*hidden/, 'Galerie-Einstieg muss außerhalb der Anmeldung verborgen sein');
 assert.match(html, /id="gallery-view"[^>]*hidden/, 'Galerieansicht fehlt oder ist anfangs sichtbar');
 assert.match(html, /id="gallery-back"/, 'Zurück-Taste der Galerie fehlt');
 assert.match(html, /id="gallery-grid"/, 'Galerieraster fehlt');
@@ -118,16 +118,23 @@ assert.match(html, /id="gallery-storage-status"/, 'Speicherstatus der Galerie fe
 assert.match(html, /id="gallery-select-all"/, 'Alles-auswählen-Kontrollfeld fehlt');
 assert.match(html, /id="gallery-selection-count"/, 'Auswahlzähler der Galerie fehlt');
 assert.match(html, /id="gallery-delete-selected"[^>]*disabled/, 'Mehrfachlöschung muss ohne Auswahl deaktiviert sein');
-assert.match(html, /<dialog id="teacher-login-dialog"/, 'Anmeldedialog für den Lehrermodus fehlt');
-assert.match(html, /id="teacher-login-form"/, 'Anmeldeformular für den Lehrermodus fehlt');
-assert.match(html, /id="teacher-biometric-section"/, 'Bereich für die Gerätebestätigung fehlt');
-assert.match(html, /id="teacher-biometric-button"/, 'Taste für die Gerätebestätigung fehlt');
-assert.match(html, /id="teacher-password"[^>]*type="password"/, 'verdecktes Passwortfeld fehlt');
-assert.match(html, /id="teacher-login-status"/, 'Anmeldestatus fehlt');
-assert.match(html, /id="teacher-login-cancel"/, 'Abbruch der Anmeldung fehlt');
-assert.match(html, /id="teacher-enrollment-step"/, 'Einrichtungsschritt für die Gerätebestätigung fehlt');
-assert.match(html, /id="teacher-enrollment-button"/, 'Taste zum Einrichten der Gerätebestätigung fehlt');
-assert.match(html, /id="teacher-enrollment-skip"/, 'Überspringen der Gerätebestätigung fehlt');
+assert.match(html, /<dialog id="account-dialog"/, 'Pop-up für Anmeldung und Zurücksetzen fehlt');
+assert.match(html, /id="account-login-tab"[^>]*>Anmelden</, 'Anmelden-Option im Zahnrad-Pop-up fehlt');
+assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-Option im Zahnrad-Pop-up fehlt');
+assert.match(html, /id="account-login-form"/, 'Allgemeines Anmeldeformular fehlt');
+assert.match(html, /id="account-new-password"[^>]*type="password"/, 'Feld zur ersten Passwortvergabe fehlt');
+assert.match(html, /id="account-confirm-password"[^>]*type="password"/, 'Passwortbestätigung fehlt');
+assert.match(html, /id="account-password"[^>]*type="password"/, 'verdecktes Anmeldepasswort fehlt');
+assert.match(html, /id="account-biometric-section"/, 'Bereich für die Gerätebestätigung fehlt');
+assert.match(html, /id="account-biometric-button"/, 'Taste für die Gerätebestätigung fehlt');
+assert.match(html, /id="account-enrollment-step"/, 'Einrichtungsschritt für die Gerätebestätigung fehlt');
+assert.match(html, /id="account-enrollment-button"/, 'Taste zum Einrichten der Gerätebestätigung fehlt');
+assert.match(html, /id="account-enrollment-skip"/, 'Überspringen der Gerätebestätigung fehlt');
+assert.match(html, /id="account-reset-confirmation"/, 'Bestätigungsfeld für den Komplett-Reset fehlt');
+assert.match(html, /id="account-reset-submit"[^>]*disabled/, 'Komplett-Reset muss zunächst deaktiviert sein');
+assert.match(html, /Zum Bestätigen „Zurücksetzen“ eingeben/, 'Reset verlangt nicht das Bestätigungswort');
+assert.match(html, /alle gespeicherten Fotos und Videos unwiderruflich gelöscht/, 'Reset warnt nicht vor der Medienlöschung');
+assert.doesNotMatch(html, /Lehrermodus|teacher-login|teacher-mode/i, 'Oberfläche enthält noch einen Lehrerlogin');
 assert.match(html, /<dialog id="gallery-viewer-dialog"/, 'Betrachter der Galerie fehlt');
 assert.match(html, /id="gallery-viewer-photo"/, 'Fotobetrachter der Galerie fehlt');
 assert.match(html, /id="gallery-viewer-video"[^>]*\smuted(?:\s|=|>)/, 'Videobetrachter der Galerie muss stumm sein');
@@ -152,8 +159,8 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=29/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=29/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=30/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=30/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -167,8 +174,12 @@ assert.match(app, /listMedia/, 'Laden der lokalen Galerie fehlt');
 assert.match(app, /getMedia/, 'Öffnen eines Galerieeintrags fehlt');
 assert.match(app, /deleteMedia/, 'Löschen aus der lokalen Galerie fehlt');
 assert.match(app, /requestPersistentStorage/, 'Anfrage für bestmögliche dauerhafte Speicherung fehlt');
-assert.match(app, /verifyTeacherPassword/, 'Passwortprüfung des Lehrermodus ist nicht verbunden');
-assert.match(app, /authenticateWithPlatform/, 'Gerätebestätigung des Lehrermodus ist nicht verbunden');
+assert.match(app, /setInitialPassword/, 'Erstmalige lokale Passwortvergabe ist nicht verbunden');
+assert.match(app, /verifyPassword/, 'Lokale Passwortprüfung ist nicht verbunden');
+assert.match(app, /resetAuthentication/, 'Zurücksetzen der lokalen Anmeldung ist nicht verbunden');
+assert.match(app, /resetMediaStore/, 'Komplettlöschung der Galerie ist nicht verbunden');
+assert.match(app, /BroadcastChannel\('sportkamera-account-v1'\)/, 'Komplett-Reset wird nicht an weitere offene App-Fenster gemeldet');
+assert.match(app, /authenticateWithPlatform/, 'Gerätebestätigung der Anmeldung ist nicht verbunden');
 assert.match(app, /enrollPlatformCredential/, 'Einrichtung der Gerätebestätigung ist nicht verbunden');
 assert.match(app, /gallerySelectedIds|selectedGalleryIds/, 'Mehrfachauswahl der Galerie fehlt');
 assert.match(app, /galleryDeleteDialog\.showModal|galleryDeleteDialog\?\.showModal/, 'Löschen verlangt keine modale Bestätigung');
@@ -238,6 +249,9 @@ assert.match(mediaStore, /removeEntry/, 'OPFS-Löschung fehlt');
 assert.match(mediaStore, /indexedDB\.open/, 'IndexedDB-Fallback für ältere Safari-Versionen fehlt');
 assert.match(mediaStore, /FileSystemFileHandle[\s\S]*createWritable/, 'OPFS-Unterstützung wird nicht auf Schreibfähigkeit geprüft');
 assert.match(mediaStore, /export async function requestPersistentStorage/, 'Schnittstelle für bestmögliche dauerhafte Speicherung fehlt');
+assert.match(mediaStore, /export async function resetMediaStore/, 'Schnittstelle für vollständige Medienlöschung fehlt');
+assert.match(mediaStore, /IDB_METADATA_STORE[\s\S]*\.clear\(\)/, 'IndexedDB-Metadaten werden beim Reset nicht geleert');
+assert.match(mediaStore, /removeEntry\(STORE_DIRECTORY, \{ recursive: true \}\)/, 'OPFS-Medien werden beim Reset nicht vollständig entfernt');
 assert.match(mediaStore, /storage\.persist\(\)/, 'bestmögliche dauerhafte Speicherung wird nicht angefragt');
 assert.match(mediaStore, /createdAt/, 'Zeitstempel für die Galeriesortierung fehlt');
 assert.match(mediaStore, /records\.sort\([\s\S]*right\.createdAtMs\s*-\s*left\.createdAtMs/, 'Galerie wird nicht mit den neuesten Aufnahmen zuerst sortiert');
@@ -252,9 +266,14 @@ assert.match(teacherAuth, /crypto\.subtle\.verify/, 'WebAuthn-Signatur wird nich
 assert.match(teacherAuth, /indexedDB\.open/, 'IndexedDB-Fallback der Lehreranmeldung fehlt');
 assert.match(teacherAuth, /FileSystemFileHandle[\s\S]*createWritable/, 'Auth-Speicher prüft OPFS nicht auf Schreibfähigkeit');
 assert.match(teacherAuth, /authorization-required/, 'WebAuthn-Einrichtung ist nicht an eine Passwortprüfung gebunden');
+assert.match(teacherAuth, /export async function setInitialPassword/, 'Erstmalige Passwortvergabe fehlt');
+assert.match(teacherAuth, /randomBytes\(16\)/, 'Passwortvergabe verwendet keinen zufälligen Salt');
+assert.match(teacherAuth, /export async function verifyPassword/, 'Prüfung des selbst vergebenen Passworts fehlt');
+assert.match(teacherAuth, /export async function resetAuthentication/, 'Vollständiges Zurücksetzen der Anmeldung fehlt');
+assert.doesNotMatch(teacherAuth, /PASSWORD_(?:SALT|DERIVED)_BASE64/, 'Ein statischer Passwortprüfwert ist noch vorhanden');
 
 const passwordScanFiles = requiredFiles.filter((file) => /\.(?:html|css|js|mjs|json|md|webmanifest)$/.test(file));
-const optionalPlaintextPassword = process.env.SPORTKAMERA_TEST_TEACHER_PASSWORD || '';
+const optionalPlaintextPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
 if (optionalPlaintextPassword) {
   await Promise.all(passwordScanFiles.map(async (file) => {
     assert.ok(!(await read(file)).includes(optionalPlaintextPassword), `${file} enthält das Klartextpasswort`);
@@ -265,8 +284,7 @@ assert.doesNotMatch(
   /(?:plain|clear|raw)[_-]?password\s*=/i,
   'Lehreranmeldung enthält eine Klartextpasswort-Konstante'
 );
-assert.match(teacherAuth, /PASSWORD_SALT_BASE64/, 'Salt der Passwortableitung fehlt');
-assert.match(teacherAuth, /PASSWORD_DERIVED_BASE64/, 'abgeleiteter Passwortprüfwert fehlt');
+assert.match(teacherAuth, /derivedKey/, 'lokal gespeicherter abgeleiteter Passwortprüfwert fehlt');
 assert.match(app, /audio:\s*false/, 'Mikrofon muss ausdrücklich deaktiviert sein');
 assert.match(app, /URL\.revokeObjectURL/, 'Object URLs werden nicht freigegeben');
 assert.match(app, /mediaChunks\.splice/, 'Recorder-Fragmente werden nicht zentral geleert');
@@ -285,11 +303,11 @@ assert.match(app, /frameRate:\s*\{ ideal: 30 \}/, 'ideale Bildrate fehlt');
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /sportkamera-shell-[\s\S]*v29|CACHE_PREFIX\}v29/, 'Cache-Version v29 fehlt');
-assert.match(worker, /\.\/app\.js\?v=29/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=29/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/media-store\.js\?v=29/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/teacher-auth\.js\?v=29/, 'versionierte Lehreranmeldung fehlt in der statischen App-Shell');
+assert.match(worker, /sportkamera-shell-[\s\S]*v30|CACHE_PREFIX\}v30/, 'Cache-Version v30 fehlt');
+assert.match(worker, /\.\/app\.js\?v=30/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=30/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/media-store\.js\?v=30/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/teacher-auth\.js\?v=30/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
 assert.doesNotMatch(worker, /\.put\s*\(/, 'Service Worker darf Laufzeitdaten nicht dynamisch cachen');
 assert.doesNotMatch(worker, /blob:/i, 'Service Worker darf keine Blob-Adresse enthalten');
 assert.doesNotMatch(worker, /sportkamera-media-v1/, 'Service Worker darf das OPFS-Medienverzeichnis nicht cachen');
@@ -306,7 +324,9 @@ assert.match(styles, /env\(safe-area-inset-top\)/, 'sichere iPad-Bildschirmränd
 assert.match(styles, /orientation:\s*landscape/, 'Querformat-Anpassung fehlt');
 assert.match(styles, /prefers-reduced-motion/, 'Bewegungsreduktion fehlt');
 assert.match(styles, /\.save-icon-button/, 'Symboltaste zum lokalen Speichern ist nicht gestaltet');
-assert.match(styles, /\.teacher-mode-entry/, 'Lehrermodus-Taste ist nicht gestaltet');
+assert.match(styles, /\.settings-button/, 'Zahnrad-Taste ist nicht gestaltet');
+assert.match(styles, /\.account-tabs/, 'Anmelden-/Zurücksetzen-Auswahl ist nicht gestaltet');
+assert.match(styles, /\.account-dialog/, 'Anmeldungs-Pop-up ist nicht gestaltet');
 assert.match(styles, /\.gallery-card/, 'Galeriekarten sind nicht gestaltet');
 assert.match(styles, /\.gallery-card-selection/, 'Mehrfachauswahl der Galeriekarten ist nicht gestaltet');
 assert.match(styles, /\.gallery-viewer-dialog/, 'Galeriebetrachter ist nicht gestaltet');

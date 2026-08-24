@@ -1,7 +1,7 @@
 {
   "name": "Sportkamera – direktes Bewegungsfeedback",
   "short_name": "Sportkamera",
-  "description": "Fotos und Videos lokal aufnehmen, in der Lehrergalerie speichern und direkt auswerten – ohne Upload.",
+  "description": "Fotos und Videos lokal aufnehmen, in der geschützten Galerie speichern und direkt auswerten – ohne Upload.",
   "lang": "de-DE",
   "id": "./",
   "start_url": "./",

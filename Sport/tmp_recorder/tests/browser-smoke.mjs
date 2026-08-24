@@ -113,7 +113,7 @@ await new Promise((resolve, reject) => {
 });
 const appPort = webServer.address().port;
 const appUrl = `http://127.0.0.1:${appPort}/`;
-const teacherPassword = process.env.SPORTKAMERA_TEST_TEACHER_PASSWORD || '';
+const testPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
 
 const debugPortServer = createServer();
 await new Promise((resolve, reject) => {
@@ -710,21 +710,28 @@ try {
   assert.equal(await evaluate(`document.querySelector('#photo-preview').getAttribute('src')`), null);
   results.push('Neuladen stellt keine frühere Aufnahme wieder her');
 
-  if (teacherPassword) {
-    await waitFor(`!document.querySelector('#teacher-mode-button').disabled`);
-    await click('#teacher-mode-button');
-    await waitFor(`document.querySelector('#teacher-login-dialog').open`);
+  if (testPassword) {
+    await waitFor(`!document.querySelector('#settings-button').disabled`);
+    await click('#settings-button');
+    await waitFor(`document.querySelector('#account-dialog').open`);
+    const setupRequired = await evaluate(`!document.querySelector('#account-setup-step').hidden`);
     await evaluate(`(() => {
-      document.querySelector('#teacher-password').value = ${JSON.stringify(teacherPassword)};
+      const password = ${JSON.stringify(testPassword)};
+      if (!document.querySelector('#account-setup-step').hidden) {
+        document.querySelector('#account-new-password').value = password;
+        document.querySelector('#account-confirm-password').value = password;
+      } else {
+        document.querySelector('#account-password').value = password;
+      }
     })()`);
-    await click('#teacher-login-form button[type="submit"]');
-    await waitFor(`document.querySelector('#teacher-mode-button').getAttribute('aria-pressed') === 'true'
-      || !document.querySelector('#teacher-enrollment-step').hidden`);
-    if (await evaluate(`!document.querySelector('#teacher-enrollment-step').hidden`)) {
-      await click('#teacher-enrollment-skip');
+    await click(setupRequired ? '#account-setup-submit' : '#account-password-submit');
+    await waitFor(`!document.querySelector('#account-dialog').open
+      || !document.querySelector('#account-enrollment-step').hidden`);
+    if (await evaluate(`document.querySelector('#account-dialog').open
+      && !document.querySelector('#account-enrollment-step').hidden`)) {
+      await click('#account-enrollment-skip');
     }
-    await waitFor(`document.querySelector('#teacher-mode-button').getAttribute('aria-pressed') === 'true'
-      && !document.querySelector('#gallery-entry').hidden`);
+    await waitFor(`!document.querySelector('#gallery-entry').hidden`);
     await click('#gallery-entry');
     await waitFor(`document.body.dataset.view === 'gallery'
       && document.querySelectorAll('.gallery-card').length >= 2`);
@@ -771,7 +778,23 @@ try {
     await click('#gallery-delete-confirm');
     await waitFor(`document.querySelectorAll('.gallery-card').length === 0
       && !document.querySelector('#gallery-empty').hidden`);
-    results.push('Lehrermodus, persistente Galerie, Einzel-Download, Annotation und Mehrfachlöschung');
+    await click('#settings-button');
+    await waitFor(`document.querySelector('#account-dialog').open`);
+    await click('#account-reset-tab');
+    await evaluate(`(() => {
+      const confirmation = document.querySelector('#account-reset-confirmation');
+      confirmation.value = 'Zurücksetzen';
+      confirmation.dispatchEvent(new Event('input', { bubbles: true }));
+    })()`);
+    await waitFor(`!document.querySelector('#account-reset-submit').disabled`);
+    await click('#account-reset-submit');
+    await waitFor(`!document.querySelector('#account-dialog').open
+      && document.querySelector('#gallery-entry').hidden`);
+    await click('#settings-button');
+    await waitFor(`document.querySelector('#account-dialog').open
+      && !document.querySelector('#account-setup-step').hidden`);
+    await click('#account-close');
+    results.push('Eigene Passwortvergabe, geschützte Galerie, Download, Annotation, Mehrfachlöschung und Komplett-Reset');
   }
 
   const workerState = await evaluate(`navigator.serviceWorker.ready.then((registration) => ({

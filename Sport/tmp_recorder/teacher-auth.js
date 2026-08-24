@@ -1,19 +1,21 @@
 const AUTH_SCHEMA_VERSION = 1;
 const AUTH_DIRECTORY = 'sportkamera-teacher-auth-v1';
 const AUTH_RECORD_FILE = 'credential.json';
+const PASSWORD_RECORD_FILE = 'password.json';
 const ES256_ALGORITHM = -7;
 const AUTH_TIMEOUT_MS = 60_000;
 const ENROLLMENT_AUTHORIZATION_MS = 2 * 60 * 1000;
 const PASSWORD_ITERATIONS = 600_000;
-const PASSWORD_SALT_BASE64 = 'w+Btb6TuBJSv0E3zoufpDA==';
-const PASSWORD_DERIVED_BASE64 = 'pzkSK0syubbN/N9H2H0WTaluJQR+8xPalMdNHAd2H70=';
+const PASSWORD_MIN_LENGTH = 6;
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 const AUTH_IDB_DATABASE = 'sportkamera-teacher-auth-idb-v1';
 const AUTH_IDB_DATABASE_VERSION = 1;
 const AUTH_IDB_STORE = 'credential';
 const AUTH_IDB_KEY = 'active';
+const PASSWORD_IDB_KEY = 'password';
 
 let cachedCredentialRecord;
+let cachedPasswordRecord;
 let cachedPlatformAvailability;
 let preloadPromise = null;
 let authDatabasePromise = null;
@@ -221,6 +223,69 @@ async function deleteCredentialRecordFromIndexedDb() {
   return existing !== undefined;
 }
 
+function normalizePasswordRecord(value) {
+  if (
+    !value
+      || typeof value !== 'object'
+      || value.schemaVersion !== AUTH_SCHEMA_VERSION
+      || typeof value.salt !== 'string'
+      || !BASE64URL_PATTERN.test(value.salt)
+      || typeof value.derivedKey !== 'string'
+      || !BASE64URL_PATTERN.test(value.derivedKey)
+      || value.iterations !== PASSWORD_ITERATIONS
+      || typeof value.createdAt !== 'string'
+      || Number.isNaN(Date.parse(value.createdAt))
+  ) {
+    return null;
+  }
+  try {
+    if (decodeBase64(value.salt, { url: true }).length !== 16) {
+      return null;
+    }
+    if (decodeBase64(value.derivedKey, { url: true }).length !== 32) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+  return {
+    schemaVersion: AUTH_SCHEMA_VERSION,
+    salt: value.salt,
+    derivedKey: value.derivedKey,
+    iterations: PASSWORD_ITERATIONS,
+    createdAt: value.createdAt
+  };
+}
+
+async function readPasswordRecordFromIndexedDb() {
+  const database = await openAuthDatabase();
+  const transaction = database.transaction(AUTH_IDB_STORE, 'readonly');
+  const completion = idbTransactionCompletion(transaction);
+  const request = transaction.objectStore(AUTH_IDB_STORE).get(PASSWORD_IDB_KEY);
+  const [record] = await Promise.all([idbRequestResult(request), completion]);
+  return normalizePasswordRecord(record);
+}
+
+async function writePasswordRecordToIndexedDb(record) {
+  const database = await openAuthDatabase();
+  const transaction = database.transaction(AUTH_IDB_STORE, 'readwrite');
+  const completion = idbTransactionCompletion(transaction);
+  transaction.objectStore(AUTH_IDB_STORE).put(record, PASSWORD_IDB_KEY);
+  await completion;
+}
+
+async function deletePasswordRecordFromIndexedDb() {
+  const database = await openAuthDatabase();
+  const transaction = database.transaction(AUTH_IDB_STORE, 'readwrite');
+  const completion = idbTransactionCompletion(transaction);
+  const store = transaction.objectStore(AUTH_IDB_STORE);
+  const existingRequest = store.get(PASSWORD_IDB_KEY);
+  const existingResult = idbRequestResult(existingRequest);
+  store.delete(PASSWORD_IDB_KEY);
+  const [existing] = await Promise.all([existingResult, completion]);
+  return existing !== undefined;
+}
+
 async function detectPlatformAuthenticator() {
   if (!isWebAuthnApiSupported()) {
     return false;
@@ -324,6 +389,50 @@ async function deleteCredentialRecordFromOpfs() {
   }
 }
 
+async function readPasswordRecordFromOpfs() {
+  try {
+    const directory = await getAuthDirectory({ create: false });
+    const handle = await directory.getFileHandle(PASSWORD_RECORD_FILE);
+    const file = await handle.getFile();
+    if (!file.size || file.size > 8 * 1024) {
+      return null;
+    }
+    return normalizePasswordRecord(JSON.parse(await file.text()));
+  } catch {
+    return null;
+  }
+}
+
+async function writePasswordRecordToOpfs(record) {
+  const directory = await getAuthDirectory({ create: true });
+  const handle = await directory.getFileHandle(PASSWORD_RECORD_FILE, { create: true });
+  const writable = await handle.createWritable();
+  try {
+    await writable.write(JSON.stringify(record));
+    await writable.close();
+  } catch (error) {
+    try {
+      await writable.abort();
+    } catch {
+      // Das ursprüngliche Schreibproblem wird weitergereicht.
+    }
+    throw new TeacherAuthError('storage-write-failed', 'Das Passwort konnte nicht gespeichert werden.', error);
+  }
+}
+
+async function deletePasswordRecordFromOpfs() {
+  try {
+    const directory = await getAuthDirectory({ create: false });
+    await directory.removeEntry(PASSWORD_RECORD_FILE);
+    return true;
+  } catch (error) {
+    if (error?.name === 'NotFoundError') {
+      return false;
+    }
+    throw error;
+  }
+}
+
 function credentialRecordRecency(record) {
   if (!record) {
     return -1;
@@ -389,6 +498,78 @@ async function readCredentialRecord() {
   return null;
 }
 
+async function readPasswordRecord() {
+  if (!isAuthStorageSupported()) {
+    return null;
+  }
+
+  const [opfsRecord, indexedDbRecord] = await Promise.all([
+    hasWritableOpfsBackend() ? readPasswordRecordFromOpfs() : Promise.resolve(null),
+    hasIndexedDbBackend()
+      ? readPasswordRecordFromIndexedDb().catch(() => null)
+      : Promise.resolve(null)
+  ]);
+  const indexedDbIsNewer = Boolean(
+    indexedDbRecord
+      && (!opfsRecord || Date.parse(indexedDbRecord.createdAt) > Date.parse(opfsRecord.createdAt))
+  );
+
+  if (indexedDbIsNewer && hasWritableOpfsBackend()) {
+    try {
+      await writePasswordRecordToOpfs(indexedDbRecord);
+      cachedAuthStorageBackend = 'opfs';
+      try {
+        await deletePasswordRecordFromIndexedDb();
+      } catch {
+        // Die gültige OPFS-Kopie bleibt maßgeblich.
+      }
+      return indexedDbRecord;
+    } catch {
+      cachedAuthStorageBackend = 'indexeddb';
+      return indexedDbRecord;
+    }
+  }
+
+  if (opfsRecord) {
+    cachedAuthStorageBackend = 'opfs';
+    if (indexedDbRecord?.derivedKey === opfsRecord.derivedKey) {
+      try {
+        await deletePasswordRecordFromIndexedDb();
+      } catch {
+        // Eine identische alte Kopie beeinträchtigt die Anmeldung nicht.
+      }
+    }
+    return opfsRecord;
+  }
+  if (indexedDbRecord) {
+    cachedAuthStorageBackend = 'indexeddb';
+    return indexedDbRecord;
+  }
+  return null;
+}
+
+async function writePasswordRecord(record) {
+  const normalized = normalizePasswordRecord(record);
+  if (!normalized) {
+    throw new TeacherAuthError('invalid-password-record', 'Die lokale Passwortinformation ist ungültig.');
+  }
+  try {
+    const backend = authStorageBackend();
+    if (backend === 'indexeddb') {
+      await writePasswordRecordToIndexedDb(normalized);
+    } else {
+      await writePasswordRecordToOpfs(normalized);
+    }
+    cachedAuthStorageBackend = backend;
+    cachedPasswordRecord = normalized;
+  } catch (error) {
+    if (error instanceof TeacherAuthError && error.code === 'storage-write-failed') {
+      throw error;
+    }
+    throw new TeacherAuthError('storage-write-failed', 'Das Passwort konnte nicht gespeichert werden.', error);
+  }
+}
+
 async function writeCredentialRecord(record) {
   const normalized = normalizeCredentialRecord(record);
   if (!normalized) {
@@ -420,9 +601,14 @@ export async function preloadTeacherAuth() {
   if (preloadPromise) {
     return preloadPromise;
   }
-  preloadPromise = Promise.all([readCredentialRecord(), detectPlatformAuthenticator()])
-    .then(([record, platformAvailable]) => {
-      cachedCredentialRecord = record;
+  preloadPromise = Promise.all([
+    readCredentialRecord(),
+    readPasswordRecord(),
+    detectPlatformAuthenticator()
+  ])
+    .then(([credentialRecord, passwordRecord, platformAvailable]) => {
+      cachedCredentialRecord = credentialRecord;
+      cachedPasswordRecord = passwordRecord;
       cachedPlatformAvailability = platformAvailable;
       return getTeacherAuthState();
     });
@@ -431,16 +617,23 @@ export async function preloadTeacherAuth() {
 
 export function getTeacherAuthState() {
   return {
-    ready: cachedCredentialRecord !== undefined && cachedPlatformAvailability !== undefined,
+    ready: cachedCredentialRecord !== undefined
+      && cachedPasswordRecord !== undefined
+      && cachedPlatformAvailability !== undefined,
     platformAvailable: cachedPlatformAvailability === true,
-    platformEnrolled: Boolean(cachedCredentialRecord),
+    platformEnrolled: Boolean(cachedCredentialRecord && cachedPasswordRecord),
+    passwordConfigured: Boolean(cachedPasswordRecord),
     passwordAvailable: Boolean(globalThis.crypto?.subtle),
     storageAvailable: isAuthStorageSupported()
   };
 }
 
 function requireReadyPlatformAuth({ requireRecord = false } = {}) {
-  if (cachedCredentialRecord === undefined || cachedPlatformAvailability === undefined) {
+  if (
+    cachedCredentialRecord === undefined
+      || cachedPasswordRecord === undefined
+      || cachedPlatformAvailability === undefined
+  ) {
     throw new TeacherAuthError('not-ready', 'Die Geräteanmeldung wird noch vorbereitet.');
   }
   if (!cachedPlatformAvailability || !isWebAuthnApiSupported()) {
@@ -449,7 +642,7 @@ function requireReadyPlatformAuth({ requireRecord = false } = {}) {
   if (!isAuthStorageSupported()) {
     throw new TeacherAuthError('storage-unavailable', 'Privater App-Speicher ist nicht verfügbar.');
   }
-  if (requireRecord && !cachedCredentialRecord) {
+  if (requireRecord && (!cachedCredentialRecord || !cachedPasswordRecord)) {
     throw new TeacherAuthError('not-enrolled', 'Für dieses App-Profil ist noch keine Geräteanmeldung eingerichtet.');
   }
 }
@@ -630,7 +823,7 @@ export async function enrollPlatformCredential() {
       publicKey: {
         challenge,
         rp: { id: getRpId(), name: 'Sportkamera' },
-        user: { id: userId, name: 'lehrkraft@lokal', displayName: 'Lehrkraft' },
+        user: { id: userId, name: 'sportkamera@lokal', displayName: 'Sportkamera-Zugang' },
         pubKeyCredParams: [{ type: 'public-key', alg: ES256_ALGORITHM }],
         authenticatorSelection: {
           authenticatorAttachment: 'platform',
@@ -754,7 +947,7 @@ export async function authenticateWithPlatform() {
   if (response.userHandle) {
     const expectedUserId = decodeBase64(record.userId, { url: true });
     if (!bytesEqual(new Uint8Array(response.userHandle), expectedUserId)) {
-      throw new TeacherAuthError('user-mismatch', 'Die Bestätigung gehört nicht zur eingerichteten Lehrkraft.');
+      throw new TeacherAuthError('user-mismatch', 'Die Bestätigung gehört nicht zum eingerichteten Zugang.');
     }
   }
   if (
@@ -806,17 +999,8 @@ export async function authenticateWithPlatform() {
   return { method: 'platform', verified: true };
 }
 
-/**
- * PBKDF2 hält den Klartext aus dem ausgelieferten Bundle heraus. Da Prüfsumme und
- * Salt in einer statischen Web-App öffentlich sind, verhindert dies kein Offline-Raten.
- */
-export async function verifyTeacherPassword(candidate) {
-  enrollmentAuthorizationUntil = 0;
-  if (typeof candidate !== 'string' || !globalThis.crypto?.subtle) {
-    return false;
-  }
+async function derivePassword(candidate, salt, iterations = PASSWORD_ITERATIONS) {
   const passwordBytes = new TextEncoder().encode(candidate.normalize('NFKC'));
-  let derived = null;
   try {
     const imported = await globalThis.crypto.subtle.importKey(
       'raw',
@@ -825,16 +1009,72 @@ export async function verifyTeacherPassword(candidate) {
       false,
       ['deriveBits']
     );
-    derived = new Uint8Array(await globalThis.crypto.subtle.deriveBits({
+    return new Uint8Array(await globalThis.crypto.subtle.deriveBits({
       name: 'PBKDF2',
-      salt: decodeBase64(PASSWORD_SALT_BASE64),
-      iterations: PASSWORD_ITERATIONS,
+      salt,
+      iterations,
       hash: 'SHA-256'
     }, imported, 256));
   } finally {
     passwordBytes.fill(0);
   }
-  const expected = decodeBase64(PASSWORD_DERIVED_BASE64);
+}
+
+/** Legt genau einmal ein gerätespezifisches Passwort mit zufälligem Salt an. */
+export async function setInitialPassword(candidate) {
+  enrollmentAuthorizationUntil = 0;
+  if (cachedPasswordRecord === undefined || cachedPlatformAvailability === undefined) {
+    throw new TeacherAuthError('not-ready', 'Die Anmeldung wird noch vorbereitet.');
+  }
+  if (cachedPasswordRecord) {
+    throw new TeacherAuthError('already-configured', 'Ein Passwort ist bereits eingerichtet.');
+  }
+  if (!isAuthStorageSupported() || !globalThis.crypto?.subtle) {
+    throw new TeacherAuthError('storage-unavailable', 'Das Passwort kann in diesem Browser nicht sicher gespeichert werden.');
+  }
+  const normalized = typeof candidate === 'string' ? candidate.normalize('NFKC') : '';
+  if (normalized.length < PASSWORD_MIN_LENGTH) {
+    throw new TeacherAuthError(
+      'password-too-short',
+      `Das Passwort muss mindestens ${PASSWORD_MIN_LENGTH} Zeichen lang sein.`
+    );
+  }
+  const salt = randomBytes(16);
+  const derived = await derivePassword(normalized, salt);
+  const record = {
+    schemaVersion: AUTH_SCHEMA_VERSION,
+    salt: base64UrlEncode(salt),
+    derivedKey: base64UrlEncode(derived),
+    iterations: PASSWORD_ITERATIONS,
+    createdAt: new Date().toISOString()
+  };
+  salt.fill(0);
+  derived.fill(0);
+  // Alte Plattform-Credentials aus der vorherigen App-Version werden nicht übernommen.
+  if (cachedCredentialRecord) {
+    await forgetPlatformCredential();
+  }
+  await writePasswordRecord(record);
+  enrollmentAuthorizationUntil = Date.now() + ENROLLMENT_AUTHORIZATION_MS;
+  return true;
+}
+
+/** Prüft das zuvor auf diesem Browserprofil eingerichtete Passwort. */
+export async function verifyPassword(candidate) {
+  enrollmentAuthorizationUntil = 0;
+  if (
+    typeof candidate !== 'string'
+      || !globalThis.crypto?.subtle
+      || !cachedPasswordRecord
+  ) {
+    return false;
+  }
+  const derived = await derivePassword(
+    candidate,
+    decodeBase64(cachedPasswordRecord.salt, { url: true }),
+    cachedPasswordRecord.iterations
+  );
+  const expected = decodeBase64(cachedPasswordRecord.derivedKey, { url: true });
   const verified = bytesEqual(derived, expected);
   derived.fill(0);
   expected.fill(0);
@@ -882,4 +1122,51 @@ export async function forgetPlatformCredential({ preserveEnrollmentAuthorization
     );
   }
   return removed;
+}
+
+/** Löscht Passwort und Geräte-Credential aus allen lokalen Auth-Speichern. */
+export async function resetAuthentication() {
+  enrollmentAuthorizationUntil = 0;
+  if (!isAuthStorageSupported()) {
+    cachedCredentialRecord = null;
+    cachedPasswordRecord = null;
+    preloadPromise = null;
+    return false;
+  }
+
+  const errors = [];
+  if (hasWritableOpfsBackend()) {
+    for (const remove of [deleteCredentialRecordFromOpfs, deletePasswordRecordFromOpfs]) {
+      try {
+        await remove();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+  }
+  if (hasIndexedDbBackend()) {
+    for (const remove of [deleteCredentialRecordFromIndexedDb, deletePasswordRecordFromIndexedDb]) {
+      try {
+        await remove();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+  }
+  cachedAuthStorageBackend = hasWritableOpfsBackend()
+    ? 'opfs'
+    : hasIndexedDbBackend()
+      ? 'indexeddb'
+      : null;
+  if (errors.length) {
+    throw new TeacherAuthError(
+      'storage-delete-failed',
+      'Die lokalen Anmeldedaten konnten nicht vollständig gelöscht werden.',
+      errors[0]
+    );
+  }
+  cachedCredentialRecord = null;
+  cachedPasswordRecord = null;
+  preloadPromise = null;
+  return true;
 }

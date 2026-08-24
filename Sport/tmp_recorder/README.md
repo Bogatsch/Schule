@@ -4,7 +4,7 @@ Eine installierbare, datensparsame Progressive Web App für direktes Foto- und V
 
 ## Datenschutz und lokale Speicherung
 
-Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale Lehrergalerie. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
+Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
 
 - Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
 - Fotos werden kurzzeitig in einem Canvas verarbeitet. Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder`.
@@ -12,7 +12,7 @@ Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein 
 - Gespeicherte Medien liegen ausschließlich im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
 - OPFS und IndexedDB sind beständig, aber kein Ersatz für ein Backup. Das Löschen der Websitedaten, eine Speicherbereinigung durch das Betriebssystem oder das Entfernen der Web-App kann die Galerie löschen. Die App bittet den Browser nach Möglichkeit um dauerhafte Speicherung und zeigt an, wenn der Browser sie nicht zugesichert hat.
 - Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
-- Eine Datei wird nur über den Download-Button in der Lehrergalerie an die Downloadfunktion des Browsers übergeben. In der Aufnahmeansicht gibt es keinen Download mehr.
+- Eine Datei wird nur über den Download-Button in der geschützten Galerie an die Downloadfunktion des Browsers übergeben. In der Aufnahmeansicht gibt es keinen Download mehr.
 - Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
 - Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 
@@ -20,13 +20,17 @@ Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, e
 
 Screenshots und Bildschirmaufnahmen durch iPadOS, andere Betriebssystemfunktionen oder Personen mit Zugriff auf das Gerät kann eine Web-App nicht verhindern.
 
-## Lehrermodus und Anmeldung
+## Anmeldung und selbst vergebenes Passwort
 
-Auf der Startseite öffnet **Lehrermodus** die lokale Anmeldung. Nach erfolgreicher Prüfung erscheint zusätzlich der Bereich **Galerie**. Ein erneutes Tippen beendet den Lehrermodus; beim nächsten Öffnen ist immer wieder eine Identifikation nötig. Beim Wechsel in den Hintergrund wird der Lehrermodus ebenfalls gesperrt.
+Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Beim ersten Anmelden wird ein eigenes Passwort mit mindestens sechs Zeichen festgelegt und bestätigt. Danach öffnet dieses Passwort die geschützte Galerie. Das Passwort gilt nur für das jeweilige Browserprofil beziehungsweise die installierte Web-App. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
 
-Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann die Anmeldung per WebAuthn mit dem Plattform-Authentifikator erfolgen. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal nach einer erfolgreichen Anmeldung und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
+Beim Update von der früheren Version mit festem Passwort bleiben bereits gespeicherte Medien erhalten. Beim ersten Anmelden nach dem Update wird ein neues eigenes Passwort verlangt; eine zuvor eingerichtete Gerätebestätigung muss anschließend einmal neu eingerichtet werden.
 
-Als Rückfall steht eine lokale Passwortprüfung zur Verfügung. Im ausgelieferten JavaScript steht nicht das Klartextpasswort, sondern nur ein mit PBKDF2 abgeleiteter Prüfwert. Das erschwert ein zufälliges Ablesen, macht das Passwort bei einer vollständig öffentlichen statischen App aber nicht zu einem echten Geheimnis: Code und lokale Daten können von technisch versierten Personen untersucht oder verändert werden. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Der Lehrermodus ist daher eine praktische Bedienhürde für ein beaufsichtigtes Gerät, keine belastbare Zugriffskontrolle. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann nach einer erfolgreichen Passwortanmeldung zusätzlich WebAuthn mit dem Plattform-Authentifikator aktiviert werden. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
+
+Das Passwort steht weder im Repository noch im ausgelieferten JavaScript. Beim Einrichten erzeugt der Browser einen zufälligen Salt und speichert lokal nur einen mit PBKDF2 abgeleiteten Prüfwert. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+
+Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich das lokale Passwort, die lokale Referenz auf die Gerätebestätigung und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Dieser destruktive Rückfall ist bewusst auch ohne Kenntnis des alten Passworts möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
 
 ## Lokal testen
 
@@ -46,7 +50,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, lokale Lehreranmeldung sowie das Fehlen des Klartextpassworts und von Uploadfunktionen.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, erstmalige Passwortvergabe, lokale Anmeldung, Komplett-Reset sowie das Fehlen eines statischen Passworts und von Uploadfunktionen.
 
 ## GitHub Pages aktivieren
 
@@ -82,7 +86,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
 
-Im Lehrermodus zeigt die Galerie gespeicherte Fotos und Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
+Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
 
 ## Manuelle Abnahme auf einem physischen iPad
 
@@ -93,14 +97,15 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 3. Foto und Video aufnehmen, mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
 4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
-6. Lehrermodus per Passwort öffnen, wieder beenden und prüfen, dass ein erneutes Öffnen eine neue Anmeldung verlangt. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+6. Über das Zahnrad beim ersten Anmelden ein eigenes Passwort festlegen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
 7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
 8. Gespeicherte Fotos und Videos in der Galerie öffnen, einzeln herunterladen und sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
 9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
 10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
 11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
 12. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-13. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
+13. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Passwort, Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder die Passwortvergabe erscheint.
+14. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
 
@@ -111,7 +116,7 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 - `app.js` – Kamera, Aufnahme, Galerie und zentrale temporäre Medienbereinigung
 - `annotation.js` – lokale Annotation eines aktuellen Videoframes
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
-- `teacher-auth.js` – lokale PBKDF2- und WebAuthn-Prüfung des Lehrermodus
+- `teacher-auth.js` – lokale Passwortvergabe, PBKDF2-Prüfung, Reset und optionale WebAuthn-Anmeldung
 - `media-utils.js` – getestete Formatauswahl und Zeitformatierung
 - `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
 - `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos

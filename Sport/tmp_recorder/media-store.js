@@ -36,13 +36,17 @@ export class MediaStoreError extends Error {
   }
 }
 
-function hasWritableOpfsBackend() {
+function hasOpfsDirectoryAccess() {
   return Boolean(
     globalThis.isSecureContext
       && globalThis.navigator?.storage
       && typeof globalThis.navigator.storage.getDirectory === 'function'
-      && typeof globalThis.FileSystemFileHandle?.prototype?.createWritable === 'function'
   );
+}
+
+function hasWritableOpfsBackend() {
+  return hasOpfsDirectoryAccess()
+    && typeof globalThis.FileSystemFileHandle?.prototype?.createWritable === 'function';
 }
 
 function hasIndexedDbBackend() {
@@ -303,6 +307,19 @@ async function deleteMediaFromIndexedDb(uniqueIds) {
     }
   }
   return result;
+}
+
+async function clearMediaFromIndexedDb() {
+  const database = await openMediaDatabase();
+  const transaction = database.transaction(
+    [IDB_METADATA_STORE, IDB_BLOB_STORE, IDB_SETTINGS_STORE],
+    'readwrite'
+  );
+  const completion = transactionCompletion(transaction);
+  transaction.objectStore(IDB_METADATA_STORE).clear();
+  transaction.objectStore(IDB_BLOB_STORE).clear();
+  transaction.objectStore(IDB_SETTINGS_STORE).clear();
+  await completion;
 }
 
 function isNotFoundError(error) {
@@ -730,6 +747,37 @@ export async function deleteMedia(ids) {
   return result;
 }
 
+/** Löscht sämtliche Medien aus OPFS und IndexedDB, auch aus einem alten Fallback-Backend. */
+export async function resetMediaStore() {
+  const errors = [];
+  if (hasOpfsDirectoryAccess()) {
+    try {
+      const root = await globalThis.navigator.storage.getDirectory();
+      await root.removeEntry(STORE_DIRECTORY, { recursive: true });
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        errors.push(error);
+      }
+    }
+  }
+  if (hasIndexedDbBackend()) {
+    try {
+      await clearMediaFromIndexedDb();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  selectedMediaBackendPromise = null;
+  if (errors.length) {
+    throw new MediaStoreError(
+      'reset-failed',
+      'Die gespeicherten Aufnahmen konnten nicht vollständig gelöscht werden.',
+      errors[0]
+    );
+  }
+  return true;
+}
+
 export async function getStorageEstimate() {
   if (!globalThis.navigator?.storage || typeof globalThis.navigator.storage.estimate !== 'function') {
     return { usage: null, quota: null, available: null };
@@ -782,6 +830,7 @@ export const mediaStore = Object.freeze({
   list: listMedia,
   get: getMedia,
   delete: deleteMedia,
+  reset: resetMediaStore,
   estimate: getStorageEstimate,
   requestPersistence: requestPersistentStorage
 });

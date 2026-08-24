@@ -437,95 +437,42 @@ h2 {
   font-size: 0.82rem;
 }
 
-.teacher-mode-entry {
+.settings-button {
+  position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.9rem;
-  align-items: center;
-  min-height: 72px;
-  padding: 0.75rem 1.1rem;
-  color: var(--ink);
-  text-align: left;
+  width: 52px;
+  height: 52px;
+  color: var(--teal);
   cursor: pointer;
-  background: rgb(223 245 241 / 58%);
+  background: rgb(255 253 248 / 88%);
   border: 2px solid rgb(7 59 76 / 18%);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: 0 8px 24px rgb(7 59 76 / 7%);
+  place-items: center;
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.teacher-mode-entry:hover {
+.settings-button[data-authenticated="true"]::after {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 10px;
+  height: 10px;
+  content: "";
+  background: #2f9e62;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+}
+
+.settings-button:hover {
   border-color: var(--teal-2);
   box-shadow: 0 12px 30px rgb(7 59 76 / 13%);
-  transform: translateY(-2px);
+  transform: rotate(12deg);
 }
 
-.teacher-mode-entry[aria-pressed="true"] {
-  color: white;
-  background: var(--teal);
-  border-color: var(--teal);
-}
-
-.teacher-mode-entry[aria-pressed="true"] .teacher-mode-copy strong,
-.teacher-mode-entry[aria-pressed="true"] .teacher-mode-copy small,
-.teacher-mode-entry[aria-pressed="true"] .arrow {
-  color: white;
-}
-
-.teacher-mode-icon {
-  position: relative;
-  display: grid;
-  width: 48px;
-  height: 48px;
-  background: white;
-  border-radius: 14px;
-  place-items: center;
-}
-
-.teacher-mode-icon::before {
-  position: absolute;
-  top: 20px;
-  width: 23px;
-  height: 18px;
-  content: "";
-  border: 3px solid var(--teal);
-  border-radius: 5px;
-}
-
-.teacher-mode-icon::after {
-  position: absolute;
-  top: 9px;
-  width: 14px;
-  height: 14px;
-  content: "";
-  border: 3px solid var(--coral);
-  border-bottom: 0;
-  border-radius: 9px 9px 0 0;
-}
-
-.teacher-mode-icon span {
-  position: absolute;
-  z-index: 1;
-  top: 27px;
-  width: 4px;
-  height: 7px;
-  background: var(--coral);
-  border-radius: 4px;
-}
-
-.teacher-mode-copy {
-  display: grid;
-  gap: 0.18rem;
-}
-
-.teacher-mode-copy strong {
-  color: var(--teal);
-  font-size: 1.02rem;
-}
-
-.teacher-mode-copy small {
-  color: var(--muted);
-  font-size: 0.8rem;
+.settings-button > span {
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
 .view-toolbar {
@@ -1479,14 +1426,14 @@ input.gallery-card-selection {
 
 .comparison-dialog::backdrop,
 .annotation-dialog::backdrop,
-.teacher-login-dialog::backdrop,
+.account-dialog::backdrop,
 .gallery-viewer-dialog::backdrop,
 .gallery-delete-dialog::backdrop {
   background: rgb(7 29 36 / 58%);
   backdrop-filter: blur(4px);
 }
 
-.teacher-login-dialog,
+.account-dialog,
 .gallery-delete-dialog {
   width: min(calc(100% - 2rem), 560px);
   max-width: none;
@@ -1499,7 +1446,7 @@ input.gallery-card-selection {
   box-shadow: 0 24px 80px rgb(7 29 36 / 32%);
 }
 
-.teacher-login-dialog-shell,
+.account-dialog-shell,
 .gallery-delete-dialog-shell {
   display: grid;
   gap: 1rem;
@@ -1511,17 +1458,84 @@ input.gallery-card-selection {
   border-radius: 22px;
 }
 
-.teacher-login-dialog .eyebrow,
+.account-dialog .eyebrow,
 .gallery-delete-dialog .eyebrow {
   margin: 0;
 }
 
-.teacher-login-dialog h2,
+.account-dialog h2,
 .gallery-delete-dialog h2 {
   margin: 0 0 0.4rem;
   color: var(--teal);
   font-size: clamp(1.6rem, 5vw, 2.2rem);
   letter-spacing: -0.04em;
+}
+
+.account-dialog-header {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.account-dialog h3 {
+  margin: 0;
+  color: var(--teal);
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
+}
+
+.account-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  background: var(--aqua);
+  border-radius: 14px;
+}
+
+.account-tabs button {
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 11px;
+}
+
+.account-tabs button[aria-selected="true"] {
+  color: white;
+  background: var(--teal);
+  box-shadow: 0 6px 16px rgb(7 59 76 / 18%);
+}
+
+.account-password-field small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.account-reset-panel {
+  gap: 1rem;
+  padding-top: 0.35rem;
+}
+
+.account-reset-panel .account-password-field {
+  width: 100%;
+  text-align: left;
+}
+
+.account-success-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  color: white;
+  font-size: 1.65rem;
+  font-weight: 900;
+  background: var(--teal-2);
+  border-radius: 18px;
+  place-items: center;
 }
 
 .dialog-copy {
@@ -1530,24 +1544,25 @@ input.gallery-card-selection {
   line-height: 1.55;
 }
 
-#teacher-login-step,
-.teacher-enrollment-step {
+.account-panel,
+.account-step,
+.account-enrollment-step {
   display: grid;
   gap: 0.8rem;
 }
 
-.teacher-password-field {
+.account-password-field {
   display: grid;
   gap: 0.4rem;
 }
 
-.teacher-password-field label {
+.account-password-field label {
   color: var(--teal);
   font-size: 0.86rem;
   font-weight: 800;
 }
 
-.teacher-password-field input {
+.account-password-field input {
   width: 100%;
   min-height: 52px;
   padding: 0.7rem 0.85rem;
@@ -1558,12 +1573,12 @@ input.gallery-card-selection {
   border-radius: 11px;
 }
 
-.teacher-password-field input:focus {
+.account-password-field input:focus {
   border-color: var(--teal-2);
   outline: 3px solid rgb(17 138 139 / 18%);
 }
 
-.teacher-biometric-section {
+.account-biometric-section {
   display: grid;
   gap: 0.65rem;
   padding: 0.8rem;
@@ -1572,11 +1587,11 @@ input.gallery-card-selection {
   border-radius: 14px;
 }
 
-.teacher-biometric-button {
+.account-biometric-button {
   width: 100%;
 }
 
-.teacher-biometric-section p {
+.account-biometric-section p {
   margin: 0;
   color: var(--muted);
   font-size: 0.78rem;
@@ -1613,7 +1628,7 @@ input.gallery-card-selection {
   inset: 7px;
 }
 
-.teacher-login-divider {
+.account-login-divider {
   display: flex;
   gap: 0.7rem;
   align-items: center;
@@ -1624,8 +1639,8 @@ input.gallery-card-selection {
   text-transform: uppercase;
 }
 
-.teacher-login-divider::before,
-.teacher-login-divider::after {
+.account-login-divider::before,
+.account-login-divider::after {
   flex: 1;
   height: 1px;
   content: "";
@@ -1663,12 +1678,16 @@ input.gallery-card-selection {
   font-weight: 750;
 }
 
-.teacher-enrollment-step {
+.account-enrollment-step,
+.account-reset-panel,
+#account-authenticated-step {
   justify-items: center;
   text-align: center;
 }
 
-.teacher-enrollment-step .dialog-actions {
+.account-enrollment-step .dialog-actions,
+.account-reset-panel .dialog-actions,
+#account-authenticated-step .dialog-actions {
   justify-content: center;
 }
 
@@ -2479,17 +2498,6 @@ noscript {
     height: 44px;
   }
 
-  .teacher-mode-entry {
-    min-height: 68px;
-    padding-inline: 0.85rem;
-  }
-
-  .teacher-mode-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
   .gallery-heading {
     display: grid;
     gap: 0.8rem;
@@ -2527,7 +2535,7 @@ noscript {
     grid-template-columns: 1fr;
   }
 
-  .teacher-login-dialog,
+  .account-dialog,
   .gallery-delete-dialog,
   .gallery-viewer-dialog {
     width: calc(100% - 1rem);
@@ -2535,7 +2543,7 @@ noscript {
     border-radius: 18px;
   }
 
-  .teacher-login-dialog-shell,
+  .account-dialog-shell,
   .gallery-delete-dialog-shell,
   .gallery-viewer-dialog-shell {
     max-height: calc(100dvh - 1rem);

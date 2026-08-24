@@ -110,6 +110,7 @@ const {
   isMediaStoreSupported,
   listMedia,
   requestPersistentStorage,
+  resetMediaStore,
   saveMedia
 } = await import('../media-store.js');
 
@@ -153,4 +154,12 @@ test('liefert Speicherbelegung und fordert bestmögliche Persistenz an', async (
   const persistence = await requestPersistentStorage();
   assert.equal(persistence.persisted, true);
   assert.equal(persistRequested, true);
+});
+
+test('setzt den lokalen Medienspeicher vollständig zurück', async () => {
+  await saveMedia(new Blob(['foto'], { type: 'image/jpeg' }), { kind: 'photo' });
+  await saveMedia(new Blob(['video'], { type: 'video/webm' }), { kind: 'video' });
+  assert.equal((await listMedia()).length, 2);
+  await resetMediaStore();
+  assert.deepEqual(await listMedia(), []);
 });
