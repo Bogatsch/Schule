@@ -5,6 +5,7 @@ import {
   selectSupportedVideoMimeType
 } from './media-utils.js?v=26';
 import { setupVideoAnnotation } from './annotation.js?v=29';
+import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=32';
 import {
   deleteMedia,
   getMedia,
@@ -146,6 +147,14 @@ const elements = {
   galleryDownloadButton: document.querySelector('#gallery-download-button'),
   galleryDeleteButton: document.querySelector('#gallery-delete-button'),
   galleryViewerStatus: document.querySelector('#gallery-viewer-status'),
+  mp4ConversionDialog: document.querySelector('#mp4-conversion-dialog'),
+  mp4ConversionSpinner: document.querySelector('#mp4-conversion-spinner'),
+  mp4ConversionTitle: document.querySelector('#mp4-conversion-title'),
+  mp4ConversionDescription: document.querySelector('#mp4-conversion-description'),
+  mp4ConversionProgress: document.querySelector('#mp4-conversion-progress'),
+  mp4ConversionStatus: document.querySelector('#mp4-conversion-status'),
+  mp4ConversionDownload: document.querySelector('#mp4-conversion-download'),
+  mp4ConversionCancel: document.querySelector('#mp4-conversion-cancel'),
   galleryDeleteDialog: document.querySelector('#gallery-delete-dialog'),
   galleryDeleteForm: document.querySelector('#gallery-delete-form'),
   galleryDeleteTitle: document.querySelector('#gallery-delete-title'),
@@ -203,6 +212,12 @@ let galleryViewerTrigger = null;
 let galleryViewerRequestId = 0;
 let pendingDeleteIds = [];
 let pendingDeleteTrigger = null;
+let mp4ConversionController = null;
+let mp4ConversionRequestId = 0;
+let mp4ConversionTrigger = null;
+let mp4ConversionRestoreFocus = true;
+let mp4ConversionStatusElement = null;
+let preparedConvertedDownload = null;
 const galleryCardObjectUrls = new Set();
 const galleryLoadedMedia = new Map();
 const delayedDownloadObjectUrls = new Set();
@@ -1772,10 +1787,8 @@ async function openGalleryViewer(id, trigger) {
   }
 }
 
-function triggerGalleryDownload(stored, statusElement) {
-  const fallback = stored.metadata.kind === 'photo' ? 'Sportkamera-Foto.jpg' : 'Sportkamera-Video.webm';
-  const filename = sanitizeDownloadName(stored.metadata.suggestedDownloadName, fallback);
-  const downloadBlob = new Blob([stored.file], { type: 'application/octet-stream' });
+function triggerBlobDownload(blob, filename, statusElement) {
+  const downloadBlob = new Blob([blob], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(downloadBlob);
   delayedDownloadObjectUrls.add(url);
   const link = document.createElement('a');
@@ -1794,9 +1807,132 @@ function triggerGalleryDownload(stored, statusElement) {
   statusElement.textContent = `Download von ${filename} wurde gestartet.`;
 }
 
-function downloadGalleryItem(id, { button = null, statusElement = elements.galleryStorageStatus } = {}) {
+function triggerStoredDownload(stored, statusElement) {
+  const fallback = stored.metadata.kind === 'photo' ? 'Sportkamera-Foto.jpg' : 'Sportkamera-Video.webm';
+  const filename = sanitizeDownloadName(stored.metadata.suggestedDownloadName, fallback);
+  triggerBlobDownload(stored.file, filename, statusElement);
+}
+
+function mp4DownloadName(metadata) {
+  const sourceName = sanitizeDownloadName(
+    metadata.suggestedDownloadName,
+    'Sportkamera-Video.webm'
+  );
+  const stem = sourceName.replace(/\.[a-z0-9]{2,5}$/i, '');
+  return sanitizeDownloadName(`${stem}.mp4`, 'Sportkamera-Video.mp4');
+}
+
+function resetMp4ConversionDialog() {
+  mp4ConversionController?.abort();
+  mp4ConversionController = null;
+  preparedConvertedDownload = null;
+  elements.mp4ConversionSpinner.hidden = false;
+  elements.mp4ConversionTitle.textContent = 'MP4 wird erstellt';
+  elements.mp4ConversionDescription.textContent = 'Das WebM-Video wird ausschließlich auf diesem Gerät in MP4 umgewandelt. Bitte lasse die App währenddessen geöffnet.';
+  elements.mp4ConversionProgress.hidden = false;
+  elements.mp4ConversionProgress.value = 0;
+  elements.mp4ConversionProgress.textContent = '0 %';
+  elements.mp4ConversionStatus.textContent = 'Konverter wird vorbereitet …';
+  elements.mp4ConversionStatus.dataset.status = '';
+  elements.mp4ConversionDownload.hidden = true;
+  elements.mp4ConversionDownload.textContent = 'MP4 herunterladen';
+  elements.mp4ConversionCancel.textContent = 'Abbrechen';
+}
+
+function closeMp4ConversionDialog({ restoreFocus = true } = {}) {
+  mp4ConversionRestoreFocus = restoreFocus;
+  mp4ConversionRequestId += 1;
+  mp4ConversionController?.abort();
+  closeModal(elements.mp4ConversionDialog);
+}
+
+async function prepareWebMAsMp4(stored, trigger, statusElement) {
+  if (elements.mp4ConversionDialog.open) {
+    return;
+  }
+  resetMp4ConversionDialog();
+  const requestId = ++mp4ConversionRequestId;
+  const controller = new AbortController();
+  mp4ConversionController = controller;
+  mp4ConversionTrigger = trigger;
+  mp4ConversionRestoreFocus = true;
+  mp4ConversionStatusElement = statusElement;
+  statusElement.textContent = 'WebM-Video wird lokal in MP4 umgewandelt …';
+  showModal(elements.mp4ConversionDialog);
+
+  try {
+    const mp4Blob = await convertWebMToMp4(stored.file, {
+      title: stored.metadata.title || '',
+      signal: controller.signal,
+      onProgress: ({ phase, progress }) => {
+        if (requestId !== mp4ConversionRequestId || !elements.mp4ConversionDialog.open) {
+          return;
+        }
+        const percentage = Math.round(progress * 100);
+        elements.mp4ConversionProgress.value = percentage;
+        elements.mp4ConversionProgress.textContent = `${percentage} %`;
+        elements.mp4ConversionStatus.textContent = phase === 'loading'
+          ? 'Konverter wird vorbereitet …'
+          : phase === 'finalizing'
+            ? 'MP4-Datei wird fertiggestellt …'
+            : `Video wird umgewandelt … ${percentage} %`;
+      }
+    });
+
+    if (
+      requestId !== mp4ConversionRequestId
+      || controller.signal.aborted
+      || !teacherMode
+      || !elements.mp4ConversionDialog.open
+    ) {
+      return;
+    }
+    preparedConvertedDownload = {
+      blob: mp4Blob,
+      filename: mp4DownloadName(stored.metadata),
+      statusElement
+    };
+    mp4ConversionController = null;
+    elements.mp4ConversionSpinner.hidden = true;
+    elements.mp4ConversionTitle.textContent = 'MP4 ist bereit';
+    elements.mp4ConversionDescription.textContent = 'Die Umwandlung ist abgeschlossen. Tippe jetzt auf „MP4 herunterladen“.';
+    elements.mp4ConversionProgress.value = 100;
+    elements.mp4ConversionProgress.textContent = '100 %';
+    elements.mp4ConversionStatus.textContent = 'Die Datei wurde vollständig auf diesem Gerät erstellt.';
+    elements.mp4ConversionDownload.hidden = false;
+    elements.mp4ConversionCancel.textContent = 'Schließen';
+    statusElement.textContent = 'MP4 ist bereit zum Herunterladen.';
+    window.setTimeout(() => elements.mp4ConversionDownload.focus({ preventScroll: true }), 0);
+  } catch (error) {
+    if (requestId !== mp4ConversionRequestId || error?.name === 'AbortError') {
+      return;
+    }
+    preparedConvertedDownload = {
+      blob: stored.file,
+      filename: sanitizeDownloadName(
+        stored.metadata.suggestedDownloadName,
+        'Sportkamera-Video.webm'
+      ),
+      statusElement
+    };
+    mp4ConversionController = null;
+    elements.mp4ConversionSpinner.hidden = true;
+    elements.mp4ConversionTitle.textContent = 'MP4 nicht möglich';
+    elements.mp4ConversionDescription.textContent = 'Dieses Gerät konnte das Video nicht in MP4 umwandeln. Das unveränderte WebM-Original kann weiterhin gespeichert werden.';
+    elements.mp4ConversionProgress.hidden = true;
+    elements.mp4ConversionStatus.textContent = 'Die ursprüngliche Aufnahme bleibt unverändert erhalten.';
+    elements.mp4ConversionStatus.dataset.status = 'error';
+    elements.mp4ConversionDownload.textContent = 'WebM herunterladen';
+    elements.mp4ConversionDownload.hidden = false;
+    elements.mp4ConversionCancel.textContent = 'Schließen';
+    statusElement.textContent = 'MP4-Konvertierung war auf diesem Gerät nicht möglich.';
+    window.setTimeout(() => elements.mp4ConversionDownload.focus({ preventScroll: true }), 0);
+  }
+}
+
+async function downloadGalleryItem(id, { button = null, statusElement = elements.galleryStorageStatus } = {}) {
   if (!teacherMode) {
-    return Promise.resolve();
+    return;
   }
   if (button) {
     button.disabled = true;
@@ -1808,28 +1944,25 @@ function downloadGalleryItem(id, { button = null, statusElement = elements.galle
       button.disabled = false;
     }
   };
-  const cached = galleryViewerItem?.metadata.id === id
-    ? galleryViewerItem
-    : galleryLoadedMedia.get(id);
-  if (cached) {
-    try {
-      triggerGalleryDownload(cached, statusElement);
-    } catch {
-      statusElement.textContent = 'Der Download konnte nicht vorbereitet werden.';
-    }
-    finish();
-    return Promise.resolve();
-  }
-
-  return getMedia(id).then((stored) => {
+  try {
+    const cached = galleryViewerItem?.metadata.id === id
+      ? galleryViewerItem
+      : galleryLoadedMedia.get(id);
+    const stored = cached || await getMedia(id);
     if (!stored || !teacherMode) {
       throw new Error('unavailable');
     }
     galleryLoadedMedia.set(id, stored);
-    triggerGalleryDownload(stored, statusElement);
-  }).catch(() => {
+    if (stored.metadata.kind === 'video' && isWebMVideo(stored.metadata.mimeType)) {
+      await prepareWebMAsMp4(stored, button, statusElement);
+    } else {
+      triggerStoredDownload(stored, statusElement);
+    }
+  } catch {
     statusElement.textContent = 'Der Download konnte nicht vorbereitet werden.';
-  }).finally(finish);
+  } finally {
+    finish();
+  }
 }
 
 function closeDeleteConfirmation({ restoreFocus = true } = {}) {
@@ -1923,6 +2056,7 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
   annotation.close({ restoreFocus: false });
   closeGalleryViewer({ restoreFocus: false });
   closeDeleteConfirmation({ restoreFocus: false });
+  closeMp4ConversionDialog({ restoreFocus: false });
   closeModal(elements.accountDialog);
   elements.galleryGrid.replaceChildren();
   elements.galleryEmpty.hidden = false;
@@ -2209,6 +2343,45 @@ elements.galleryDownloadButton.addEventListener('click', () => {
       button: elements.galleryDownloadButton,
       statusElement: elements.galleryViewerStatus
     });
+  }
+});
+elements.mp4ConversionDownload.addEventListener('click', () => {
+  if (!preparedConvertedDownload) {
+    return;
+  }
+  const prepared = preparedConvertedDownload;
+  preparedConvertedDownload = null;
+  try {
+    triggerBlobDownload(prepared.blob, prepared.filename, prepared.statusElement);
+  } catch {
+    prepared.statusElement.textContent = 'Der vorbereitete Download konnte nicht gestartet werden.';
+  }
+  closeMp4ConversionDialog();
+});
+elements.mp4ConversionCancel.addEventListener('click', () => closeMp4ConversionDialog());
+elements.mp4ConversionDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  closeMp4ConversionDialog();
+});
+elements.mp4ConversionDialog.addEventListener('click', (event) => {
+  if (event.target === elements.mp4ConversionDialog) {
+    closeMp4ConversionDialog();
+  }
+});
+elements.mp4ConversionDialog.addEventListener('close', () => {
+  const trigger = mp4ConversionTrigger;
+  const restoreFocus = mp4ConversionRestoreFocus;
+  const statusElement = mp4ConversionStatusElement;
+  const wasConverting = Boolean(mp4ConversionController);
+  resetMp4ConversionDialog();
+  mp4ConversionTrigger = null;
+  mp4ConversionRestoreFocus = true;
+  mp4ConversionStatusElement = null;
+  if (wasConverting && teacherMode && statusElement) {
+    statusElement.textContent = 'MP4-Konvertierung wurde abgebrochen.';
+  }
+  if (restoreFocus && teacherMode && trigger?.isConnected) {
+    trigger.focus({ preventScroll: true });
   }
 });
 elements.galleryDeleteButton.addEventListener('click', () => {

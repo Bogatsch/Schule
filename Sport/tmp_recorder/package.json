@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check app.js && node --check annotation.js && node --check media-store.js && node --check teacher-auth.js && node --check media-utils.js && node --check pages/leitbilder/app.js && node --check pages/leitbilder/volleyball/angriffsschlag/app.js && node --check sw.js",
-    "test": "npm run check && node --test tests/media-utils.test.mjs tests/media-store.test.mjs tests/auth.test.mjs && node tests/static-check.mjs",
+    "check": "node --check app.js && node --check annotation.js && node --check media-store.js && node --check teacher-auth.js && node --check media-utils.js && node --check video-converter.js && node --check pages/leitbilder/app.js && node --check pages/leitbilder/volleyball/angriffsschlag/app.js && node --check sw.js",
+    "test": "npm run check && node --test tests/media-utils.test.mjs tests/media-store.test.mjs tests/auth.test.mjs tests/video-converter.test.mjs && node tests/static-check.mjs",
     "test:browser": "node tests/browser-smoke.mjs"
   }
 }

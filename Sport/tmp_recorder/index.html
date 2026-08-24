@@ -9,14 +9,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sportkamera">
     <meta name="format-detection" content="telephone=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'">
     <title>Sportkamera</title>
     <meta name="description" content="Datensparsame Foto- und Videoaufnahme für direktes Bewegungsfeedback im Sportunterricht.">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=31">
-    <script type="module" src="./app.js?v=31"></script>
+    <link rel="stylesheet" href="./styles.css?v=32">
+    <script type="module" src="./app.js?v=32"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -560,6 +560,22 @@
           </div>
 
           <p id="gallery-viewer-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </div>
+      </dialog>
+
+      <dialog id="mp4-conversion-dialog" class="mp4-conversion-dialog" aria-labelledby="mp4-conversion-title" aria-describedby="mp4-conversion-description">
+        <div class="mp4-conversion-dialog-shell">
+          <span id="mp4-conversion-spinner" class="spinner mp4-conversion-spinner" aria-hidden="true"></span>
+          <p class="eyebrow">Lokale Konvertierung</p>
+          <h2 id="mp4-conversion-title">MP4 wird erstellt</h2>
+          <p id="mp4-conversion-description" class="dialog-copy">Das WebM-Video wird ausschließlich auf diesem Gerät in MP4 umgewandelt. Bitte lasse die App währenddessen geöffnet.</p>
+          <label id="mp4-conversion-progress-label" class="visually-hidden" for="mp4-conversion-progress">Fortschritt der MP4-Konvertierung</label>
+          <progress id="mp4-conversion-progress" max="100" value="0" aria-labelledby="mp4-conversion-progress-label">0 %</progress>
+          <p id="mp4-conversion-status" class="dialog-status" role="status" aria-live="polite">Konverter wird vorbereitet …</p>
+          <div class="dialog-actions">
+            <button id="mp4-conversion-download" class="primary-action" type="button" hidden>MP4 herunterladen</button>
+            <button id="mp4-conversion-cancel" class="secondary-action" type="button">Abbrechen</button>
+          </div>
         </div>
       </dialog>
 

@@ -1438,6 +1438,7 @@ input.gallery-card-selection {
 .video-name-dialog::backdrop,
 .account-dialog::backdrop,
 .gallery-viewer-dialog::backdrop,
+.mp4-conversion-dialog::backdrop,
 .gallery-delete-dialog::backdrop {
   background: rgb(7 29 36 / 58%);
   backdrop-filter: blur(4px);
@@ -1445,6 +1446,7 @@ input.gallery-card-selection {
 
 .video-name-dialog,
 .account-dialog,
+.mp4-conversion-dialog,
 .gallery-delete-dialog {
   width: min(calc(100% - 2rem), 560px);
   max-width: none;
@@ -1459,6 +1461,7 @@ input.gallery-card-selection {
 
 .video-name-dialog-shell,
 .account-dialog-shell,
+.mp4-conversion-dialog-shell,
 .gallery-delete-dialog-shell {
   display: grid;
   gap: 1rem;
@@ -1472,12 +1475,14 @@ input.gallery-card-selection {
 
 .video-name-dialog .eyebrow,
 .account-dialog .eyebrow,
+.mp4-conversion-dialog .eyebrow,
 .gallery-delete-dialog .eyebrow {
   margin: 0;
 }
 
 .video-name-dialog h2,
 .account-dialog h2,
+.mp4-conversion-dialog h2,
 .gallery-delete-dialog h2 {
   margin: 0 0 0.4rem;
   color: var(--teal);
@@ -1487,6 +1492,45 @@ input.gallery-card-selection {
 
 .video-name-dialog {
   width: min(calc(100% - 2rem), 540px);
+}
+
+.mp4-conversion-dialog {
+  width: min(calc(100% - 2rem), 560px);
+}
+
+.mp4-conversion-dialog-shell {
+  justify-items: center;
+  text-align: center;
+}
+
+.mp4-conversion-spinner {
+  width: 54px;
+  height: 54px;
+  border-width: 5px;
+}
+
+.mp4-conversion-dialog progress {
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  accent-color: var(--teal-2);
+  background: var(--aqua);
+  border: 0;
+  border-radius: 999px;
+}
+
+.mp4-conversion-dialog progress::-webkit-progress-bar {
+  background: var(--aqua);
+  border-radius: 999px;
+}
+
+.mp4-conversion-dialog progress::-webkit-progress-value {
+  background: var(--teal-2);
+  border-radius: 999px;
+}
+
+.mp4-conversion-dialog .dialog-actions {
+  justify-content: center;
 }
 
 .account-dialog-header {
@@ -2555,6 +2599,7 @@ noscript {
 
   .video-name-dialog,
   .account-dialog,
+  .mp4-conversion-dialog,
   .gallery-delete-dialog,
   .gallery-viewer-dialog {
     width: calc(100% - 1rem);
@@ -2564,6 +2609,7 @@ noscript {
 
   .video-name-dialog-shell,
   .account-dialog-shell,
+  .mp4-conversion-dialog-shell,
   .gallery-delete-dialog-shell,
   .gallery-viewer-dialog-shell {
     max-height: calc(100dvh - 1rem);

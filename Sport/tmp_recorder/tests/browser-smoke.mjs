@@ -771,7 +771,18 @@ try {
       };
     })()`);
     await click('#gallery-download-button');
-    await waitFor(`window.__sportkameraDownload !== null`);
+    await waitFor(`window.__sportkameraDownload !== null || (
+      document.querySelector('#mp4-conversion-dialog').open
+      && !document.querySelector('#mp4-conversion-download').hidden
+    )`, 60_000);
+    if (await evaluate(`document.querySelector('#mp4-conversion-dialog').open`)) {
+      assert.equal(
+        await evaluate(`document.querySelector('#mp4-conversion-title').textContent`),
+        'MP4 ist bereit'
+      );
+      await click('#mp4-conversion-download');
+      await waitFor(`window.__sportkameraDownload !== null`);
+    }
     const galleryDownload = await evaluate(`(() => {
       const result = window.__sportkameraDownload;
       HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
@@ -779,7 +790,7 @@ try {
       delete window.__sportkameraDownload;
       return result;
     })()`);
-    assert.match(galleryDownload.filename, /^Sprungwurf Test\.(?:webm|mp4)$/);
+    assert.match(galleryDownload.filename, /^Sprungwurf Test\.mp4$/);
     assert.match(galleryDownload.href, /^blob:/);
     await click('#gallery-viewer-close');
     await waitFor(`!document.querySelector('#gallery-viewer-dialog').open`);

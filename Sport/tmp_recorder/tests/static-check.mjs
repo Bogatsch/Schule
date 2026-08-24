@@ -10,6 +10,7 @@ const requiredFiles = [
   'index.html',
   'styles.css',
   'app.js',
+  'video-converter.js',
   'annotation.js',
   'media-store.js',
   'teacher-auth.js',
@@ -18,10 +19,14 @@ const requiredFiles = [
   'package.json',
   'sw.js',
   'README.md',
+  'THIRD_PARTY_NOTICES.md',
+  'vendor/mediabunny/mediabunny-1.55.2.min.js',
+  'vendor/mediabunny/LICENSE',
   'tests/static-check.mjs',
   'tests/media-store.test.mjs',
   'tests/auth.test.mjs',
   'tests/browser-smoke.mjs',
+  'tests/video-converter.test.mjs',
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
@@ -57,9 +62,10 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml] = await Promise.all([
+const [html, app, videoConverter, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle] = await Promise.all([
   read('index.html'),
   read('app.js'),
+  read('video-converter.js'),
   read('annotation.js'),
   read('media-store.js'),
   read('teacher-auth.js'),
@@ -72,13 +78,16 @@ const [html, app, annotationApp, mediaStore, teacherAuth, worker, styles, manife
   read('pages/leitbilder/volleyball/index.html'),
   read('pages/leitbilder/volleyball/angriffsschlag/index.html'),
   read('pages/leitbilder/volleyball/angriffsschlag/app.js'),
-  read('pages/leitbilder/volleyball/pritschen-seitlich/index.html')
+  read('pages/leitbilder/volleyball/pritschen-seitlich/index.html'),
+  read('THIRD_PARTY_NOTICES.md'),
+  read('vendor/mediabunny/mediabunny-1.55.2.min.js')
 ]);
 const manifest = JSON.parse(manifestText);
 
 assert.match(html, /Content-Security-Policy/i, 'CSP fehlt');
 assert.match(html, /connect-src 'none'/, 'CSP muss externe Verbindungen sperren');
 assert.match(html, /media-src 'self' blob:/, 'CSP muss nur lokale Blob-Medien erlauben');
+assert.match(html, /worker-src 'self' blob:/, 'CSP muss den lokalen Blob-Worker des Videokonverters erlauben');
 assert.match(html, /apple-mobile-web-app-capable/, 'Apple-PWA-Metadaten fehlen');
 assert.doesNotMatch(html, /Bewegung sehen|Deine Aufnahme bleibt hier|Aufnahmen bleiben nur vorübergehend/, 'entfernter Einleitungstext ist noch vorhanden');
 assert.doesNotMatch(html, /Vorschau|preview-label|preview-kicker/, 'entfernte Vorschau-Beschriftung ist noch vorhanden');
@@ -152,6 +161,10 @@ assert.deepEqual(
   ['gallery-download-button'],
   'Ein Download-Button darf nur im Galeriebetrachter existieren'
 );
+assert.match(html, /<dialog id="mp4-conversion-dialog"/, 'Fortschrittsdialog für die MP4-Konvertierung fehlt');
+assert.match(html, /id="mp4-conversion-progress"/, 'Fortschrittsanzeige für die MP4-Konvertierung fehlt');
+assert.match(html, /id="mp4-conversion-download"[^>]*hidden/, 'Bestätigter MP4-Download nach der Konvertierung fehlt');
+assert.match(html, /id="mp4-conversion-cancel"/, 'Abbruch der MP4-Konvertierung fehlt');
 assert.match(html, /id="gallery-delete-button"/, 'Einzellöschung der Galerie fehlt');
 assert.match(html, /id="gallery-viewer-status"/, 'Status des Galeriebetrachters fehlt');
 assert.match(html, /<dialog id="gallery-delete-dialog"/, 'Bestätigungsdialog zum Löschen fehlt');
@@ -163,8 +176,8 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=31/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=31/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=32/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=32/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -172,6 +185,9 @@ assert.match(app, /showModal/, 'modales Öffnen der Leitbildauswahl fehlt');
 assert.match(app, /comparisonTimeline\.addEventListener/, 'unabhängige Zeitleistensteuerung des Leitbilds fehlt');
 assert.match(app, /dataset\.comparisonSpeed/, 'unabhängige Temporegelung des Leitbilds fehlt');
 assert.match(app, /link\.download\s*=/, 'lokaler Einzeldownload aus der Galerie fehlt');
+assert.match(app, /convertWebMToMp4/, 'WebM-zu-MP4-Konvertierung ist nicht mit dem Galeriedownload verbunden');
+assert.match(app, /isWebMVideo/, 'WebM-Erkennung vor dem Galeriedownload fehlt');
+assert.match(app, /mp4DownloadName/, 'MP4-Dateiname übernimmt den vergebenen Videonamen nicht');
 assert.doesNotMatch(app, /photoDownloadButton|videoDownloadButton|downloadDialog|openDownloadDialog/, 'veralteter Downloadablauf der Aufnahmeansicht ist noch verbunden');
 assert.match(app, /saveMedia/, 'explizites Speichern der aktuellen Aufnahme fehlt');
 assert.match(app, /saveCurrentMedia\('video',[\s\S]*\{ title \}/, 'Der vergebene Videoname wird beim Speichern nicht weitergegeben');
@@ -196,6 +212,19 @@ assert.match(annotationApp, /pointerdown/, 'Freihandzeichnen per Stift oder Fing
 assert.match(annotationApp, /destination-out/, 'Radierer entfernt keine Zeichnung');
 assert.match(annotationApp, /frameCanvas\.width = 0/, 'Frame wird beim Schließen nicht verworfen');
 assert.doesNotMatch(app, /syncComparisonPosition|hasActiveComparison/, 'veraltete Synchronsteuerung ist noch vorhanden');
+
+assert.match(videoConverter, /mediabunny-\$\{MEDIABUNNY_VERSION\}\.min\.js/, 'lokale Mediabunny-Bibliothek wird nicht geladen');
+assert.match(videoConverter, /codec:\s*'avc'/, 'MP4-Konvertierung erzwingt keinen H.264-/AVC-Videocodec');
+assert.match(videoConverter, /forceTranscode:\s*true/, 'WebM wird nicht tatsächlich transkodiert');
+assert.match(videoConverter, /hardwareAcceleration:\s*'prefer-hardware'/, 'Hardwarebeschleunigung wird auf dem iPad nicht bevorzugt');
+assert.match(videoConverter, /audio:\s*\{ discard:\s*true \}/, 'Tonspur muss bei den stummen Sportkamera-Videos verworfen werden');
+assert.match(videoConverter, /type:\s*'video\/mp4'/, 'Konverter gibt keinen echten MP4-Blob zurück');
+assert.match(videoConverter, /signal\?\.aborted/, 'MP4-Konvertierung kann nicht sicher abgebrochen werden');
+assert.doesNotMatch(videoConverter, /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|sendBeacon)\b/, 'Videokonverter darf keine Medien über das Netzwerk senden');
+assert.match(thirdPartyNotices, /Mediabunny 1\.55\.2/, 'Drittanbieterhinweis nennt nicht die gebündelte Mediabunny-Version');
+assert.match(thirdPartyNotices, /Mozilla Public License 2\.0/, 'Mediabunny-Lizenzhinweis fehlt');
+assert.match(thirdPartyNotices, /ADDD26C70765F44C93EDFA03331B6E6D6B17B2689F9E035A4F4085F17EA9578A/, 'Prüfsumme des Mediabunny-Bundles fehlt');
+assert.match(mediabunnyBundle.slice(0, 1000), /Mozilla Public\s+\*?\s*License/, 'Lizenzkopf fehlt im Mediabunny-Bundle');
 
 [html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {
   assert.doesNotMatch(pageHtml, /class="step-label"><span>\d+<\/span>/, 'Nummerierung der Ablaufschritte ist noch vorhanden');
@@ -309,9 +338,11 @@ assert.match(app, /frameRate:\s*\{ ideal: 30 \}/, 'ideale Bildrate fehlt');
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /sportkamera-shell-[\s\S]*v31|CACHE_PREFIX\}v31/, 'Cache-Version v31 fehlt');
-assert.match(worker, /\.\/app\.js\?v=31/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=31/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /sportkamera-shell-[\s\S]*v32|CACHE_PREFIX\}v32/, 'Cache-Version v32 fehlt');
+assert.match(worker, /\.\/app\.js\?v=32/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=32/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/video-converter\.js\?v=32/, 'Videokonverter fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
 assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/teacher-auth\.js\?v=30/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
 assert.doesNotMatch(worker, /\.put\s*\(/, 'Service Worker darf Laufzeitdaten nicht dynamisch cachen');
@@ -337,5 +368,6 @@ assert.match(styles, /\.video-name-dialog/, 'Benennungs-Pop-up ist nicht gestalt
 assert.match(styles, /\.gallery-card/, 'Galeriekarten sind nicht gestaltet');
 assert.match(styles, /\.gallery-card-selection/, 'Mehrfachauswahl der Galeriekarten ist nicht gestaltet');
 assert.match(styles, /\.gallery-viewer-dialog/, 'Galeriebetrachter ist nicht gestaltet');
+assert.match(styles, /\.mp4-conversion-dialog/, 'MP4-Konvertierungsdialog ist nicht gestaltet');
 
 console.log(`Statische Abnahme erfolgreich: ${requiredFiles.length} Dateien und alle Datenschutz-/PWA-Regeln geprüft.`);
