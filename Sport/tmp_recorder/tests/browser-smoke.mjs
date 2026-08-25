@@ -425,7 +425,8 @@ try {
 
   await click('.guide-entry');
   await waitFor(`document.title === 'Leitbilder | Sportkamera'
-    && document.querySelectorAll('[data-category]').length === 2`);
+    && document.querySelectorAll('[data-category]').length === 2
+    && document.body.dataset.ready === 'true'`);
   await click('[data-category="spielsportarten"]');
   await waitFor(`!document.querySelector('[data-category-content="spielsportarten"]').hidden`);
   await click('[data-sport="volleyball"]');
@@ -445,6 +446,7 @@ try {
   await waitFor(`document.title === 'Volleyball | Sportkamera'`);
   await click('.sport-back');
   await waitFor(`document.title === 'Leitbilder | Sportkamera'
+    && document.body.dataset.ready === 'true'
     && !document.querySelector('[data-category-content="spielsportarten"]').hidden`);
   await click('.guides-back');
   await waitFor(`document.title === 'Sportkamera'
@@ -896,7 +898,10 @@ try {
     'sportkamera-media-idb-v1',
     'sportkamera-teacher-auth-idb-v1'
   ].includes(name)));
-  assert.equal(storageState.cacheState.names.length, 1);
+  assert.deepEqual(
+    [...storageState.cacheState.names].sort(),
+    ['sportkamera-guides-v36', 'sportkamera-shell-v36']
+  );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
   results.push('Web Storage und Service-Worker-Cache enthalten keine Nutzermedien; lokale Galerie bleibt isoliert');
@@ -907,7 +912,23 @@ try {
   await waitFor(`navigator.serviceWorker.controller !== null`, 5_000);
   await new Promise((resolve) => webServer.close(resolve));
   try {
-    await reload(false);
+    const offlineRange = await evaluate(`fetch('./Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4', {
+      headers: { Range: 'bytes=0-31' }
+    }).then(async (response) => ({
+      status: response.status,
+      contentRange: response.headers.get('content-range'),
+      length: (await response.arrayBuffer()).byteLength
+    }))`);
+    assert.equal(offlineRange.status, 206);
+    assert.equal(offlineRange.contentRange, 'bytes 0-31/6654506');
+    assert.equal(offlineRange.length, 32);
+
+    await navigate(`${appUrl}pages/leitbilder/volleyball/pritschen-seitlich/index.html`);
+    await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
+      && document.querySelector('#guide-video').readyState >= 1`);
+    assert.equal(await evaluate(`document.querySelector('#guide-video').error`), null);
+
+    await navigate(appUrl);
     assert.equal(await evaluate(`document.title`), 'Sportkamera');
     assert.equal(await evaluate(`document.body.dataset.view`), 'start');
   } finally {
@@ -916,7 +937,7 @@ try {
       webServer.listen(appPort, '127.0.0.1', resolve);
     });
   }
-  results.push('Offline-Start aus dem statischen App-Cache');
+  results.push('Offline-Start und Leitbild-Wiedergabe mit Byte-Range aus getrennten App-Caches');
 
   await setViewport(1366, 1024);
   await reload();

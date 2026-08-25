@@ -29,6 +29,7 @@ const requiredFiles = [
   'tests/browser-smoke.mjs',
   'tests/video-converter.test.mjs',
   'tests/zip-utils.test.mjs',
+  'tests/service-worker.test.mjs',
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
@@ -348,9 +349,10 @@ assert.match(app, /height:\s*\{ ideal: 720 \}/, 'ideale 720p-Höhe fehlt');
 assert.match(app, /frameRate:\s*\{ ideal: 30 \}/, 'ideale Bildrate fehlt');
 
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
+assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /sportkamera-shell-[\s\S]*v35|CACHE_PREFIX\}v35/, 'Cache-Version v35 fehlt');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v36'/, 'Cache-Version v36 fehlt');
 assert.match(worker, /\.\/app\.js\?v=35/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
@@ -358,6 +360,10 @@ assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der sta
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
 assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/teacher-auth\.js\?v=30/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
+assert.match(worker, /Angriffsschlag\/Angriffschlag\.mp4/, 'Angriffsschlag fehlt im Offline-Leitbildcache');
+assert.match(worker, /Pritschen\/Pritschen%20seitlich\.mp4/, 'Pritschen fehlt im Offline-Leitbildcache');
+assert.match(worker, /status:\s*206/, 'Byte-Range-Antwort für Offline-Leitbilder fehlt');
+assert.match(worker, /Content-Range/, 'Content-Range für Offline-Leitbilder fehlt');
 assert.doesNotMatch(worker, /\.put\s*\(/, 'Service Worker darf Laufzeitdaten nicht dynamisch cachen');
 assert.doesNotMatch(worker, /blob:/i, 'Service Worker darf keine Blob-Adresse enthalten');
 assert.doesNotMatch(worker, /sportkamera-media-v1/, 'Service Worker darf das OPFS-Medienverzeichnis nicht cachen');

@@ -30,3 +30,5 @@ const initialCategory = window.location.hash.slice(1);
 if (initialCategory) {
   selectCategory(initialCategory, { updateAddress: false, focusHeading: false });
 }
+
+document.body.dataset.ready = 'true';

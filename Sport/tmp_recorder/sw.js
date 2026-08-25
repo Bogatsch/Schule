@@ -1,5 +1,8 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v35`;
+const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
+const CACHE_VERSION = 'v36';
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
+const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
 
 // Nur diese statischen Dateien dürfen in Cache Storage gelangen.
 const APP_SHELL = Object.freeze([
@@ -40,13 +43,78 @@ const APP_SHELL = Object.freeze([
   './icons/icon-maskable-512.png'
 ]);
 
+const GUIDE_VIDEOS = Object.freeze([
+  './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
+  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4'
+]);
+
 const ALLOWED_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
+const GUIDE_VIDEO_URLS = new Set(GUIDE_VIDEOS.map((path) => new URL(path, self.location.href).href));
 const OFFLINE_DOCUMENT = new URL('./index.html', self.location.href).href;
+
+function rangeNotSatisfiable(size) {
+  return new Response(null, {
+    status: 416,
+    headers: {
+      'Accept-Ranges': 'bytes',
+      'Content-Range': `bytes */${size}`
+    }
+  });
+}
+
+async function createVideoResponse(request, cachedResponse) {
+  const rangeHeader = request.headers.get('range');
+  if (!rangeHeader) {
+    return cachedResponse;
+  }
+
+  const videoBlob = await cachedResponse.blob();
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(rangeHeader.trim());
+  if (!match || (!match[1] && !match[2]) || videoBlob.size === 0) {
+    return rangeNotSatisfiable(videoBlob.size);
+  }
+
+  let start;
+  let end;
+  if (!match[1]) {
+    const suffixLength = Number(match[2]);
+    if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) {
+      return rangeNotSatisfiable(videoBlob.size);
+    }
+    start = Math.max(videoBlob.size - suffixLength, 0);
+    end = videoBlob.size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] ? Number(match[2]) : videoBlob.size - 1;
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end)) {
+      return rangeNotSatisfiable(videoBlob.size);
+    }
+    end = Math.min(end, videoBlob.size - 1);
+  }
+
+  if (start < 0 || start >= videoBlob.size || start > end) {
+    return rangeNotSatisfiable(videoBlob.size);
+  }
+
+  const partialBlob = videoBlob.slice(start, end + 1, videoBlob.type || 'video/mp4');
+  const headers = new Headers(cachedResponse.headers);
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('Content-Length', String(partialBlob.size));
+  headers.set('Content-Range', `bytes ${start}-${end}/${videoBlob.size}`);
+
+  return new Response(partialBlob, {
+    status: 206,
+    statusText: 'Partial Content',
+    headers
+  });
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+    Promise.all([
+      caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
+      caches.open(GUIDE_CACHE_NAME).then((cache) => cache.addAll(GUIDE_VIDEOS))
+    ])
       .then(() => self.skipWaiting())
   );
 });
@@ -56,7 +124,10 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((names) => Promise.all(
         names
-          .filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME)
+          .filter((name) => (
+            (name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME)
+            || (name.startsWith(GUIDE_CACHE_PREFIX) && name !== GUIDE_CACHE_NAME)
+          ))
           .map((name) => caches.delete(name))
       ))
       .then(() => self.clients.claim())
@@ -81,6 +152,17 @@ self.addEventListener('fetch', (event) => {
         caches.match(request, { ignoreSearch: true })
           .then((cachedResponse) => cachedResponse || caches.match(OFFLINE_DOCUMENT))
       ))
+    );
+    return;
+  }
+
+  if (GUIDE_VIDEO_URLS.has(requestUrl.href)) {
+    event.respondWith(
+      caches.open(GUIDE_CACHE_NAME)
+        .then((cache) => cache.match(requestUrl.href))
+        .then((cachedResponse) => (
+          cachedResponse ? createVideoResponse(request, cachedResponse) : fetch(request)
+        ))
     );
     return;
   }
