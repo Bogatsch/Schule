@@ -12,7 +12,7 @@ Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein 
 - Gespeicherte Medien liegen ausschließlich im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
 - OPFS und IndexedDB sind beständig, aber kein Ersatz für ein Backup. Das Löschen der Websitedaten, eine Speicherbereinigung durch das Betriebssystem oder das Entfernen der Web-App kann die Galerie löschen. Die App bittet den Browser nach Möglichkeit um dauerhafte Speicherung und zeigt an, wenn der Browser sie nicht zugesichert hat.
 - Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
-- Eine Datei wird nur über den Download-Button in der geschützten Galerie an die Downloadfunktion des Browsers übergeben. WebM-Videos werden dabei vollständig auf dem Gerät in eine echte H.264-MP4-Datei umgewandelt; das gespeicherte WebM-Original bleibt unverändert. In der Aufnahmeansicht gibt es keinen Download mehr.
+- Dateien werden nur über die Downloadfunktionen in der geschützten Galerie an den Browser übergeben. Beim Einzeldownload werden WebM-Videos vollständig auf dem Gerät in echte H.264-MP4-Dateien umgewandelt; das gespeicherte WebM-Original bleibt unverändert. Mehrere ausgewählte Medien bündelt die App lokal in einem ZIP mit den unveränderten Originaldateien. In der Aufnahmeansicht gibt es keinen Download.
 - Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
 - Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 
@@ -50,7 +50,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, erstmalige Passwortvergabe, lokale Anmeldung, Komplett-Reset sowie das Fehlen eines statischen Passworts und von Uploadfunktionen.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, erstmalige Passwortvergabe, lokale Anmeldung, Komplett-Reset sowie das Fehlen eines statischen Passworts und von Uploadfunktionen.
 
 ## GitHub Pages aktivieren
 
@@ -86,7 +86,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
 
-Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und benannte Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Der Download-Button exportiert ein einzelnes Medium über den Browser und übernimmt bei Videos den zuvor vergebenen Namen. WebM-Aufnahmen werden dafür lokal mit bevorzugter Hardwarebeschleunigung in H.264-MP4 umgewandelt. Ein Fortschrittsfenster bleibt währenddessen in der App; danach startet die Lehrkraft den fertigen MP4-Download mit einem zweiten Tippen. Je nach Videolänge und iPad kann die Umwandlung Zeit und zusätzlichen Arbeitsspeicher benötigen, daher sollte die App im Vordergrund bleiben. Unterstützt der Browser die lokale Konvertierung nicht, bietet die App das unveränderte WebM-Original an. Bereits als MP4 gespeicherte Videos und Fotos werden direkt heruntergeladen. Über Kontrollfelder können mehrere Einträge ausgewählt und gemeinsam gelöscht werden. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
+Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und benannte Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Das Download-Symbol exportiert bei genau einer markierten Aufnahme diese einzelne Datei und übernimmt bei Videos den zuvor vergebenen Namen. WebM-Aufnahmen werden dafür lokal mit bevorzugter Hardwarebeschleunigung in H.264-MP4 umgewandelt. Ein Fortschrittsfenster bleibt währenddessen in der App; danach startet die Lehrkraft den fertigen MP4-Download mit einem zweiten Tippen. Je nach Videolänge und iPad kann die Umwandlung Zeit und zusätzlichen Arbeitsspeicher benötigen, daher sollte die App im Vordergrund bleiben. Unterstützt der Browser die lokale Konvertierung nicht, bietet die App das unveränderte WebM-Original an. Bereits als MP4 gespeicherte Videos und Fotos werden direkt heruntergeladen. Sind mehrere Einträge markiert, bündelt dasselbe Download-Symbol ihre unveränderten Originaldateien vollständig lokal in einem ZIP. Über das Papierkorb-Symbol lässt sich dieselbe Auswahl gemeinsam löschen. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
 
 ## Manuelle Abnahme auf einem physischen iPad
 
@@ -99,7 +99,7 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
 6. Über das Zahnrad beim ersten Anmelden ein eigenes Passwort festlegen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
 7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
-8. Gespeicherte Fotos und Videos in der Galerie öffnen und einzeln herunterladen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+8. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
 9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
 10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
 11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
@@ -113,7 +113,8 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 
 - `index.html` – semantische, barrierearme deutschsprachige Oberfläche
 - `styles.css` – responsive Touch-Gestaltung für Hoch- und Querformat samt Safe Areas
-- `app.js` – Kamera, Aufnahme, Galerie und zentrale temporäre Medienbereinigung
+- `app.js` – Kamera, Aufnahme, Galerie, Mehrfachdownload und zentrale temporäre Medienbereinigung
+- `zip-utils.js` – lokale, offlinefähige Bündelung ausgewählter Galerieaufnahmen als ZIP
 - `video-converter.js` – lokale WebM-zu-H.264-MP4-Konvertierung für Galeriedownloads
 - `annotation.js` – lokale Annotation eines aktuellen Videoframes
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB

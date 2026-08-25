@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=32">
-    <script type="module" src="./app.js?v=32"></script>
+    <link rel="stylesheet" href="./styles.css?v=34">
+    <script type="module" src="./app.js?v=34"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -365,9 +365,14 @@
               <span>Alle auswählen</span>
             </label>
             <span id="gallery-selection-count" class="gallery-selection-count" role="status" aria-live="polite">Keine Auswahl</span>
-            <button id="gallery-delete-selected" class="secondary-action danger-action" type="button" disabled>
-              Auswahl löschen
-            </button>
+            <div class="gallery-selection-actions">
+              <button id="gallery-download-selected" class="secondary-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen herunterladen" title="Ausgewählte Aufnahmen herunterladen" disabled>
+                <span class="download-action-icon" aria-hidden="true"></span>
+              </button>
+              <button id="gallery-delete-selected" class="secondary-action danger-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen löschen" title="Ausgewählte Aufnahmen löschen" disabled>
+                <span class="delete-action-icon" aria-hidden="true"></span>
+              </button>
+            </div>
           </div>
 
           <div id="gallery-empty" class="gallery-empty" role="status">

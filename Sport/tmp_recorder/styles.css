@@ -1126,10 +1126,24 @@ input.gallery-card-selection,
   font-weight: 700;
 }
 
-#gallery-delete-selected {
-  min-height: 46px;
+.gallery-selection-actions {
+  display: flex;
+  gap: 0.65rem;
   margin-left: auto;
-  padding-block: 0.55rem;
+}
+
+.gallery-selection-actions .secondary-action {
+  display: inline-grid;
+  width: 48px;
+  min-height: 46px;
+  padding: 0;
+  place-items: center;
+}
+
+.gallery-selection-icon-button .download-action-icon,
+.gallery-selection-icon-button .delete-action-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .gallery-empty {
@@ -2582,9 +2596,9 @@ noscript {
     justify-self: end;
   }
 
-  #gallery-delete-selected {
+  .gallery-selection-actions {
     grid-column: 1 / -1;
-    width: 100%;
+    justify-content: flex-end;
     margin-left: 0;
   }
 

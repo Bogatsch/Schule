@@ -6,6 +6,7 @@ import {
 } from './media-utils.js?v=26';
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=32';
+import { createZip } from './zip-utils.js?v=33';
 import {
   deleteMedia,
   getMedia,
@@ -104,6 +105,7 @@ const elements = {
   galleryStorageStatus: document.querySelector('#gallery-storage-status'),
   gallerySelectAll: document.querySelector('#gallery-select-all'),
   gallerySelectionCount: document.querySelector('#gallery-selection-count'),
+  galleryDownloadSelected: document.querySelector('#gallery-download-selected'),
   galleryDeleteSelected: document.querySelector('#gallery-delete-selected'),
   accountDialog: document.querySelector('#account-dialog'),
   accountClose: document.querySelector('#account-close'),
@@ -210,6 +212,8 @@ let galleryViewerItem = null;
 let galleryViewerObjectUrl = null;
 let galleryViewerTrigger = null;
 let galleryViewerRequestId = 0;
+let galleryZipDownloadRequestId = 0;
+let galleryZipDownloadInProgress = false;
 let pendingDeleteIds = [];
 let pendingDeleteTrigger = null;
 let mp4ConversionController = null;
@@ -1389,11 +1393,19 @@ function updateGallerySelectionUI() {
   const allSelected = galleryItems.length > 0 && selectedCount === galleryItems.length;
   elements.gallerySelectAll.checked = allSelected;
   elements.gallerySelectAll.indeterminate = selectedCount > 0 && !allSelected;
-  elements.gallerySelectAll.disabled = galleryItems.length === 0;
+  elements.gallerySelectAll.disabled = galleryItems.length === 0 || galleryZipDownloadInProgress;
   elements.gallerySelectionCount.textContent = selectedCount === 0
     ? 'Keine Auswahl'
     : `${selectedCount} ${selectedCount === 1 ? 'Aufnahme' : 'Aufnahmen'} ausgewählt`;
-  elements.galleryDeleteSelected.disabled = selectedCount === 0;
+  const downloadLabel = selectedCount === 1
+    ? 'Ausgewählte Aufnahme herunterladen'
+    : selectedCount > 1
+      ? `${selectedCount} ausgewählte Aufnahmen als ZIP herunterladen`
+      : 'Ausgewählte Aufnahmen herunterladen';
+  elements.galleryDownloadSelected.setAttribute('aria-label', downloadLabel);
+  elements.galleryDownloadSelected.title = downloadLabel;
+  elements.galleryDownloadSelected.disabled = selectedCount === 0 || galleryZipDownloadInProgress;
+  elements.galleryDeleteSelected.disabled = selectedCount === 0 || galleryZipDownloadInProgress;
 
   elements.galleryGrid.querySelectorAll('.gallery-card').forEach((card) => {
     const selected = gallerySelectedIds.has(card.dataset.mediaId);
@@ -1402,6 +1414,7 @@ function updateGallerySelectionUI() {
     const checkbox = card.querySelector('.gallery-card-selection input');
     if (checkbox) {
       checkbox.checked = selected;
+      checkbox.disabled = galleryZipDownloadInProgress;
     }
   });
 }
@@ -1965,6 +1978,82 @@ async function downloadGalleryItem(id, { button = null, statusElement = elements
   }
 }
 
+function galleryZipDownloadName() {
+  const now = new Date();
+  const date = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0')
+  ].join('-');
+  return `Sportkamera-Aufnahmen-${date}.zip`;
+}
+
+async function downloadGallerySelection() {
+  if (!teacherMode || galleryZipDownloadInProgress) {
+    return;
+  }
+  const selectedItems = galleryItems.filter((item) => gallerySelectedIds.has(item.id));
+  if (!selectedItems.length) {
+    return;
+  }
+  if (selectedItems.length === 1) {
+    await downloadGalleryItem(selectedItems[0].id, {
+      button: elements.galleryDownloadSelected,
+      statusElement: elements.galleryStorageStatus
+    });
+    updateGallerySelectionUI();
+    return;
+  }
+
+  const requestId = ++galleryZipDownloadRequestId;
+  galleryZipDownloadInProgress = true;
+  updateGallerySelectionUI();
+  elements.galleryStorageStatus.textContent = `ZIP wird vorbereitet … 0 von ${selectedItems.length}`;
+
+  try {
+    const entries = [];
+    for (let index = 0; index < selectedItems.length; index += 1) {
+      const item = selectedItems[index];
+      const stored = galleryLoadedMedia.get(item.id) || await getMedia(item.id);
+      if (!stored || requestId !== galleryZipDownloadRequestId || !teacherMode) {
+        throw new Error('unavailable');
+      }
+      galleryLoadedMedia.set(item.id, stored);
+      const fallback = stored.metadata.kind === 'photo'
+        ? `Sportkamera-Foto-${index + 1}.jpg`
+        : `Sportkamera-Video-${index + 1}.webm`;
+      entries.push({
+        blob: stored.file,
+        name: sanitizeDownloadName(stored.metadata.suggestedDownloadName, fallback),
+        lastModified: stored.metadata.createdAt
+      });
+      elements.galleryStorageStatus.textContent = `Aufnahmen werden geladen … ${index + 1} von ${selectedItems.length}`;
+    }
+
+    elements.galleryStorageStatus.textContent = 'ZIP wird erstellt …';
+    const zip = await createZip(entries, {
+      onProgress: ({ completed, total }) => {
+        if (requestId === galleryZipDownloadRequestId && teacherMode) {
+          elements.galleryStorageStatus.textContent = `ZIP wird erstellt … ${completed} von ${total}`;
+        }
+      }
+    });
+    if (requestId !== galleryZipDownloadRequestId || !teacherMode) {
+      return;
+    }
+    triggerBlobDownload(zip, galleryZipDownloadName(), elements.galleryStorageStatus);
+  } catch {
+    if (requestId === galleryZipDownloadRequestId && teacherMode) {
+      elements.galleryStorageStatus.textContent = 'Das ZIP konnte nicht erstellt werden. Bitte wähle weniger Aufnahmen aus und versuche es erneut.';
+    }
+  } finally {
+    if (requestId === galleryZipDownloadRequestId) {
+      galleryZipDownloadInProgress = false;
+      updateGallerySelectionUI();
+    }
+  }
+}
+
 function closeDeleteConfirmation({ restoreFocus = true } = {}) {
   const trigger = pendingDeleteTrigger;
   pendingDeleteIds = [];
@@ -2048,6 +2137,8 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
   teacherAuthOperationId += 1;
   teacherMode = false;
   teacherAuthVerified = false;
+  galleryZipDownloadRequestId += 1;
+  galleryZipDownloadInProgress = false;
   gallerySelectedIds.clear();
   galleryItems = [];
   galleryLoadId += 1;
@@ -2189,6 +2280,8 @@ elements.comparisonAnnotationButton.addEventListener('click', () => {
 elements.settingsButton.addEventListener('click', openAccountDialog);
 elements.galleryEntry.addEventListener('click', openGallery);
 elements.galleryBack.addEventListener('click', () => {
+  galleryZipDownloadRequestId += 1;
+  galleryZipDownloadInProgress = false;
   galleryLoadId += 1;
   galleryRenderId += 1;
   gallerySelectedIds.clear();
@@ -2301,6 +2394,9 @@ elements.gallerySelectAll.addEventListener('change', () => {
 });
 elements.galleryDeleteSelected.addEventListener('click', () => {
   openDeleteConfirmation([...gallerySelectedIds], elements.galleryDeleteSelected);
+});
+elements.galleryDownloadSelected.addEventListener('click', () => {
+  void downloadGallerySelection();
 });
 
 elements.galleryViewerClose.addEventListener('click', () => closeGalleryViewer());

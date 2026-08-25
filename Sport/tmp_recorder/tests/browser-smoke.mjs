@@ -795,8 +795,59 @@ try {
     await click('#gallery-viewer-close');
     await waitFor(`!document.querySelector('#gallery-viewer-dialog').open`);
 
+    await click('.gallery-card[data-kind="photo"] [data-gallery-action="select"]');
+    await waitFor(`document.querySelector('#gallery-selection-count').textContent.startsWith('1 ')
+      && !document.querySelector('#gallery-download-selected').disabled`);
+    await evaluate(`(() => {
+      window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
+      window.__sportkameraDownload = null;
+      HTMLAnchorElement.prototype.click = function captureDownload() {
+        if (this.download) {
+          window.__sportkameraDownload = { filename: this.download, href: this.href };
+          return;
+        }
+        return window.__sportkameraOriginalAnchorClick.call(this);
+      };
+    })()`);
+    await click('#gallery-download-selected');
+    await waitFor(`window.__sportkameraDownload !== null`);
+    const selectedSingleDownload = await evaluate(`(() => {
+      const result = window.__sportkameraDownload;
+      HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraDownload;
+      return result;
+    })()`);
+    assert.doesNotMatch(selectedSingleDownload.filename, /\.zip$/i);
+    assert.match(selectedSingleDownload.href, /^blob:/);
+    await click('.gallery-card[data-kind="photo"] [data-gallery-action="select"]');
+    await waitFor(`document.querySelector('#gallery-selection-count').textContent === 'Keine Auswahl'`);
+
     await click('#gallery-select-all');
-    await waitFor(`!document.querySelector('#gallery-delete-selected').disabled`);
+    await waitFor(`!document.querySelector('#gallery-download-selected').disabled
+      && !document.querySelector('#gallery-delete-selected').disabled`);
+    await evaluate(`(() => {
+      window.__sportkameraOriginalAnchorClick = HTMLAnchorElement.prototype.click;
+      window.__sportkameraDownload = null;
+      HTMLAnchorElement.prototype.click = function captureDownload() {
+        if (this.download) {
+          window.__sportkameraDownload = { filename: this.download, href: this.href };
+          return;
+        }
+        return window.__sportkameraOriginalAnchorClick.call(this);
+      };
+    })()`);
+    await click('#gallery-download-selected');
+    await waitFor(`window.__sportkameraDownload !== null`);
+    const zipDownload = await evaluate(`(() => {
+      const result = window.__sportkameraDownload;
+      HTMLAnchorElement.prototype.click = window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraOriginalAnchorClick;
+      delete window.__sportkameraDownload;
+      return result;
+    })()`);
+    assert.match(zipDownload.filename, /^Sportkamera-Aufnahmen-\d{4}-\d{2}-\d{2}\.zip$/);
+    assert.match(zipDownload.href, /^blob:/);
     await click('#gallery-delete-selected');
     await waitFor(`document.querySelector('#gallery-delete-dialog').open`);
     await click('#gallery-delete-confirm');
@@ -818,7 +869,7 @@ try {
     await waitFor(`document.querySelector('#account-dialog').open
       && !document.querySelector('#account-setup-step').hidden`);
     await click('#account-close');
-    results.push('Eigene Passwortvergabe, geschützte Galerie, Download, Annotation, Mehrfachlöschung und Komplett-Reset');
+    results.push('Eigene Passwortvergabe, geschützte Galerie, Einzel- und ZIP-Download, Annotation, Mehrfachlöschung und Komplett-Reset');
   }
 
   const workerState = await evaluate(`navigator.serviceWorker.ready.then((registration) => ({

@@ -15,6 +15,7 @@ const requiredFiles = [
   'media-store.js',
   'teacher-auth.js',
   'media-utils.js',
+  'zip-utils.js',
   'manifest.webmanifest',
   'package.json',
   'sw.js',
@@ -27,6 +28,7 @@ const requiredFiles = [
   'tests/auth.test.mjs',
   'tests/browser-smoke.mjs',
   'tests/video-converter.test.mjs',
+  'tests/zip-utils.test.mjs',
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
@@ -62,10 +64,11 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, videoConverter, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle] = await Promise.all([
+const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('video-converter.js'),
+  read('zip-utils.js'),
   read('annotation.js'),
   read('media-store.js'),
   read('teacher-auth.js'),
@@ -131,6 +134,9 @@ assert.match(html, /id="gallery-storage-status"/, 'Speicherstatus der Galerie fe
 assert.match(html, /id="gallery-select-all"/, 'Alles-auswählen-Kontrollfeld fehlt');
 assert.match(html, /id="gallery-selection-count"/, 'Auswahlzähler der Galerie fehlt');
 assert.match(html, /id="gallery-delete-selected"[^>]*disabled/, 'Mehrfachlöschung muss ohne Auswahl deaktiviert sein');
+assert.match(html, /id="gallery-download-selected"[^>]*disabled/, 'Auswahl-Download muss ohne Auswahl deaktiviert sein');
+assert.match(html, /id="gallery-download-selected"[^>]*aria-label="Ausgewählte Aufnahmen herunterladen"[^>]*>[\s\S]*?class="download-action-icon"/, 'Auswahl-Download benötigt eine zugängliche Symboltaste');
+assert.match(html, /id="gallery-delete-selected"[^>]*aria-label="Ausgewählte Aufnahmen löschen"[^>]*>[\s\S]*?class="delete-action-icon"/, 'Auswahl-Löschung benötigt eine zugängliche Symboltaste');
 assert.match(html, /<dialog id="account-dialog"/, 'Pop-up für Anmeldung und Zurücksetzen fehlt');
 assert.match(html, /id="account-login-tab"[^>]*>Anmelden</, 'Anmelden-Option im Zahnrad-Pop-up fehlt');
 assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-Option im Zahnrad-Pop-up fehlt');
@@ -176,8 +182,8 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=32/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=32/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=34/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=34/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -203,6 +209,10 @@ assert.match(app, /BroadcastChannel\('sportkamera-account-v1'\)/, 'Komplett-Rese
 assert.match(app, /authenticateWithPlatform/, 'Gerätebestätigung der Anmeldung ist nicht verbunden');
 assert.match(app, /enrollPlatformCredential/, 'Einrichtung der Gerätebestätigung ist nicht verbunden');
 assert.match(app, /gallerySelectedIds|selectedGalleryIds/, 'Mehrfachauswahl der Galerie fehlt');
+assert.match(app, /createZip/, 'Gebündelter ZIP-Download der Galerie fehlt');
+assert.match(app, /selectedItems\.length === 1[\s\S]*downloadGalleryItem/, 'Ein einzelner ausgewählter Eintrag wird nicht direkt heruntergeladen');
+assert.match(zipUtils, /application\/zip/, 'ZIP-Erstellung verwendet nicht den passenden Dateityp');
+assert.doesNotMatch(zipUtils, /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|sendBeacon)\b/, 'ZIP-Erstellung darf keine Medien über das Netzwerk senden');
 assert.match(app, /galleryDeleteDialog\.showModal|galleryDeleteDialog\?\.showModal/, 'Löschen verlangt keine modale Bestätigung');
 assert.match(app, /annotation\.open\(elements\.galleryViewerVideo/, 'Annotation eines gespeicherten Videos ist nicht verbunden');
 assert.match(app, /annotation\.open\(elements\.videoPreview/, 'Annotation der eigenen Aufnahme ist nicht verbunden');
@@ -338,10 +348,11 @@ assert.match(app, /frameRate:\s*\{ ideal: 30 \}/, 'ideale Bildrate fehlt');
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /sportkamera-shell-[\s\S]*v32|CACHE_PREFIX\}v32/, 'Cache-Version v32 fehlt');
-assert.match(worker, /\.\/app\.js\?v=32/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=32/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /sportkamera-shell-[\s\S]*v34|CACHE_PREFIX\}v34/, 'Cache-Version v34 fehlt');
+assert.match(worker, /\.\/app\.js\?v=34/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=32/, 'Videokonverter fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
 assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/teacher-auth\.js\?v=30/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
