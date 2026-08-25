@@ -81,30 +81,13 @@ export function isWebMVideo(mimeType) {
   return String(mimeType || '').split(';', 1)[0].trim().toLowerCase() === 'video/webm';
 }
 
-export async function convertWebMToMp4(blob, {
-  title = '',
-  signal = null,
-  onProgress = null
-} = {}) {
-  if (!(blob instanceof Blob) || blob.size <= 0 || !isWebMVideo(blob.type)) {
-    throw new VideoConversionError('invalid-input', 'Es wurde kein gültiges WebM-Video übergeben.');
-  }
-  if (signal?.aborted) {
-    throw createAbortError();
-  }
-  if (typeof globalThis.VideoDecoder !== 'function' || typeof globalThis.VideoEncoder !== 'function') {
-    throw new VideoConversionError(
-      'unsupported',
-      'Dieses Gerät unterstützt die lokale Videokonvertierung nicht.'
-    );
-  }
-
-  onProgress?.({ phase: 'loading', progress: 0 });
-  const library = await loadMediabunny();
-  if (signal?.aborted) {
-    throw createAbortError();
-  }
-
+async function runMp4Conversion(blob, library, {
+  title,
+  signal,
+  onProgress,
+  progressPhase,
+  video
+}) {
   const {
     ALL_FORMATS,
     BlobSource,
@@ -112,18 +95,8 @@ export async function convertWebMToMp4(blob, {
     Conversion,
     Input,
     Mp4OutputFormat,
-    Output,
-    Quality,
-    canEncodeVideo
+    Output
   } = library;
-
-  if (typeof canEncodeVideo !== 'function' || !(await canEncodeVideo('avc'))) {
-    throw new VideoConversionError(
-      'unsupported',
-      'Dieses Gerät kann kein H.264-Video für eine MP4-Datei erzeugen.'
-    );
-  }
-
   const input = new Input({
     formats: ALL_FORMATS,
     source: new BlobSource(blob)
@@ -143,13 +116,7 @@ export async function convertWebMToMp4(blob, {
       input,
       output,
       tracks: 'primary',
-      video: {
-        codec: 'avc',
-        forceTranscode: true,
-        hardwareAcceleration: 'prefer-hardware',
-        keyFrameInterval: 2,
-        quality: new Quality('high')
-      },
+      video,
       audio: { discard: true },
       tags: title ? { title } : {}
     });
@@ -167,7 +134,7 @@ export async function convertWebMToMp4(blob, {
     signal?.addEventListener('abort', abortConversion, { once: true });
     conversion.onProgress = (progress) => {
       onProgress?.({
-        phase: 'converting',
+        phase: progressPhase,
         progress: Math.max(0, Math.min(1, Number(progress) || 0))
       });
     };
@@ -186,14 +153,7 @@ export async function convertWebMToMp4(blob, {
     if (signal?.aborted || error?.name === 'ConversionCanceledError') {
       throw createAbortError();
     }
-    if (error instanceof VideoConversionError) {
-      throw error;
-    }
-    throw new VideoConversionError(
-      'conversion-failed',
-      'Das WebM-Video konnte auf diesem Gerät nicht in MP4 umgewandelt werden.',
-      error
-    );
+    throw error;
   } finally {
     signal?.removeEventListener('abort', abortConversion);
     if (conversion && conversion.state !== 'done' && conversion.state !== 'canceled') {
@@ -201,4 +161,88 @@ export async function convertWebMToMp4(blob, {
     }
     input.dispose();
   }
+}
+
+export async function convertWebMToMp4(blob, {
+  title = '',
+  signal = null,
+  onProgress = null
+} = {}) {
+  if (!(blob instanceof Blob) || blob.size <= 0 || !isWebMVideo(blob.type)) {
+    throw new VideoConversionError('invalid-input', 'Es wurde kein gültiges WebM-Video übergeben.');
+  }
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+
+  onProgress?.({ phase: 'loading', progress: 0 });
+  const library = await loadMediabunny();
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+
+  const { Quality, canEncodeVideo } = library;
+  const failedAttempts = [];
+  const hasWebCodecs = (
+    typeof globalThis.VideoDecoder === 'function'
+    && typeof globalThis.VideoEncoder === 'function'
+  );
+  let canEncodeAvc = false;
+  if (hasWebCodecs && typeof canEncodeVideo === 'function') {
+    try {
+      canEncodeAvc = await canEncodeVideo('avc');
+    } catch {
+      canEncodeAvc = false;
+    }
+  }
+
+  if (canEncodeAvc) {
+    // Der bewährte Safari-/iPad-Pfad bleibt zuerst. Andere Browser erhalten
+    // danach einen zweiten Versuch ohne festgelegten Hardware-Encoder.
+    for (const hardwareAcceleration of ['prefer-hardware', 'no-preference']) {
+      try {
+        return await runMp4Conversion(blob, library, {
+          title,
+          signal,
+          onProgress,
+          progressPhase: 'converting',
+          video: {
+            codec: 'avc',
+            forceTranscode: true,
+            hardwareAcceleration,
+            keyFrameInterval: 2,
+            quality: new Quality('high')
+          }
+        });
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          throw error;
+        }
+        failedAttempts.push(error);
+      }
+    }
+  }
+
+  // Firefox und Chrome-Konfigurationen ohne nutzbaren H.264-Encoder können
+  // VP8/VP9-Pakete verlustfrei und ohne WebCodecs in einen MP4-Container kopieren.
+  try {
+    return await runMp4Conversion(blob, library, {
+      title,
+      signal,
+      onProgress,
+      progressPhase: 'remuxing',
+      video: { forceTranscode: false }
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw error;
+    }
+    failedAttempts.push(error);
+  }
+
+  throw new VideoConversionError(
+    'conversion-failed',
+    'Das WebM-Video konnte auf diesem Gerät nicht in MP4 umgewandelt werden.',
+    failedAttempts.at(-1) || null
+  );
 }

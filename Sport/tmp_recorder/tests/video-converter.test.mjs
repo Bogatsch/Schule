@@ -115,3 +115,177 @@ test('bricht eine bereits abgemeldete Konvertierung vor dem Start ab', async () 
     { name: 'AbortError' }
   );
 });
+
+test('verpackt WebM ohne WebCodecs direkt in einen MP4-Container', async () => {
+  const originalVideoDecoder = globalThis.VideoDecoder;
+  const originalVideoEncoder = globalThis.VideoEncoder;
+  const originalMediabunny = globalThis.Mediabunny;
+  let disposed = false;
+
+  class FakeInput {
+    dispose() {
+      disposed = true;
+    }
+  }
+  class FakeBlobSource {}
+  class FakeBufferTarget {
+    constructor() {
+      this.buffer = null;
+    }
+  }
+  class FakeMp4OutputFormat {}
+  class FakeOutput {
+    constructor({ target }) {
+      this.target = target;
+    }
+  }
+
+  try {
+    delete globalThis.VideoDecoder;
+    delete globalThis.VideoEncoder;
+    globalThis.Mediabunny = {
+      ALL_FORMATS: [],
+      BlobSource: FakeBlobSource,
+      BufferTarget: FakeBufferTarget,
+      Input: FakeInput,
+      Mp4OutputFormat: FakeMp4OutputFormat,
+      Output: FakeOutput,
+      Conversion: {
+        async init(options) {
+          assert.equal(options.video.forceTranscode, false);
+          assert.equal(options.video.codec, undefined);
+          return {
+            isValid: true,
+            state: 'idle',
+            onProgress: null,
+            async execute() {
+              this.state = 'executing';
+              this.onProgress?.(0.75);
+              options.output.target.buffer = new Uint8Array([
+                0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109
+              ]).buffer;
+              this.state = 'done';
+            },
+            async cancel() {
+              this.state = 'canceled';
+            }
+          };
+        }
+      }
+    };
+
+    const events = [];
+    const output = await convertWebMToMp4(
+      new Blob(['webm'], { type: 'video/webm;codecs=vp8' }),
+      { onProgress: (event) => events.push(event) }
+    );
+
+    assert.equal(output.type, 'video/mp4');
+    assert.equal(disposed, true);
+    assert.ok(events.some((event) => event.phase === 'remuxing' && event.progress === 0.75));
+  } finally {
+    if (originalVideoDecoder === undefined) {
+      delete globalThis.VideoDecoder;
+    } else {
+      globalThis.VideoDecoder = originalVideoDecoder;
+    }
+    if (originalVideoEncoder === undefined) {
+      delete globalThis.VideoEncoder;
+    } else {
+      globalThis.VideoEncoder = originalVideoEncoder;
+    }
+    if (originalMediabunny === undefined) {
+      delete globalThis.Mediabunny;
+    } else {
+      globalThis.Mediabunny = originalMediabunny;
+    }
+  }
+});
+
+test('wiederholt H.264 ohne erzwungene Hardwarebeschleunigung', async () => {
+  const originalVideoDecoder = globalThis.VideoDecoder;
+  const originalVideoEncoder = globalThis.VideoEncoder;
+  const originalMediabunny = globalThis.Mediabunny;
+  const accelerationAttempts = [];
+
+  class FakeInput {
+    dispose() {}
+  }
+  class FakeBlobSource {}
+  class FakeBufferTarget {
+    constructor() {
+      this.buffer = null;
+    }
+  }
+  class FakeMp4OutputFormat {}
+  class FakeOutput {
+    constructor({ target }) {
+      this.target = target;
+    }
+  }
+  class FakeQuality {}
+
+  try {
+    globalThis.VideoDecoder = class {};
+    globalThis.VideoEncoder = class {};
+    globalThis.Mediabunny = {
+      ALL_FORMATS: [],
+      BlobSource: FakeBlobSource,
+      BufferTarget: FakeBufferTarget,
+      Input: FakeInput,
+      Mp4OutputFormat: FakeMp4OutputFormat,
+      Output: FakeOutput,
+      Quality: FakeQuality,
+      async canEncodeVideo() {
+        return true;
+      },
+      Conversion: {
+        async init(options) {
+          accelerationAttempts.push(options.video.hardwareAcceleration);
+          const shouldFail = options.video.hardwareAcceleration === 'prefer-hardware';
+          return {
+            isValid: true,
+            state: 'idle',
+            onProgress: null,
+            async execute() {
+              this.state = 'executing';
+              if (shouldFail) {
+                throw new Error('Hardware-Encoder nicht verfügbar');
+              }
+              options.output.target.buffer = new Uint8Array([
+                0, 0, 0, 24, 102, 116, 121, 112, 105, 115, 111, 109
+              ]).buffer;
+              this.state = 'done';
+            },
+            async cancel() {
+              this.state = 'canceled';
+            }
+          };
+        }
+      }
+    };
+
+    const output = await convertWebMToMp4(
+      new Blob(['webm'], { type: 'video/webm;codecs=vp9' })
+    );
+
+    assert.equal(output.type, 'video/mp4');
+    assert.deepEqual(accelerationAttempts, ['prefer-hardware', 'no-preference']);
+  } finally {
+    if (originalVideoDecoder === undefined) {
+      delete globalThis.VideoDecoder;
+    } else {
+      globalThis.VideoDecoder = originalVideoDecoder;
+    }
+    if (originalVideoEncoder === undefined) {
+      delete globalThis.VideoEncoder;
+    } else {
+      globalThis.VideoEncoder = originalVideoEncoder;
+    }
+    if (originalMediabunny === undefined) {
+      delete globalThis.Mediabunny;
+    } else {
+      globalThis.Mediabunny = originalMediabunny;
+    }
+  }
+});

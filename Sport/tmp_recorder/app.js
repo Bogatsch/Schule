@@ -5,7 +5,7 @@ import {
   selectSupportedVideoMimeType
 } from './media-utils.js?v=26';
 import { setupVideoAnnotation } from './annotation.js?v=29';
-import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=32';
+import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
 import {
   deleteMedia,
@@ -1888,7 +1888,9 @@ async function prepareWebMAsMp4(stored, trigger, statusElement) {
           ? 'Konverter wird vorbereitet …'
           : phase === 'finalizing'
             ? 'MP4-Datei wird fertiggestellt …'
-            : `Video wird umgewandelt … ${percentage} %`;
+            : phase === 'remuxing'
+              ? `Video wird browserkompatibel als MP4 verpackt … ${percentage} %`
+              : `Video wird umgewandelt … ${percentage} %`;
       }
     });
 
