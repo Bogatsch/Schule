@@ -52,7 +52,7 @@ async function requestRange(range) {
 test('Leitbild-Videos sind vollständig für den Offline-Cache aufgelistet', () => {
   assert.deepEqual(Array.from(workerScope.testApi.GUIDE_VIDEOS), [
     './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
-    './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4'
+    './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38'
   ]);
 });
 

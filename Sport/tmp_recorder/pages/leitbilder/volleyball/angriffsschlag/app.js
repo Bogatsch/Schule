@@ -77,6 +77,18 @@ guideVideo.addEventListener('error', () => {
   guideVideoStatus.textContent = 'Das Leitbild-Video konnte nicht geladen werden.';
 });
 guideVideo.addEventListener('contextmenu', (event) => event.preventDefault());
+
+// Kurze, bereits lokal gecachte Videos können ihre Metadaten laden, bevor das
+// Modul ausgeführt wurde. Den Player deshalb auch direkt initialisieren.
+updateGuidePlaybackUI();
+updateGuidePlayButton();
+
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register(new URL('../../../../sw.js', import.meta.url)).catch(() => {
+    // Die Leitbild-Wiedergabe funktioniert online auch ohne Offline-Cache.
+  });
+}
+
 window.addEventListener('pagehide', () => {
   guideVideo.pause();
   annotation.close({ restoreFocus: false });

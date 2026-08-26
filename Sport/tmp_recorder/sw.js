@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v37';
+const CACHE_VERSION = 'v38';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
 
@@ -34,7 +34,7 @@ const APP_SHELL = Object.freeze([
   './pages/leitbilder/app.js',
   './pages/leitbilder/volleyball/index.html',
   './pages/leitbilder/volleyball/angriffsschlag/index.html',
-  './pages/leitbilder/volleyball/angriffsschlag/app.js?v=28',
+  './pages/leitbilder/volleyball/angriffsschlag/app.js?v=38',
   './pages/leitbilder/volleyball/pritschen-seitlich/index.html',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',
@@ -45,7 +45,7 @@ const APP_SHELL = Object.freeze([
 
 const GUIDE_VIDEOS = Object.freeze([
   './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
-  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4'
+  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38'
 ]);
 
 const ALLOWED_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));

@@ -449,6 +449,7 @@ try {
   assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
   assert.equal(await evaluate(`document.querySelector('#guide-play-button').textContent.trim()`), '▶');
   await waitFor(`document.querySelector('#guide-video').readyState >= 2`);
+  await waitFor(`document.querySelector('#guide-playback-time').value !== '0:00 / 0:00'`);
   await exerciseAnnotation('#guide-annotation-button', 'Pritschen seitlich');
   results.push('Leitbild-Frame mit Stift und Radierer annotieren und verwerfen');
   await click('[data-guide-speed="0.5"]');
@@ -911,7 +912,7 @@ try {
   ].includes(name)));
   assert.deepEqual(
     [...storageState.cacheState.names].sort(),
-    ['sportkamera-guides-v37', 'sportkamera-shell-v37']
+    ['sportkamera-guides-v38', 'sportkamera-shell-v38']
   );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
@@ -923,7 +924,7 @@ try {
   await waitFor(`navigator.serviceWorker.controller !== null`, 5_000);
   await new Promise((resolve) => webServer.close(resolve));
   try {
-    const offlineRange = await evaluate(`fetch('./Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4', {
+    const offlineRange = await evaluate(`fetch('./Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38', {
       headers: { Range: 'bytes=0-31' }
     }).then(async (response) => ({
       status: response.status,
