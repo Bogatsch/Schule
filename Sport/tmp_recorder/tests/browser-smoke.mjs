@@ -1,12 +1,17 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
-import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const pritschenVideoPath = path.join(
+  appRoot,
+  'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4'
+);
+const pritschenVideoSize = (await stat(pritschenVideoPath)).size;
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'sportkamera-browser-'));
 const profileDirectory = path.join(tempRoot, 'profile');
 await mkdir(profileDirectory);
@@ -298,6 +303,12 @@ async function waitFor(expression, timeoutMs = 10_000) {
       captureDisabled: document.querySelector('#capture-button') && document.querySelector('#capture-button').disabled,
       readyState: document.querySelector('#live-video') && document.querySelector('#live-video').readyState,
       videoWidth: document.querySelector('#live-video') && document.querySelector('#live-video').videoWidth,
+      guideReadyState: document.querySelector('#guide-video') && document.querySelector('#guide-video').readyState,
+      guideNetworkState: document.querySelector('#guide-video') && document.querySelector('#guide-video').networkState,
+      guideError: document.querySelector('#guide-video') && document.querySelector('#guide-video').error && {
+        code: document.querySelector('#guide-video').error.code,
+        message: document.querySelector('#guide-video').error.message
+      },
       visibility: document.visibilityState
     })`).catch(() => null);
     throw new Error(`${error.message} Zustand: ${JSON.stringify(diagnostic)}`);
@@ -900,7 +911,7 @@ try {
   ].includes(name)));
   assert.deepEqual(
     [...storageState.cacheState.names].sort(),
-    ['sportkamera-guides-v36', 'sportkamera-shell-v36']
+    ['sportkamera-guides-v37', 'sportkamera-shell-v37']
   );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
@@ -920,7 +931,7 @@ try {
       length: (await response.arrayBuffer()).byteLength
     }))`);
     assert.equal(offlineRange.status, 206);
-    assert.equal(offlineRange.contentRange, 'bytes 0-31/6654506');
+    assert.equal(offlineRange.contentRange, `bytes 0-31/${pritschenVideoSize}`);
     assert.equal(offlineRange.length, 32);
 
     await navigate(`${appUrl}pages/leitbilder/volleyball/pritschen-seitlich/index.html`);

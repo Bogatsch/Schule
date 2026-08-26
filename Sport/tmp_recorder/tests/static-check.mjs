@@ -352,7 +352,7 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v36'/, 'Cache-Version v36 fehlt');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v37'/, 'Cache-Version v37 fehlt');
 assert.match(worker, /\.\/app\.js\?v=35/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
