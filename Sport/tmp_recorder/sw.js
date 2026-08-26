@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v38';
+const CACHE_VERSION = 'v39';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
 

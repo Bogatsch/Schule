@@ -912,7 +912,7 @@ try {
   ].includes(name)));
   assert.deepEqual(
     [...storageState.cacheState.names].sort(),
-    ['sportkamera-guides-v38', 'sportkamera-shell-v38']
+    ['sportkamera-guides-v39', 'sportkamera-shell-v39']
   );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));

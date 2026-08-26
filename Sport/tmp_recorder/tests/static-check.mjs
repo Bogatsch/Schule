@@ -102,6 +102,8 @@ assert.doesNotMatch(html, /<video[^>]*\scontrols(?:\s|=|>)/i, 'native Videosteue
 assert.doesNotMatch(html, /https?:\/\//i, 'HTML enthält eine externe Ressource');
 assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite fehlt');
 assert.match(html, /id="comparison-button"/, 'Button für den Leitbildvergleich fehlt');
+assert.doesNotMatch(html, /class="preview-pane-label"(?![^>]*\shidden)/, 'Beschriftung verdeckt die eigene Aufnahme');
+assert.doesNotMatch(html, /id="comparison-pane-label"[^>]*(?<!\shidden)>/, 'Leitbildtitel verdeckt das Vergleichsvideo');
 assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4"/, 'Leitbildauswahl für den Vergleich fehlt');
 assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4\?v=38"/, 'Pritschen fehlt in der Leitbildauswahl für den Vergleich');
 assert.match(html, /id="comparison-play-button"/, 'eigene Start-/Pause-Taste des Leitbilds fehlt');
@@ -352,7 +354,7 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v38'/, 'Cache-Version v38 fehlt');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v39'/, 'Cache-Version v39 fehlt');
 assert.match(worker, /\.\/app\.js\?v=35/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
