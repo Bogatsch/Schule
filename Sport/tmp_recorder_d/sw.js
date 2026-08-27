@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v40';
+const CACHE_VERSION = 'v39';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
 
@@ -8,14 +8,26 @@ const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
 const APP_SHELL = Object.freeze([
   './',
   './index.html',
-  './styles.css?v=40',
+  './styles.css?v=34',
   './annotation.js',
   './annotation.js?v=27',
   './annotation.js?v=29',
+  './media-store.js',
+  './media-store.js?v=29',
+  './media-store.js?v=30',
+  './media-store.js?v=31',
+  './teacher-auth.js',
+  './teacher-auth.js?v=29',
+  './teacher-auth.js?v=30',
   './media-utils.js',
   './media-utils.js?v=26',
   './media-utils.js?v=29',
-  './app.js?v=40',
+  './video-converter.js',
+  './video-converter.js?v=35',
+  './zip-utils.js',
+  './zip-utils.js?v=33',
+  './vendor/mediabunny/mediabunny-1.55.2.min.js?v=1.55.2',
+  './app.js?v=35',
   './manifest.webmanifest',
   './pages/leitbilder/index.html',
   './pages/leitbilder/styles.css',

@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=40">
-    <script type="module" src="./app.js?v=40"></script>
+    <link rel="stylesheet" href="./styles.css?v=34">
+    <script type="module" src="./app.js?v=35"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -30,6 +30,9 @@
             <small>Direktes Bewegungsfeedback</small>
           </span>
         </div>
+        <button id="settings-button" class="settings-button" type="button" aria-label="Anmeldung und Einstellungen öffnen" aria-haspopup="dialog" aria-controls="account-dialog">
+          <span aria-hidden="true">⚙</span>
+        </button>
       </header>
 
       <main id="main-content" tabindex="-1">
@@ -47,6 +50,11 @@
                 <button class="mode-card video-card" type="button" data-start-mode="video">
                   <span class="mode-icon video-icon" aria-hidden="true"><span></span></span>
                   <span class="mode-text"><strong>Video</strong><small>Bis zu 3 Minuten · ohne Ton</small></span>
+                  <span class="arrow" aria-hidden="true">→</span>
+                </button>
+                <button id="gallery-entry" class="mode-card gallery-mode-card" type="button" hidden>
+                  <span class="mode-icon gallery-mode-icon" aria-hidden="true"><span></span></span>
+                  <span class="mode-text"><strong>Galerie</strong><small>Gespeicherte Aufnahmen verwalten</small></span>
                   <span class="arrow" aria-hidden="true">→</span>
                 </button>
               </div>
@@ -131,6 +139,12 @@
             </div>
           </div>
 
+          <div id="photo-save-controls" class="photo-save-controls" hidden>
+            <button id="photo-save-button" class="save-icon-button" type="button" aria-label="Foto in der Galerie speichern" title="Foto speichern">
+              <span class="save-icon" aria-hidden="true"></span>
+            </button>
+          </div>
+
           <div id="preview-player-grid" class="preview-player-grid">
             <div id="playback-controls" class="playback-controls" aria-label="Wiedergabe der eigenen Aufnahme" hidden>
               <p class="player-control-label">Eigene Aufnahme</p>
@@ -153,7 +167,10 @@
                     <button type="button" data-speed="1" aria-pressed="true">1×</button>
                   </div>
                 </details>
-                <button id="video-annotation-button" class="annotation-icon-button" type="button" aria-label="Aktuellen Frame der eigenen Aufnahme annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                <button id="video-save-button" class="save-icon-button" type="button" aria-label="Video in der Galerie speichern" title="Video speichern">
+                  <span class="save-icon" aria-hidden="true"></span>
+                </button>
+                <button id="video-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame der eigenen Aufnahme annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
                   </svg>
@@ -182,7 +199,7 @@
                     <button type="button" data-comparison-speed="1" aria-pressed="true">1×</button>
                   </div>
                 </details>
-                <button id="comparison-annotation-button" class="annotation-icon-button" type="button" aria-label="Aktuellen Frame des Leitbilds annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                <button id="comparison-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame des Leitbilds annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
                   </svg>
@@ -326,6 +343,47 @@
           </div>
         </section>
 
+        <section id="gallery-view" class="view gallery-view" aria-labelledby="gallery-title" hidden>
+          <div class="view-toolbar gallery-toolbar">
+            <button id="gallery-back" class="text-button" type="button">
+              <span aria-hidden="true">←</span> Zurück
+            </button>
+          </div>
+
+          <header class="gallery-heading">
+            <div>
+              <p class="eyebrow">Geschützter Bereich</p>
+              <h1 id="gallery-title">Galerie</h1>
+              <p>Gespeicherte Fotos und Videos – neueste Aufnahmen zuerst.</p>
+            </div>
+            <p id="gallery-storage-status" class="gallery-storage-status" role="status" aria-live="polite">Speicher wird geprüft …</p>
+          </header>
+
+          <div class="gallery-selection-bar" aria-label="Mehrfachauswahl">
+            <label class="gallery-select-all-control" for="gallery-select-all">
+              <input id="gallery-select-all" type="checkbox">
+              <span>Alle auswählen</span>
+            </label>
+            <span id="gallery-selection-count" class="gallery-selection-count" role="status" aria-live="polite">Keine Auswahl</span>
+            <div class="gallery-selection-actions">
+              <button id="gallery-download-selected" class="secondary-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen herunterladen" title="Ausgewählte Aufnahmen herunterladen" disabled>
+                <span class="download-action-icon" aria-hidden="true"></span>
+              </button>
+              <button id="gallery-delete-selected" class="secondary-action danger-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen löschen" title="Ausgewählte Aufnahmen löschen" disabled>
+                <span class="delete-action-icon" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+
+          <div id="gallery-empty" class="gallery-empty" role="status">
+            <span class="gallery-empty-icon" aria-hidden="true"><span></span></span>
+            <h2>Noch keine Aufnahmen gespeichert</h2>
+            <p>Gespeicherte Fotos und Videos erscheinen hier nach Datum sortiert.</p>
+          </div>
+
+          <div id="gallery-grid" class="gallery-grid" role="list" aria-label="Gespeicherte Aufnahmen"></div>
+        </section>
+
         <section id="error-view" class="view error-view" aria-labelledby="error-title" hidden>
           <div class="error-card" role="alert">
             <span class="error-symbol" aria-hidden="true">!</span>
@@ -339,6 +397,205 @@
           </div>
         </section>
       </main>
+
+      <dialog id="video-name-dialog" class="video-name-dialog" aria-labelledby="video-name-dialog-title" aria-describedby="video-name-description">
+        <form id="video-name-form" class="video-name-dialog-shell">
+          <div>
+            <p class="eyebrow">In Galerie speichern</p>
+            <h2 id="video-name-dialog-title">Video benennen</h2>
+          </div>
+          <p id="video-name-description" class="dialog-copy">Der Name wird in der Galerie angezeigt und später als Dateiname für den Download verwendet.</p>
+          <div class="account-password-field">
+            <label for="video-name">Name des Videos</label>
+            <input id="video-name" name="video-name" type="text" maxlength="80" autocomplete="off" autocapitalize="sentences" enterkeyhint="done" spellcheck="true" required>
+            <small>Bis zu 80 Zeichen.</small>
+          </div>
+          <div class="dialog-actions">
+            <button id="video-name-submit" class="primary-action" type="submit">Speichern</button>
+            <button id="video-name-cancel" class="secondary-action" type="button">Abbrechen</button>
+          </div>
+          <p id="video-name-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </form>
+      </dialog>
+
+      <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-dialog-title">
+        <div class="account-dialog-shell">
+          <header class="account-dialog-header">
+            <div>
+              <p class="eyebrow">Lokaler Zugang</p>
+              <h2 id="account-dialog-title">Anmeldung und Einstellungen</h2>
+            </div>
+            <button id="account-close" class="comparison-close" type="button" aria-label="Einstellungen schließen">×</button>
+          </header>
+
+          <div class="account-tabs" role="tablist" aria-label="Einstellungsbereich auswählen">
+            <button id="account-login-tab" type="button" role="tab" aria-selected="true" aria-controls="account-login-panel">Anmelden</button>
+            <button id="account-reset-tab" type="button" role="tab" aria-selected="false" aria-controls="account-reset-panel">Zurücksetzen</button>
+          </div>
+
+          <form id="account-login-form">
+            <section id="account-login-panel" class="account-panel" role="tabpanel" aria-labelledby="account-login-tab">
+              <div id="account-authenticated-step" class="account-step" hidden>
+                <span class="account-success-icon" aria-hidden="true">✓</span>
+                <h3>Du bist angemeldet</h3>
+                <p class="dialog-copy">Die Galerie ist freigeschaltet, bis die App verlassen oder in den Hintergrund gelegt wird.</p>
+                <div class="dialog-actions">
+                  <button id="account-logout" class="secondary-action" type="button">Abmelden</button>
+                </div>
+              </div>
+
+              <div id="account-setup-step" class="account-step" hidden>
+                <h3>Passwort festlegen</h3>
+                <p class="dialog-copy">Beim ersten Anmelden legst du ein eigenes Passwort für dieses Browserprofil fest.</p>
+                <div class="account-password-field">
+                  <label for="account-new-password">Neues Passwort</label>
+                  <input id="account-new-password" name="new-password" type="password" minlength="6" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+                  <small>Mindestens 6 Zeichen.</small>
+                </div>
+                <div class="account-password-field">
+                  <label for="account-confirm-password">Passwort wiederholen</label>
+                  <input id="account-confirm-password" name="confirm-password" type="password" minlength="6" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+                </div>
+                <div class="dialog-actions">
+                  <button id="account-setup-submit" class="primary-action" type="submit">Passwort festlegen und anmelden</button>
+                </div>
+              </div>
+
+              <div id="account-password-step" class="account-step" hidden>
+                <section id="account-biometric-section" class="account-biometric-section" aria-label="Geräteauthentifizierung" hidden>
+                  <button id="account-biometric-button" class="primary-action account-biometric-button" type="button">
+                    <span class="biometric-icon" aria-hidden="true"></span>
+                    Mit diesem Gerät bestätigen
+                  </button>
+                  <p>Je nach Gerät erfolgt die Bestätigung mit Touch ID, Face ID oder Gerätecode.</p>
+                </section>
+
+                <div id="account-biometric-divider" class="account-login-divider" aria-hidden="true" hidden><span>oder</span></div>
+                <div class="account-password-field">
+                  <label for="account-password">Passwort</label>
+                  <input id="account-password" name="password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false">
+                </div>
+                <div class="dialog-actions">
+                  <button id="account-password-submit" class="primary-action" type="submit">Anmelden</button>
+                </div>
+              </div>
+
+              <section id="account-enrollment-step" class="account-enrollment-step" aria-labelledby="account-enrollment-title" hidden>
+                <span class="enrollment-icon" aria-hidden="true"></span>
+                <p class="eyebrow">Optional</p>
+                <h3 id="account-enrollment-title">Schneller mit diesem Gerät anmelden</h3>
+                <p class="dialog-copy">Richte die Gerätebestätigung für spätere Anmeldungen ein.</p>
+                <div class="dialog-actions">
+                  <button id="account-enrollment-button" class="primary-action" type="button">Gerätebestätigung einrichten</button>
+                  <button id="account-enrollment-skip" class="secondary-action" type="button">Jetzt nicht</button>
+                </div>
+              </section>
+            </section>
+          </form>
+
+          <form id="account-reset-form" hidden>
+            <section id="account-reset-panel" class="account-panel account-reset-panel" role="tabpanel" aria-labelledby="account-reset-tab">
+              <span class="delete-confirmation-icon" aria-hidden="true">!</span>
+              <h3>Lokalen Zugang zurücksetzen</h3>
+              <p class="dialog-copy"><strong>Achtung:</strong> Dabei werden das Passwort, die Gerätebestätigung und alle gespeicherten Fotos und Videos unwiderruflich gelöscht.</p>
+              <div class="account-password-field">
+                <label for="account-reset-confirmation">Zum Bestätigen „Zurücksetzen“ eingeben</label>
+                <input id="account-reset-confirmation" name="reset-confirmation" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false">
+              </div>
+              <div class="dialog-actions">
+                <button id="account-reset-submit" class="primary-action destructive-action" type="submit" disabled>Alles zurücksetzen</button>
+              </div>
+            </section>
+          </form>
+
+          <p id="account-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </div>
+      </dialog>
+
+      <dialog id="gallery-viewer-dialog" class="gallery-viewer-dialog" aria-labelledby="gallery-viewer-title">
+        <div class="gallery-viewer-dialog-shell">
+          <header class="gallery-viewer-header">
+            <div>
+              <p class="eyebrow">Gespeicherte Aufnahme</p>
+              <h2 id="gallery-viewer-title">Aufnahme ansehen</h2>
+              <p id="gallery-viewer-date" class="gallery-viewer-date"></p>
+            </div>
+            <button id="gallery-viewer-close" class="comparison-close" type="button" aria-label="Aufnahme schließen">×</button>
+          </header>
+
+          <div class="gallery-viewer-media">
+            <img id="gallery-viewer-photo" alt="" draggable="false" hidden>
+            <video id="gallery-viewer-video" playsinline muted preload="metadata" aria-label="Gespeichertes Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture hidden></video>
+          </div>
+
+          <div id="gallery-playback-controls" class="playback-controls gallery-playback-controls" aria-label="Wiedergabe der gespeicherten Aufnahme" hidden>
+            <button id="gallery-play-button" class="play-button" type="button" aria-label="Gespeichertes Video starten">
+              <span aria-hidden="true">▶</span>
+            </button>
+            <div class="timeline-wrap">
+              <label class="visually-hidden" for="gallery-timeline">Wiedergabeposition des gespeicherten Videos</label>
+              <input id="gallery-timeline" type="range" min="0" max="1000" value="0" step="1">
+              <output id="gallery-playback-time" for="gallery-timeline">0:00 / 0:00</output>
+            </div>
+            <details id="gallery-speed-menu" class="speed-menu">
+              <summary aria-label="Tempo des gespeicherten Videos ändern">
+                <span id="gallery-speed-value">1×</span>
+              </summary>
+              <div class="speed-options" role="group" aria-label="Wiedergabegeschwindigkeit des gespeicherten Videos">
+                <button type="button" data-gallery-speed="0.25" aria-pressed="false">0,25×</button>
+                <button type="button" data-gallery-speed="0.5" aria-pressed="false">0,5×</button>
+                <button type="button" data-gallery-speed="1" aria-pressed="true">1×</button>
+              </div>
+            </details>
+          </div>
+
+          <div class="gallery-viewer-actions">
+            <button id="gallery-annotation-button" class="gallery-icon-button" type="button" aria-haspopup="dialog" aria-controls="annotation-dialog">
+              <span class="annotation-action-icon" aria-hidden="true"></span>
+              Annotieren
+            </button>
+            <button id="gallery-download-button" class="gallery-icon-button" type="button">
+              <span class="download-action-icon" aria-hidden="true"></span>
+              Download
+            </button>
+            <button id="gallery-delete-button" class="gallery-icon-button gallery-delete-button" type="button" aria-haspopup="dialog" aria-controls="gallery-delete-dialog">
+              <span class="delete-action-icon" aria-hidden="true"></span>
+              Löschen
+            </button>
+          </div>
+
+          <p id="gallery-viewer-status" class="dialog-status" role="status" aria-live="polite"></p>
+        </div>
+      </dialog>
+
+      <dialog id="mp4-conversion-dialog" class="mp4-conversion-dialog" aria-labelledby="mp4-conversion-title" aria-describedby="mp4-conversion-description">
+        <div class="mp4-conversion-dialog-shell">
+          <span id="mp4-conversion-spinner" class="spinner mp4-conversion-spinner" aria-hidden="true"></span>
+          <p class="eyebrow">Lokale Konvertierung</p>
+          <h2 id="mp4-conversion-title">MP4 wird erstellt</h2>
+          <p id="mp4-conversion-description" class="dialog-copy">Das WebM-Video wird ausschließlich auf diesem Gerät in MP4 umgewandelt. Bitte lasse die App währenddessen geöffnet.</p>
+          <label id="mp4-conversion-progress-label" class="visually-hidden" for="mp4-conversion-progress">Fortschritt der MP4-Konvertierung</label>
+          <progress id="mp4-conversion-progress" max="100" value="0" aria-labelledby="mp4-conversion-progress-label">0 %</progress>
+          <p id="mp4-conversion-status" class="dialog-status" role="status" aria-live="polite">Konverter wird vorbereitet …</p>
+          <div class="dialog-actions">
+            <button id="mp4-conversion-download" class="primary-action" type="button" hidden>MP4 herunterladen</button>
+            <button id="mp4-conversion-cancel" class="secondary-action" type="button">Abbrechen</button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog id="gallery-delete-dialog" class="gallery-delete-dialog" aria-labelledby="gallery-delete-title" aria-describedby="gallery-delete-message">
+        <form id="gallery-delete-form" class="gallery-delete-dialog-shell">
+          <span class="delete-confirmation-icon" aria-hidden="true">!</span>
+          <p class="eyebrow">Bitte bestätigen</p>
+          <h2 id="gallery-delete-title">Aufnahme wirklich löschen?</h2>
+          <p id="gallery-delete-message" class="dialog-copy">Die ausgewählte Aufnahme wird dauerhaft aus der Galerie entfernt.</p>
+          <div class="dialog-actions">
+            <button id="gallery-delete-confirm" class="primary-action destructive-action" type="submit">Endgültig löschen</button>
+            <button id="gallery-delete-cancel" class="secondary-action" type="button" autofocus>Abbrechen</button>
+          </div>
+        </form>
+      </dialog>
 
       <dialog id="annotation-dialog" class="annotation-dialog" aria-labelledby="annotation-dialog-title">
         <div class="annotation-dialog-shell">
