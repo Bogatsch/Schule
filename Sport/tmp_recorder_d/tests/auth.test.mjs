@@ -92,52 +92,51 @@ Object.defineProperty(globalThis, 'navigator', {
   }
 });
 
+const teacherAuth = await import('../teacher-auth.js');
 const {
   getTeacherAuthState,
   preloadTeacherAuth,
   resetAuthentication,
-  setInitialPassword,
   verifyPassword
-} = await import('../teacher-auth.js');
+} = teacherAuth;
 
-test('richtet ein eigenes Passwort einmalig ein, prüft und löscht es wieder', async () => {
+test('prüft ausschließlich das fest hinterlegte Zugangspasswort', async () => {
   await preloadTeacherAuth();
-  assert.equal(getTeacherAuthState().passwordConfigured, false);
-  await assert.rejects(
-    () => setInitialPassword('kurz'),
-    (error) => error?.code === 'password-too-short'
-  );
+  const state = getTeacherAuthState();
+  assert.equal(state.ready, true);
+  assert.equal(state.passwordAvailable, true);
+  assert.equal(Object.hasOwn(state, 'passwordConfigured'), false);
+  assert.equal(typeof teacherAuth.setInitialPassword, 'undefined');
 
-  const password = 'Ein-Testpasswort-42';
-  await setInitialPassword(password);
-  assert.equal(getTeacherAuthState().passwordConfigured, true);
-  assert.equal(await verifyPassword(password), true);
   assert.equal(await verifyPassword('Falsches-Passwort'), false);
-  await assert.rejects(
-    () => setInitialPassword('Noch-ein-Passwort'),
-    (error) => error?.code === 'already-configured'
+  assert.equal(await verifyPassword(''), false);
+  assert.equal(await verifyPassword(null), false);
+
+  // Das feste Passwort steht nicht im Repository. Wird es beim Testlauf über die
+  // Umgebungsvariable gesetzt, wird zusätzlich der erfolgreiche Fall geprüft.
+  const expectedPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
+  if (expectedPassword) {
+    assert.equal(await verifyPassword(expectedPassword), true);
+  }
+
+  await resetAuthentication();
+});
+
+test('legt kein Passwort lokal ab und entfernt Altbestände beim Zurücksetzen', async () => {
+  await preloadTeacherAuth();
+  await verifyPassword('Falsches-Passwort');
+  assert.equal(
+    root.children.get('sportkamera-teacher-auth-v1')?.children.has('password.json') || false,
+    false
   );
 
-  const authDirectory = root.children.get('sportkamera-teacher-auth-v1');
-  const passwordFile = authDirectory.children.get('password.json');
-  assert.ok(passwordFile);
-  const serializedPassword = await (await passwordFile.getFile()).text();
-  assert.ok(!serializedPassword.includes(password));
-  const firstRecord = JSON.parse(serializedPassword);
-
-  const reloadedAuth = await import('../teacher-auth.js?reload-test=1');
-  await reloadedAuth.preloadTeacherAuth();
-  assert.equal(reloadedAuth.getTeacherAuthState().passwordConfigured, true);
-  assert.equal(await reloadedAuth.verifyPassword(password), true);
+  // Passwortdatensatz einer früheren App-Version mit selbst vergebenem Passwort.
+  const authDirectory = await root.getDirectoryHandle('sportkamera-teacher-auth-v1', { create: true });
+  const legacyFile = await authDirectory.getFileHandle('password.json', { create: true });
+  const writable = await legacyFile.createWritable();
+  await writable.write('{"schemaVersion":1}');
+  await writable.close();
 
   await resetAuthentication();
-  assert.equal(getTeacherAuthState().passwordConfigured, false);
   assert.equal(authDirectory.children.has('password.json'), false);
-
-  await setInitialPassword(password);
-  const secondPasswordFile = authDirectory.children.get('password.json');
-  const secondRecord = JSON.parse(await (await secondPasswordFile.getFile()).text());
-  assert.notEqual(secondRecord.salt, firstRecord.salt);
-  assert.equal(await verifyPassword(password), true);
-  await resetAuthentication();
 });

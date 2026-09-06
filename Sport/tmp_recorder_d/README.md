@@ -20,17 +20,17 @@ Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, e
 
 Screenshots und Bildschirmaufnahmen durch iPadOS, andere Betriebssystemfunktionen oder Personen mit Zugriff auf das Gerät kann eine Web-App nicht verhindern.
 
-## Anmeldung und selbst vergebenes Passwort
+## Anmeldung mit festem Passwort
 
-Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Beim ersten Anmelden wird ein eigenes Passwort mit mindestens sechs Zeichen festgelegt und bestätigt. Danach öffnet dieses Passwort die geschützte Galerie. Das Passwort gilt nur für das jeweilige Browserprofil beziehungsweise die installierte Web-App. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
+Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Die geschützte Galerie öffnet ein fest hinterlegtes Passwort, das für alle Geräte gleich ist und nicht in der App geändert oder neu vergeben werden kann. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
 
-Beim Update von der früheren Version mit festem Passwort bleiben bereits gespeicherte Medien erhalten. Beim ersten Anmelden nach dem Update wird ein neues eigenes Passwort verlangt; eine zuvor eingerichtete Gerätebestätigung muss anschließend einmal neu eingerichtet werden.
+Beim Update von der Version mit selbst vergebenem Passwort bleiben bereits gespeicherte Medien erhalten. Ein zuvor lokal abgelegter Passwortdatensatz wird nicht mehr verwendet und beim nächsten Zurücksetzen entfernt; eine eingerichtete Gerätebestätigung bleibt gültig.
 
 Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann nach einer erfolgreichen Passwortanmeldung zusätzlich WebAuthn mit dem Plattform-Authentifikator aktiviert werden. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
 
-Das Passwort steht weder im Repository noch im ausgelieferten JavaScript. Beim Einrichten erzeugt der Browser einen zufälligen Salt und speichert lokal nur einen mit PBKDF2 abgeleiteten Prüfwert. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+Das Passwort steht weder im Repository noch im ausgelieferten JavaScript im Klartext. Hinterlegt sind nur ein fester Zufalls-Salt und der daraus mit PBKDF2-SHA-256 über 600.000 Runden abgeleitete Prüfwert; die Eingabe wird beim Anmelden genauso abgeleitet und mit diesem Wert verglichen. Da ein solcher Prüfwert öffentlich einsehbar ist, schützt er nur gegen einfaches Auslesen, nicht gegen einen gezielten Rateangriff auf ein schwaches Passwort. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
 
-Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich das lokale Passwort, die lokale Referenz auf die Gerätebestätigung und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Dieser destruktive Rückfall ist bewusst auch ohne Kenntnis des alten Passworts möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
+Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
 
 ## Lokal testen
 
@@ -50,7 +50,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, erstmalige Passwortvergabe, lokale Anmeldung, Komplett-Reset sowie das Fehlen eines statischen Passworts und von Uploadfunktionen.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
 
 ## GitHub Pages aktivieren
 
@@ -97,14 +97,14 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 3. Foto und Video aufnehmen, beim Video einen eigenen Namen vergeben, beide mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
 4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
-6. Über das Zahnrad beim ersten Anmelden ein eigenes Passwort festlegen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+6. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
 7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
 8. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
 9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
 10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
 11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
 12. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-13. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Passwort, Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder die Passwortvergabe erscheint.
+13. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
 14. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
@@ -118,7 +118,7 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 - `video-converter.js` – lokale WebM-zu-H.264-MP4-Konvertierung für Galeriedownloads
 - `annotation.js` – lokale Annotation eines aktuellen Videoframes
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
-- `teacher-auth.js` – lokale Passwortvergabe, PBKDF2-Prüfung, Reset und optionale WebAuthn-Anmeldung
+- `teacher-auth.js` – PBKDF2-Prüfung des festen Passworts, Reset und optionale WebAuthn-Anmeldung
 - `media-utils.js` – getestete Formatauswahl und Zeitformatierung
 - `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
 - `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos

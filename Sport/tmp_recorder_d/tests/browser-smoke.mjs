@@ -736,17 +736,10 @@ try {
     await waitFor(`!document.querySelector('#settings-button').disabled`);
     await click('#settings-button');
     await waitFor(`document.querySelector('#account-dialog').open`);
-    const setupRequired = await evaluate(`!document.querySelector('#account-setup-step').hidden`);
     await evaluate(`(() => {
-      const password = ${JSON.stringify(testPassword)};
-      if (!document.querySelector('#account-setup-step').hidden) {
-        document.querySelector('#account-new-password').value = password;
-        document.querySelector('#account-confirm-password').value = password;
-      } else {
-        document.querySelector('#account-password').value = password;
-      }
+      document.querySelector('#account-password').value = ${JSON.stringify(testPassword)};
     })()`);
-    await click(setupRequired ? '#account-setup-submit' : '#account-password-submit');
+    await click('#account-password-submit');
     await waitFor(`!document.querySelector('#account-dialog').open
       || !document.querySelector('#account-enrollment-step').hidden`);
     if (await evaluate(`document.querySelector('#account-dialog').open
@@ -881,9 +874,9 @@ try {
       && document.querySelector('#gallery-entry').hidden`);
     await click('#settings-button');
     await waitFor(`document.querySelector('#account-dialog').open
-      && !document.querySelector('#account-setup-step').hidden`);
+      && !document.querySelector('#account-password-step').hidden`);
     await click('#account-close');
-    results.push('Eigene Passwortvergabe, geschützte Galerie, Einzel- und ZIP-Download, Annotation, Mehrfachlöschung und Komplett-Reset');
+    results.push('Festes Zugangspasswort, geschützte Galerie, Einzel- und ZIP-Download, Annotation, Mehrfachlöschung und Komplett-Reset');
   }
 
   const workerState = await evaluate(`navigator.serviceWorker.ready.then((registration) => ({

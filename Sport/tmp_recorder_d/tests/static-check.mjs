@@ -144,8 +144,7 @@ assert.match(html, /<dialog id="account-dialog"/, 'Pop-up für Anmeldung und Zur
 assert.match(html, /id="account-login-tab"[^>]*>Anmelden</, 'Anmelden-Option im Zahnrad-Pop-up fehlt');
 assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-Option im Zahnrad-Pop-up fehlt');
 assert.match(html, /id="account-login-form"/, 'Allgemeines Anmeldeformular fehlt');
-assert.match(html, /id="account-new-password"[^>]*type="password"/, 'Feld zur ersten Passwortvergabe fehlt');
-assert.match(html, /id="account-confirm-password"[^>]*type="password"/, 'Passwortbestätigung fehlt');
+assert.doesNotMatch(html, /id="account-new-password"|id="account-confirm-password"|id="account-setup-step"/, 'Eigene Passwortvergabe ist noch im Anmeldedialog vorhanden');
 assert.match(html, /id="account-password"[^>]*type="password"/, 'verdecktes Anmeldepasswort fehlt');
 assert.match(html, /id="account-biometric-section"/, 'Bereich für die Gerätebestätigung fehlt');
 assert.match(html, /id="account-biometric-button"/, 'Taste für die Gerätebestätigung fehlt');
@@ -186,7 +185,7 @@ assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(html, /styles\.css\?v=34/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=35/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /app\.js\?v=36/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -204,8 +203,8 @@ assert.match(app, /listMedia/, 'Laden der lokalen Galerie fehlt');
 assert.match(app, /getMedia/, 'Öffnen eines Galerieeintrags fehlt');
 assert.match(app, /deleteMedia/, 'Löschen aus der lokalen Galerie fehlt');
 assert.match(app, /requestPersistentStorage/, 'Anfrage für bestmögliche dauerhafte Speicherung fehlt');
-assert.match(app, /setInitialPassword/, 'Erstmalige lokale Passwortvergabe ist nicht verbunden');
-assert.match(app, /verifyPassword/, 'Lokale Passwortprüfung ist nicht verbunden');
+assert.doesNotMatch(app, /setInitialPassword/, 'Eigene Passwortvergabe ist noch verbunden');
+assert.match(app, /verifyPassword/, 'Prüfung des festen Passworts ist nicht verbunden');
 assert.match(app, /resetAuthentication/, 'Zurücksetzen der lokalen Anmeldung ist nicht verbunden');
 assert.match(app, /resetMediaStore/, 'Komplettlöschung der Galerie ist nicht verbunden');
 assert.match(app, /BroadcastChannel\('sportkamera-account-v1'\)/, 'Komplett-Reset wird nicht an weitere offene App-Fenster gemeldet');
@@ -316,11 +315,11 @@ assert.match(teacherAuth, /crypto\.subtle\.verify/, 'WebAuthn-Signatur wird nich
 assert.match(teacherAuth, /indexedDB\.open/, 'IndexedDB-Fallback der Lehreranmeldung fehlt');
 assert.match(teacherAuth, /FileSystemFileHandle[\s\S]*createWritable/, 'Auth-Speicher prüft OPFS nicht auf Schreibfähigkeit');
 assert.match(teacherAuth, /authorization-required/, 'WebAuthn-Einrichtung ist nicht an eine Passwortprüfung gebunden');
-assert.match(teacherAuth, /export async function setInitialPassword/, 'Erstmalige Passwortvergabe fehlt');
-assert.match(teacherAuth, /randomBytes\(16\)/, 'Passwortvergabe verwendet keinen zufälligen Salt');
-assert.match(teacherAuth, /export async function verifyPassword/, 'Prüfung des selbst vergebenen Passworts fehlt');
+assert.doesNotMatch(teacherAuth, /setInitialPassword/, 'Eigene Passwortvergabe ist noch vorhanden');
+assert.match(teacherAuth, /export async function verifyPassword/, 'Prüfung des festen Passworts fehlt');
 assert.match(teacherAuth, /export async function resetAuthentication/, 'Vollständiges Zurücksetzen der Anmeldung fehlt');
-assert.doesNotMatch(teacherAuth, /PASSWORD_(?:SALT|DERIVED)_BASE64/, 'Ein statischer Passwortprüfwert ist noch vorhanden');
+assert.match(teacherAuth, /const PASSWORD_SALT_BASE64URL = '[A-Za-z0-9_-]{22}';/, 'fester Salt des Zugangspassworts fehlt');
+assert.match(teacherAuth, /const PASSWORD_DIGEST_BASE64URL = '[A-Za-z0-9_-]{43}';/, 'fester PBKDF2-Prüfwert des Zugangspassworts fehlt');
 
 const passwordScanFiles = requiredFiles.filter((file) => /\.(?:html|css|js|mjs|json|md|webmanifest)$/.test(file));
 const optionalPlaintextPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
@@ -334,7 +333,11 @@ assert.doesNotMatch(
   /(?:plain|clear|raw)[_-]?password\s*=/i,
   'Lehreranmeldung enthält eine Klartextpasswort-Konstante'
 );
-assert.match(teacherAuth, /derivedKey/, 'lokal gespeicherter abgeleiteter Passwortprüfwert fehlt');
+assert.match(
+  teacherAuth,
+  /decodeBase64\(PASSWORD_DIGEST_BASE64URL[\s\S]*bytesEqual\(derived, expected\)/,
+  'Passwortprüfung vergleicht nicht den abgeleiteten Prüfwert'
+);
 assert.match(app, /audio:\s*false/, 'Mikrofon muss ausdrücklich deaktiviert sein');
 assert.match(app, /URL\.revokeObjectURL/, 'Object URLs werden nicht freigegeben');
 assert.match(app, /mediaChunks\.splice/, 'Recorder-Fragmente werden nicht zentral geleert');
@@ -354,14 +357,14 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v39'/, 'Cache-Version v39 fehlt');
-assert.match(worker, /\.\/app\.js\?v=35/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v40'/, 'Cache-Version v40 fehlt');
+assert.match(worker, /\.\/app\.js\?v=36/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
 assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/teacher-auth\.js\?v=30/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/teacher-auth\.js\?v=31/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
 assert.match(worker, /Angriffsschlag\/Angriffschlag\.mp4/, 'Angriffsschlag fehlt im Offline-Leitbildcache');
 assert.match(worker, /Pritschen\/Pritschen%20seitlich\.mp4/, 'Pritschen fehlt im Offline-Leitbildcache');
 assert.match(worker, /status:\s*206/, 'Byte-Range-Antwort für Offline-Leitbilder fehlt');
