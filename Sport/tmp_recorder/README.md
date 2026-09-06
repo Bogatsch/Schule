@@ -1,23 +1,40 @@
 # Sportkamera
 
-Eine installierbare, datensparsame Progressive Web App für direktes Foto- und Video-Feedback im Sportunterricht. Sie besteht aus lokalem HTML, CSS und JavaScript, benötigt keinen Build-Schritt und ist für GitHub Pages vorbereitet.
+Eine installierbare, datensparsame Progressive Web App für direktes Foto- und Video-Feedback im Sportunterricht. Die Anwendung besteht nur aus lokalem HTML, CSS und JavaScript, benötigt keinen Build-Schritt und ist für GitHub Pages vorbereitet.
 
-## Datenschutz und flüchtige Aufnahmen
+## Datenschutz und lokale Speicherung
 
-Aufnahmen werden ausschließlich für die aktuelle Vorschau im Arbeitsspeicher des Browsers gehalten. Es gibt keine Galerie, keine Anmeldung, keine dauerhafte Speicherung und keine Download-, Export-, Upload- oder Teilen-Funktion.
+Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
 
-- Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird nicht benötigt.
-- Fotos werden vorübergehend in einem Canvas verarbeitet. Videos entstehen aus flüchtigen Fragmenten des `MediaRecorder`.
-- **Aufnahme verwerfen**, **Neue Aufnahme**, **Zurück**, ein Wechsel in den Hintergrund und das Verlassen der Seite entfernen die aktuelle Aufnahme aus der App.
-- Vorschauvideos verhindern über Browserattribute native Downloads, Bild-in-Bild und Remote-Wiedergabe soweit der Browser diese Einschränkungen unterstützt.
-- Der aktuelle Videoframe kann temporär annotiert werden. Beim Schließen wird die Annotation verworfen.
-- Es gibt keine Netzwerkaufrufe für Nutzermedien. Der Service Worker speichert nur den statischen App-Rahmen und die bereitgestellten Leitbild-Videos für den Offlinebetrieb.
+- Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
+- Fotos werden kurzzeitig in einem Canvas verarbeitet. Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder`.
+- Nur ausdrücklich gespeicherte Aufnahmen bleiben nach dem Schließen oder Neuladen der App erhalten. Nicht gespeicherte Aufnahmen werden beim Verwerfen, bei einer neuen Aufnahme sowie beim Verlassen oder Wechseln in den Hintergrund aus der App entfernt.
+- Gespeicherte Medien liegen ausschließlich im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
+- OPFS und IndexedDB sind beständig, aber kein Ersatz für ein Backup. Das Löschen der Websitedaten, eine Speicherbereinigung durch das Betriebssystem oder das Entfernen der Web-App kann die Galerie löschen. Die App bittet den Browser nach Möglichkeit um dauerhafte Speicherung und zeigt an, wenn der Browser sie nicht zugesichert hat.
+- Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
+- Dateien werden nur über die Downloadfunktionen in der geschützten Galerie an den Browser übergeben. Beim Einzeldownload versucht die App WebM-Videos vollständig auf dem Gerät in H.264-MP4-Dateien umzuwandeln; der bewährte hardwarebeschleunigte Safari-/iPad-Pfad hat dabei Vorrang. Chrome und Firefox erhalten bei Bedarf einen zweiten H.264-Versuch ohne erzwungenen Hardware-Encoder. Ist dort kein H.264-Encoder verfügbar, werden die vorhandenen VP8-/VP9-Videodaten ohne Qualitätsverlust in einen MP4-Container umgepackt. Das gespeicherte WebM-Original bleibt immer unverändert. Mehrere ausgewählte Medien bündelt die App lokal in einem ZIP mit den unveränderten Originaldateien. In der Aufnahmeansicht gibt es keinen Download.
+- Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
+- Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 
-Eine Web-App kann Screenshots, Bildschirmaufnahmen oder den Zugriff auf Browser-Entwicklerwerkzeuge nicht technisch verhindern.
+Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, etwa zum Abruf von HTML, CSS, JavaScript und Symbolen. GitHub beziehungsweise beteiligte Netzbetreiber können dabei übliche Verbindungsdaten wie IP-Adresse, Zeitpunkt und User-Agent verarbeiten. Bild- oder Videodaten werden bei diesen Aufrufen nicht übertragen.
+
+Screenshots und Bildschirmaufnahmen durch iPadOS, andere Betriebssystemfunktionen oder Personen mit Zugriff auf das Gerät kann eine Web-App nicht verhindern.
+
+## Anmeldung mit festem Passwort
+
+Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Die geschützte Galerie öffnet ein fest hinterlegtes Passwort, das für alle Geräte gleich ist und nicht in der App geändert oder neu vergeben werden kann. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
+
+Beim Update von der Version mit selbst vergebenem Passwort bleiben bereits gespeicherte Medien erhalten. Ein zuvor lokal abgelegter Passwortdatensatz wird nicht mehr verwendet und beim nächsten Zurücksetzen entfernt; eine eingerichtete Gerätebestätigung bleibt gültig.
+
+Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann nach einer erfolgreichen Passwortanmeldung zusätzlich WebAuthn mit dem Plattform-Authentifikator aktiviert werden. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
+
+Das Passwort steht weder im Repository noch im ausgelieferten JavaScript im Klartext. Hinterlegt sind nur ein fester Zufalls-Salt und der daraus mit PBKDF2-SHA-256 über 600.000 Runden abgeleitete Prüfwert; die Eingabe wird beim Anmelden genauso abgeleitet und mit diesem Wert verglichen. Da ein solcher Prüfwert öffentlich einsehbar ist, schützt er nur gegen einfaches Auslesen, nicht gegen einen gezielten Rateangriff auf ein schwaches Passwort. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+
+Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
 
 ## Lokal testen
 
-Kamera und Service Worker benötigen einen sicheren Kontext. Browser behandeln `http://localhost` für die Entwicklung als sicheren Kontext; im Internet ist HTTPS erforderlich.
+Ein Doppelklick auf `index.html` reicht nicht aus: Kamera, WebAuthn, lokaler App-Speicher und Service Worker sind nur in einem sicheren Kontext zuverlässig verfügbar. Browser behandeln `http://localhost` für die Entwicklung als sicheren Kontext; im Internet ist HTTPS erforderlich.
 
 Im Ordner `Sport/tmp_recorder` einen lokalen Server starten:
 
@@ -25,36 +42,88 @@ Im Ordner `Sport/tmp_recorder` einen lokalen Server starten:
 python -m http.server 8080 --bind 127.0.0.1
 ```
 
-Danach `http://127.0.0.1:8080/` öffnen. Die automatisierten Prüfungen laufen mit:
+Dann `http://127.0.0.1:8080/` im Browser öffnen. Alternativ kann der Server im Repository-Stamm gestartet und `http://127.0.0.1:8080/Sport/tmp_recorder/` geöffnet werden.
+
+Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine Installation externer Pakete:
 
 ```powershell
 npm test
 ```
 
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
+
+## GitHub Pages aktivieren
+
+Da alle Pfade relativ sind, kann die App direkt aus diesem Repository-Unterordner bereitgestellt werden:
+
+1. Das Repository zu GitHub übertragen und den gewünschten Hauptbranch öffnen (meist `main`).
+2. In GitHub **Settings → Pages** öffnen.
+3. Unter **Build and deployment** als Quelle **Deploy from a branch** wählen.
+4. Den Hauptbranch und den Ordner **/(root)** auswählen, dann **Save** wählen.
+5. Nach der Bereitstellung `https://BENUTZERNAME.github.io/REPOSITORY/Sport/tmp_recorder/` öffnen.
+
+GitHub Pages liefert die App automatisch per HTTPS aus. Bei einem privaten Repository hängt die Pages-Verfügbarkeit vom verwendeten GitHub-Tarif ab.
+
+## Auf dem iPad öffnen und installieren
+
+1. Die HTTPS-Adresse in **Safari** auf dem iPad öffnen.
+2. **Foto** oder **Video** wählen und die Kameraabfrage mit **Erlauben** bestätigen. Für Video ist kein Mikrofonzugriff nötig.
+3. Zum Installieren die Safari-Schaltfläche **Teilen** und anschließend **Zum Home-Bildschirm** wählen.
+4. Falls iPadOS die Option anbietet, **Als Web-App öffnen** aktiviert lassen und mit **Hinzufügen** bestätigen.
+5. Die Sportkamera über ihr Symbol starten. Nach einem vollständigen Online-Start steht der statische App-Rahmen auch offline bereit.
+
+Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seiteneinstellungen links in der Adressleiste **Website-Einstellungen → Kamera → Erlauben** wählen und die Seite neu laden.
+
 ## Bedienung
 
 - **Foto** erstellt einen Schnappschuss über Canvas.
-- **Video** zeichnet maximal drei Minuten ohne Ton auf und kann früher gestoppt werden.
-- **Kamera wechseln** schaltet zwischen Front- und Rückkamera um.
-- In der Videovorschau stehen Start/Pause, Zeitleiste und die Geschwindigkeiten 0,25×, 0,5× und 1× zur Verfügung.
-- Über den Stift-Button lässt sich der aktuelle Videoframe vorübergehend annotieren.
-- Mit **Leitbild daneben** kann ein Leitbild unabhängig neben der eigenen Aufnahme abgespielt werden.
-- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen **Angriffsschlag** und **Pritschen seitlich** bereit.
+- **Video** zeichnet maximal drei Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 als Fallback, wenn der Browser WebM nicht aufnehmen kann.
+- **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei vorhandene, nicht gespeicherte Aufnahmedaten.
+- Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Bei Videos öffnet es zuvor ein Benennungsfenster; Fotos werden direkt gespeichert. Es öffnet keine Downloadseite.
+- In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
+- Über den Stift-Button lässt sich der aktuelle Videoframe in einem temporären Annotationsfenster öffnen. Dort gibt es Freihandstift, fünf Farben und einen Radierer; beim Schließen wird die Annotation verworfen.
+- Mit **Leitbild daneben** lässt sich ein Leitbild neben die eigene Aufnahme schalten. Beide Videos besitzen unabhängige Bedienelemente.
+- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
+- **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
 
-## Manuelle Abnahme
+Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und benannte Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Das Download-Symbol exportiert bei genau einer markierten Aufnahme diese einzelne Datei und übernimmt bei Videos den zuvor vergebenen Namen. WebM-Aufnahmen werden dafür nach Möglichkeit lokal mit bevorzugter Hardwarebeschleunigung in H.264-MP4 umgewandelt. Scheitert der Hardwarepfad, versucht die App H.264 erneut mit den allgemeinen Browsereinstellungen. Ohne verfügbaren H.264-Encoder verpackt sie die vorhandene VP8-/VP9-Spur direkt als MP4; dieser schnelle Fallback benötigt kein WebCodecs. Ein Fortschrittsfenster bleibt währenddessen in der App; danach startet die Lehrkraft den fertigen MP4-Download mit einem zweiten Tippen. Je nach Videolänge und Gerät kann eine H.264-Umwandlung Zeit und zusätzlichen Arbeitsspeicher benötigen, daher sollte die App im Vordergrund bleiben. Sind auch die MP4-Fallbacks nicht möglich, bietet die App das unveränderte WebM-Original an. Bereits als MP4 gespeicherte Videos und Fotos werden direkt heruntergeladen. Sind mehrere Einträge markiert, bündelt dasselbe Download-Symbol ihre unveränderten Originaldateien vollständig lokal in einem ZIP. Über das Papierkorb-Symbol lässt sich dieselbe Auswahl gemeinsam löschen. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
 
-1. Foto und Video aufnehmen und prüfen, dass keine Mikrofonabfrage erscheint.
-2. Rück- und Frontkamera im Hoch- und Querformat testen.
-3. Wiedergabe, Zeitleiste, Tempostufen, Vergleich und Annotation prüfen.
-4. Prüfen, dass Startseite und Vorschau keine Galerie-, Anmelde-, Speicher-, Download- oder Exportelemente enthalten.
-5. Eine Aufnahme verwerfen beziehungsweise die App in den Hintergrund schicken; nach der Rückkehr darf sie nicht mehr vorhanden sein.
-6. Offline-Start und Leitbild-Wiedergabe nach einem vollständigen Online-Start prüfen.
+## Manuelle Abnahme auf einem physischen iPad
 
-## Wichtige Dateien
+Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikatoren lassen sich in automatisierten Desktop-Tests nicht vollständig nachbilden. Vor dem Unterrichtseinsatz sollten diese Punkte auf dem Zielgerät geprüft werden:
 
-- `index.html` – Oberfläche für Aufnahme, Vorschau, Vergleich und Annotation
-- `app.js` – Kamera, Aufnahme, Wiedergabe und zentrale flüchtige Medienbereinigung
-- `annotation.js` – temporäre Frame-Annotation
-- `media-utils.js` – Formatauswahl, Zeitlimit und Zeitformatierung
-- `sw.js` – feste Offline-Positivliste für App-Rahmen und Leitbilder
-- `pages/leitbilder/` – Leitbildauswahl und Videoplayer
+1. Erster Start, Datenschutzhinweis und Kameraberechtigung; sicherstellen, dass keine Mikrofonabfrage erscheint.
+2. Rück- und Frontkamera im Hoch- und Querformat testen; Frontbild und Fotoausrichtung vergleichen.
+3. Foto und Video aufnehmen, beim Video einen eigenen Namen vergeben, beide mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
+4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
+5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
+6. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
+8. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
+10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
+11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
+12. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
+13. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
+14. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
+
+Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
+
+## Dateien
+
+- `index.html` – semantische, barrierearme deutschsprachige Oberfläche
+- `styles.css` – responsive Touch-Gestaltung für Hoch- und Querformat samt Safe Areas
+- `app.js` – Kamera, Aufnahme, Galerie, Mehrfachdownload und zentrale temporäre Medienbereinigung
+- `zip-utils.js` – lokale, offlinefähige Bündelung ausgewählter Galerieaufnahmen als ZIP
+- `video-converter.js` – lokale WebM-zu-H.264-MP4-Konvertierung für Galeriedownloads
+- `annotation.js` – lokale Annotation eines aktuellen Videoframes
+- `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
+- `teacher-auth.js` – PBKDF2-Prüfung des festen Passworts, Reset und optionale WebAuthn-Anmeldung
+- `media-utils.js` – getestete Formatauswahl und Zeitformatierung
+- `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
+- `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos
+- `manifest.webmanifest` und `icons/` – Installation als PWA und Apple-Touch-Icon
+- `sw.js` – versionierter Offline-Cache ausschließlich für statische App-Dateien
+- `vendor/mediabunny/` und `THIRD_PARTY_NOTICES.md` – lokal gebündelter Videokonverter samt Lizenz- und Prüfsummenhinweis
+- `tests/` – automatisierte Funktions-, Datenschutz- und PWA-Prüfungen
+- `tools/generate-icons.ps1` – reproduzierbare lokale Erzeugung der PNG-App-Symbole
