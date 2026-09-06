@@ -35,8 +35,6 @@ const requiredFiles = [
   'pages/leitbilder/app.js',
   'pages/leitbilder/guide-tree.js',
   'tools/build-leitbilder.mjs',
-  'Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
-  'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4',
   'icons/favicon-64.png',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
@@ -384,7 +382,7 @@ assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher 
 assert.match(worker, /\.\/teacher-auth\.js\?v=31/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
 assert.match(
   worker,
-  /const GUIDE_VIDEOS = Object\.freeze\(\[\n(?:\s*'\.\/Videos\/[^']+',?\n)+\]\);/,
+  /const GUIDE_VIDEOS = Object\.freeze\(\[\r?\n(?:\s*'\.\/Videos\/[^']+',?\r?\n)+\]\);/,
   'Die erzeugte Leitbildliste des Service Workers fehlt oder hat ein anderes Format'
 );
 assert.match(worker, /status:\s*206/, 'Byte-Range-Antwort für Offline-Leitbilder fehlt');

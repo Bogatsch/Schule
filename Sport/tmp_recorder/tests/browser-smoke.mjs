@@ -9,14 +9,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const pritschenVideoPath = path.join(
-  appRoot,
-  'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4'
-);
-const pritschenVideoSize = (await stat(pritschenVideoPath)).size;
+// Der Ordner Videos/ darf frei umsortiert werden, deshalb kommt das Leitbild
+// für den Offline-Test aus dem erzeugten Index statt aus einem festen Pfad.
 const guideVideos = flattenVideos(GUIDE_TREE);
-const pritschenGuide = guideVideos.find((video) => video.name === 'Pritschen seitlich');
-assert.ok(pritschenGuide, 'Das Leitbild "Pritschen seitlich" fehlt im erzeugten Index.');
+const pritschenGuide = guideVideos.find((video) => video.name === 'Pritschen seitlich') ?? guideVideos[0];
+assert.ok(pritschenGuide, 'Im erzeugten Leitbild-Index steht kein Video.');
+const pritschenVideoPath = path.join(appRoot, decodeURIComponent(pritschenGuide.src.split('?')[0]));
+const pritschenVideoSize = (await stat(pritschenVideoPath)).size;
 const guideCacheName = 'sportkamera-guides-store';
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'sportkamera-browser-'));
 const profileDirectory = path.join(tempRoot, 'profile');

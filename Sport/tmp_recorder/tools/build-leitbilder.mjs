@@ -189,6 +189,19 @@ export function renderWorkerList(videos) {
 
 const WORKER_PATTERN = /const GUIDE_VIDEOS = Object\.freeze\(\[[\s\S]*?\]\);/u;
 
+/**
+ * Zeilenenden unterscheiden sich zwischen Windows-Checkout und Linux-Runner.
+ * Für den Vergleich zählt deshalb nur der Inhalt, geschrieben wird im Stil der
+ * jeweils vorhandenen Datei.
+ */
+function normalizeNewlines(text) {
+  return text.replace(/\r\n/gu, '\n');
+}
+
+function matchNewlines(text, reference) {
+  return reference.includes('\r\n') ? normalizeNewlines(text).replace(/\n/gu, '\r\n') : normalizeNewlines(text);
+}
+
 /** Liest den Videoordner und liefert Baum, Videoliste und die zu schreibenden Dateiinhalte. */
 export async function buildLeitbilderIndex() {
   const warnings = [];
@@ -199,11 +212,13 @@ export async function buildLeitbilderIndex() {
   if (!WORKER_PATTERN.test(workerSource)) {
     throw new Error('In sw.js wurde keine GUIDE_VIDEOS-Liste gefunden.');
   }
-  const lineEnding = workerSource.includes('\r\n') ? '\r\n' : '\n';
-
-  const moduleOut = renderModule(tree, videos).replace(/\n/gu, lineEnding);
-  const workerOut = workerSource.replace(WORKER_PATTERN, () => renderWorkerList(videos));
   const currentModule = await readFile(treeFile, 'utf8').catch(() => '');
+
+  const moduleOut = matchNewlines(renderModule(tree, videos), currentModule || workerSource);
+  const workerOut = workerSource.replace(
+    WORKER_PATTERN,
+    () => matchNewlines(renderWorkerList(videos), workerSource)
+  );
 
   return {
     tree,
@@ -211,7 +226,8 @@ export async function buildLeitbilderIndex() {
     warnings,
     moduleOut,
     workerOut,
-    stale: currentModule !== moduleOut || workerSource !== workerOut
+    stale: normalizeNewlines(currentModule) !== normalizeNewlines(moduleOut)
+      || normalizeNewlines(workerSource) !== normalizeNewlines(workerOut)
   };
 }
 

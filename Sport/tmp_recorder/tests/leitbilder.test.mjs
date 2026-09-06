@@ -62,7 +62,9 @@ test('der Service Worker kennt genau die Videos des Index', async () => {
   const worker = await readFile(workerFile, 'utf8');
   const listed = [...worker.matchAll(/'\.\/(Videos\/[^']+)'/gu)].map((match) => match[1]);
   assert.deepEqual(listed, flattenVideos(GUIDE_TREE).map((video) => video.src));
-  assert.ok(worker.includes(renderWorkerList(index.videos)));
+  // Zeilenenden unterscheiden sich je nach Checkout und sind hier bedeutungslos.
+  const normalize = (text) => text.replace(/\r\n/gu, '\n');
+  assert.ok(normalize(worker).includes(normalize(renderWorkerList(index.videos))));
 });
 
 test('ein Ordner mit genau einem Video wird zu diesem Video zusammengefasst', () => {
