@@ -28,13 +28,13 @@ export const GUIDE_TREE = Object.freeze(
               {
                 name: "Angriffschlag",
                 path: "Spielsportarten/Volleyball/Angriffschlag",
-                src: "Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4?v=a7a3907f",
+                src: "Videos/Spielsportarten/Volleyball/Angriffschlag.mp4?v=a7a3907f",
                 bytes: 6639559
               },
               {
                 name: "Pritschen seitlich",
                 path: "Spielsportarten/Volleyball/Pritschen%20seitlich",
-                src: "Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=c829a942",
+                src: "Videos/Spielsportarten/Volleyball/Pritschen%20seitlich.mp4?v=c829a942",
                 bytes: 1146006
               },
               {
