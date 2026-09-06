@@ -1,5 +1,6 @@
 import {
   DELAY_DEFAULT_SECONDS,
+  DELAY_KNOB_SWEEP_DEGREES,
   DELAY_MAX_SECONDS,
   DELAY_MIN_SECONDS,
   MAX_RECORDING_MS,
@@ -812,7 +813,10 @@ function updateDelayValueUI() {
   elements.delayKnob.setAttribute('aria-valuenow', String(delaySeconds));
   elements.delayKnob.setAttribute('aria-valuetext', `${delaySeconds} Sekunden`);
   elements.delayKnob.style.setProperty('--delay-angle', `${delaySecondsToKnobAngle(delaySeconds)}deg`);
-  elements.delayKnob.style.setProperty('--delay-progress', String(delayKnobProgress(delaySeconds)));
+  elements.delayKnob.style.setProperty(
+    '--delay-sweep',
+    `${delayKnobProgress(delaySeconds) * DELAY_KNOB_SWEEP_DEGREES}deg`
+  );
 }
 
 function clearDelayCanvas() {
@@ -926,15 +930,33 @@ async function captureDelayFrame() {
 
 function paintDelayFrame(bitmap) {
   const canvas = elements.delayCanvas;
-  if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+  // Safari setzt object-fit auf einer Zeichenfläche nicht um. Der Ausschnitt wird
+  // deshalb selbst berechnet: Die Fläche bekommt die Größe ihres Anzeigebereichs,
+  // das Bild wird formatfüllend und mittig hineingezeichnet.
+  const pixelRatio = Math.min(globalThis.devicePixelRatio || 1, 2);
+  const width = Math.round(canvas.clientWidth * pixelRatio);
+  const height = Math.round(canvas.clientHeight * pixelRatio);
+  if (width < 2 || height < 2) {
+    return;
+  }
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
   }
   const context = canvas.getContext('2d');
   if (!context) {
     return;
   }
-  context.drawImage(bitmap, 0, 0);
+  const scale = Math.max(width / bitmap.width, height / bitmap.height);
+  const drawWidth = bitmap.width * scale;
+  const drawHeight = bitmap.height * scale;
+  context.drawImage(
+    bitmap,
+    (width - drawWidth) / 2,
+    (height - drawHeight) / 2,
+    drawWidth,
+    drawHeight
+  );
   canvas.classList.remove('waiting');
 }
 

@@ -463,9 +463,11 @@ try {
   await click('[data-guide-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
   // Das Leitbild landet erst durch das Ansehen im Offline-Cache.
+  // Die Adresse im Cache ist absolut; von dieser Unterseite aus zeigt ein
+  // relativer Pfad ins Leere.
   await waitFor(`caches.open('${guideCacheName}')
-    .then((cache) => cache.match('${pritschenGuide.src}'))
-    .then(Boolean)`, 20_000);
+    .then((cache) => cache.match('${appUrl}${pritschenGuide.src}'))
+    .then(Boolean)`, 30_000);
   results.push('Leitbild wird beim Ansehen für die Offline-Nutzung abgelegt');
   await click('#guides-back');
   await waitFor(`document.title === 'Volleyball | Sportkamera'
