@@ -1,9 +1,17 @@
 import {
+  DELAY_DEFAULT_SECONDS,
+  DELAY_MAX_SECONDS,
+  DELAY_MIN_SECONDS,
   MAX_RECORDING_MS,
+  clampDelaySeconds,
+  delayKnobProgress,
+  delaySecondsToKnobAngle,
+  formatDelayCountdown,
   formatPlaybackTime,
   formatRecordingTime,
+  knobAngleToDelaySeconds,
   selectSupportedVideoMimeType
-} from './media-utils.js?v=26';
+} from './media-utils.js?v=37';
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
@@ -33,6 +41,13 @@ const CAMERA_CONSTRAINTS = Object.freeze({
   frameRate: { ideal: 30 }
 });
 
+// Die verzögerte Wiedergabe puffert JPEG-Einzelbilder im Arbeitsspeicher. Breite,
+// Qualität und Bildrate halten 60 Sekunden Vorlauf bei rund 30 MB.
+const DELAY_CAPTURE_MAX_WIDTH = 720;
+const DELAY_FRAME_QUALITY = 0.6;
+const DELAY_CAPTURE_INTERVAL_MS = 1000 / 15;
+const DELAY_BUFFER_MARGIN_MS = 2000;
+
 const elements = {
   startView: document.querySelector('#start-view'),
   cameraView: document.querySelector('#camera-view'),
@@ -54,6 +69,22 @@ const elements = {
   captureButton: document.querySelector('#capture-button'),
   recordingIndicator: document.querySelector('#recording-indicator'),
   recordingTime: document.querySelector('#recording-time'),
+  delayView: document.querySelector('#delay-view'),
+  delayEntry: document.querySelector('#delay-entry'),
+  delayBack: document.querySelector('#delay-back'),
+  delaySwitchCamera: document.querySelector('#delay-switch-camera'),
+  delaySettings: document.querySelector('#delay-settings'),
+  delayValueLabel: document.querySelector('#delay-value-label'),
+  delayStage: document.querySelector('#delay-stage'),
+  delayVideo: document.querySelector('#delay-video'),
+  delayCanvas: document.querySelector('#delay-canvas'),
+  delayPlaceholder: document.querySelector('#delay-placeholder'),
+  delayCountdown: document.querySelector('#delay-countdown'),
+  delayCountdownValue: document.querySelector('#delay-countdown-value'),
+  delayDialog: document.querySelector('#delay-dialog'),
+  delayDialogClose: document.querySelector('#delay-dialog-close'),
+  delayKnob: document.querySelector('#delay-knob'),
+  delayKnobValue: document.querySelector('#delay-knob-value'),
   previewBack: document.querySelector('#preview-back'),
   previewStage: document.querySelector('#preview-stage'),
   photoPreview: document.querySelector('#photo-preview'),
@@ -170,6 +201,7 @@ const elements = {
 const views = {
   start: elements.startView,
   camera: elements.cameraView,
+  delay: elements.delayView,
   preview: elements.previewView,
   gallery: elements.galleryView,
   error: elements.errorView
@@ -177,6 +209,17 @@ const views = {
 
 let currentMode = 'photo';
 let facingMode = 'environment';
+let delaySeconds = DELAY_DEFAULT_SECONDS;
+let delayFrames = [];
+let delayFrameCounter = 0;
+let delayRenderedFrameId = 0;
+let delaySessionStart = 0;
+let delayLoopHandle = null;
+let delayLastCaptureAt = 0;
+let delayCapturePending = false;
+let delayDecodePending = false;
+let delayShownCountdown = '';
+const delayCaptureCanvas = document.createElement('canvas');
 let cameraStream = null;
 let mediaRecorder = null;
 let mediaChunks = [];
@@ -479,10 +522,12 @@ function stopCameraTracks() {
     cameraStream.getTracks().forEach((track) => track.stop());
   }
   cameraStream = null;
-  elements.liveVideo.pause();
-  elements.liveVideo.srcObject = null;
-  elements.liveVideo.removeAttribute('src');
-  elements.liveVideo.load();
+  [elements.liveVideo, elements.delayVideo].forEach((video) => {
+    video.pause();
+    video.srcObject = null;
+    video.removeAttribute('src');
+    video.load();
+  });
 }
 
 function clearTimers() {
@@ -529,6 +574,7 @@ function resetSaveButtons() {
 function cleanupMedia({ nextView = 'start', errorMessage = '' } = {}) {
   operationId += 1;
   clearTimers();
+  stopDelaySession();
 
   if (mediaRecorder) {
     mediaRecorder.ondataavailable = null;
@@ -688,6 +734,277 @@ async function beginNewSession(mode = currentMode) {
 function stopStreamAfterCapture() {
   stopCameraTracks();
   elements.captureButton.disabled = true;
+}
+
+function delayedPlaybackSupportMessage() {
+  const cameraMessage = browserSupportMessage('photo');
+  if (cameraMessage) {
+    return cameraMessage;
+  }
+  if (typeof globalThis.createImageBitmap !== 'function') {
+    return 'Die verzögerte Wiedergabe wird von diesem Browser nicht unterstützt. Die Aufnahme bleibt verfügbar.';
+  }
+  return '';
+}
+
+function updateDelayFacingUI() {
+  const isFrontCamera = facingMode === 'user';
+  elements.delayVideo.classList.toggle('mirrored', isFrontCamera);
+  elements.delayCanvas.classList.toggle('mirrored', isFrontCamera);
+  elements.delaySwitchCamera.setAttribute(
+    'aria-label',
+    isFrontCamera ? 'Zur Rückkamera wechseln' : 'Zur Frontkamera wechseln'
+  );
+}
+
+function updateDelayValueUI() {
+  elements.delayValueLabel.textContent = `${delaySeconds} s`;
+  elements.delayKnobValue.textContent = String(delaySeconds);
+  elements.delayKnob.setAttribute('aria-valuenow', String(delaySeconds));
+  elements.delayKnob.setAttribute('aria-valuetext', `${delaySeconds} Sekunden`);
+  elements.delayKnob.style.setProperty('--delay-angle', `${delaySecondsToKnobAngle(delaySeconds)}deg`);
+  elements.delayKnob.style.setProperty('--delay-progress', String(delayKnobProgress(delaySeconds)));
+}
+
+function clearDelayCanvas() {
+  const context = elements.delayCanvas.getContext('2d');
+  if (context && elements.delayCanvas.width && elements.delayCanvas.height) {
+    context.clearRect(0, 0, elements.delayCanvas.width, elements.delayCanvas.height);
+  }
+  elements.delayCanvas.width = 0;
+  elements.delayCanvas.height = 0;
+  elements.delayCanvas.classList.add('waiting');
+}
+
+/** Verwirft alle gepufferten Einzelbilder und startet Countdown und Wiedergabe neu. */
+function restartDelaySession() {
+  delayFrames.splice(0, delayFrames.length);
+  delayRenderedFrameId = 0;
+  delayShownCountdown = '';
+  delayLastCaptureAt = 0;
+  delaySessionStart = performance.now();
+  clearDelayCanvas();
+  elements.delayCountdown.hidden = false;
+  elements.delayCountdownValue.textContent = formatDelayCountdown(delaySeconds * 1000);
+  if (delayLoopHandle === null) {
+    delayLoopHandle = window.requestAnimationFrame(runDelayLoop);
+  }
+}
+
+function stopDelaySession() {
+  if (delayLoopHandle !== null) {
+    window.cancelAnimationFrame(delayLoopHandle);
+  }
+  delayLoopHandle = null;
+  delaySessionStart = 0;
+  delayFrames.splice(0, delayFrames.length);
+  delayRenderedFrameId = 0;
+  delayCapturePending = false;
+  delayDecodePending = false;
+  delayShownCountdown = '';
+  clearDelayCanvas();
+  elements.delayCountdown.hidden = true;
+  elements.delayStage.setAttribute('aria-busy', 'false');
+  elements.delayPlaceholder.hidden = false;
+  closeModal(elements.delayDialog);
+}
+
+function setDelaySeconds(value) {
+  const next = clampDelaySeconds(value);
+  if (next === delaySeconds) {
+    return;
+  }
+  delaySeconds = next;
+  updateDelayValueUI();
+  // Ein geänderter Vorlauf macht den bisherigen Puffer wertlos.
+  if (delaySessionStart) {
+    restartDelaySession();
+  }
+}
+
+/**
+ * Hält nur so viele Einzelbilder vor, wie der eingestellte Vorlauf braucht.
+ * Das aktuell angezeigte älteste Bild bleibt als Rückfall erhalten.
+ */
+function pruneDelayFrames() {
+  const cutoff = performance.now() - (delaySeconds * 1000 + DELAY_BUFFER_MARGIN_MS);
+  let removable = 0;
+  while (removable + 1 < delayFrames.length && delayFrames[removable + 1].timestamp <= cutoff) {
+    removable += 1;
+  }
+  if (removable > 0) {
+    delayFrames.splice(0, removable);
+  }
+}
+
+async function captureDelayFrame() {
+  if (delayCapturePending) {
+    return;
+  }
+  const video = elements.delayVideo;
+  if (!video.videoWidth || !video.videoHeight) {
+    return;
+  }
+  delayCapturePending = true;
+  const thisOperation = operationId;
+  const thisSession = delaySessionStart;
+  try {
+    const scale = Math.min(1, DELAY_CAPTURE_MAX_WIDTH / video.videoWidth);
+    const width = Math.max(2, Math.round(video.videoWidth * scale));
+    const height = Math.max(2, Math.round(video.videoHeight * scale));
+    if (delayCaptureCanvas.width !== width || delayCaptureCanvas.height !== height) {
+      delayCaptureCanvas.width = width;
+      delayCaptureCanvas.height = height;
+    }
+    const context = delayCaptureCanvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+    context.drawImage(video, 0, 0, width, height);
+    const blob = await canvasToBlob(delayCaptureCanvas, 'image/jpeg', DELAY_FRAME_QUALITY);
+    if (thisOperation !== operationId || thisSession !== delaySessionStart) {
+      return;
+    }
+    delayFrameCounter += 1;
+    delayFrames.push({ id: delayFrameCounter, timestamp: performance.now(), blob });
+    pruneDelayFrames();
+  } catch {
+    // Ein einzelnes verworfenes Bild unterbricht die Wiedergabe nicht.
+  } finally {
+    delayCapturePending = false;
+  }
+}
+
+function paintDelayFrame(bitmap) {
+  const canvas = elements.delayCanvas;
+  if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+  }
+  const context = canvas.getContext('2d');
+  if (!context) {
+    return;
+  }
+  context.drawImage(bitmap, 0, 0);
+  canvas.classList.remove('waiting');
+}
+
+function drawDelayedFrame(targetTimestamp) {
+  if (delayDecodePending) {
+    return;
+  }
+  let frame = null;
+  for (let index = delayFrames.length - 1; index >= 0; index -= 1) {
+    if (delayFrames[index].timestamp <= targetTimestamp) {
+      frame = delayFrames[index];
+      break;
+    }
+  }
+  if (!frame || frame.id === delayRenderedFrameId) {
+    return;
+  }
+  delayDecodePending = true;
+  const thisOperation = operationId;
+  const thisSession = delaySessionStart;
+  createImageBitmap(frame.blob).then((bitmap) => {
+    if (thisOperation === operationId && thisSession === delaySessionStart) {
+      paintDelayFrame(bitmap);
+      delayRenderedFrameId = frame.id;
+    }
+    bitmap.close();
+  }).catch(() => {
+    // Ein nicht dekodierbares Bild wird beim nächsten Durchlauf übersprungen.
+  }).finally(() => {
+    delayDecodePending = false;
+  });
+}
+
+function runDelayLoop() {
+  delayLoopHandle = window.requestAnimationFrame(runDelayLoop);
+  if (!delaySessionStart) {
+    return;
+  }
+  const now = performance.now();
+  if (now - delayLastCaptureAt >= DELAY_CAPTURE_INTERVAL_MS) {
+    delayLastCaptureAt = now;
+    void captureDelayFrame();
+  }
+
+  const delayMs = delaySeconds * 1000;
+  const remaining = delaySessionStart + delayMs - now;
+  if (remaining > 0) {
+    const countdown = formatDelayCountdown(remaining);
+    if (delayShownCountdown !== countdown) {
+      delayShownCountdown = countdown;
+      elements.delayCountdownValue.textContent = countdown;
+    }
+    return;
+  }
+
+  if (!elements.delayCountdown.hidden) {
+    elements.delayCountdown.hidden = true;
+  }
+  drawDelayedFrame(now - delayMs);
+}
+
+async function startDelayedPlayback() {
+  const supportMessage = delayedPlaybackSupportMessage();
+  if (supportMessage) {
+    showError(supportMessage);
+    return;
+  }
+
+  const thisOperation = ++operationId;
+  updateDelayFacingUI();
+  updateDelayValueUI();
+  setView('delay');
+  elements.delayStage.setAttribute('aria-busy', 'true');
+  elements.delayPlaceholder.hidden = false;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        ...CAMERA_CONSTRAINTS,
+        facingMode: { ideal: facingMode }
+      }
+    });
+
+    if (thisOperation !== operationId) {
+      stream.getTracks().forEach((track) => track.stop());
+      return;
+    }
+
+    cameraStream = stream;
+    elements.delayVideo.srcObject = stream;
+    await elements.delayVideo.play();
+
+    if (thisOperation !== operationId) {
+      stopCameraTracks();
+      return;
+    }
+
+    elements.delayPlaceholder.hidden = true;
+    elements.delayStage.setAttribute('aria-busy', 'false');
+    restartDelaySession();
+  } catch (error) {
+    if (thisOperation === operationId) {
+      showError(cameraErrorMessage(error));
+    }
+  }
+}
+
+async function beginDelayedPlayback() {
+  cleanupMedia({ nextView: 'start' });
+  await startDelayedPlayback();
+}
+
+function delayKnobAngleFromPointer(event) {
+  const bounds = elements.delayKnob.getBoundingClientRect();
+  const offsetX = event.clientX - (bounds.left + bounds.width / 2);
+  const offsetY = event.clientY - (bounds.top + bounds.height / 2);
+  // 0 Grad zeigt nach oben, positive Werte laufen im Uhrzeigersinn.
+  return Math.atan2(offsetX, -offsetY) * (180 / Math.PI);
 }
 
 function canvasToBlob(canvas, type, quality) {
@@ -2117,6 +2434,72 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
 
 document.querySelectorAll('[data-start-mode]').forEach((button) => {
   button.addEventListener('click', () => void beginNewSession(button.dataset.startMode));
+});
+
+elements.delayEntry.addEventListener('click', () => void beginDelayedPlayback());
+elements.delayBack.addEventListener('click', () => cleanupMedia({ nextView: 'start' }));
+elements.delaySwitchCamera.addEventListener('click', () => {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  void beginDelayedPlayback();
+});
+elements.delaySettings.addEventListener('click', () => {
+  updateDelayValueUI();
+  showModal(elements.delayDialog);
+  window.requestAnimationFrame(() => elements.delayKnob.focus({ preventScroll: true }));
+});
+elements.delayDialogClose.addEventListener('click', () => {
+  closeModal(elements.delayDialog);
+  elements.delaySettings.focus({ preventScroll: true });
+});
+elements.delayDialog.addEventListener('click', (event) => {
+  if (event.target === elements.delayDialog) {
+    closeModal(elements.delayDialog);
+  }
+});
+elements.delayKnob.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  elements.delayKnob.setPointerCapture(event.pointerId);
+  elements.delayKnob.focus({ preventScroll: true });
+  setDelaySeconds(knobAngleToDelaySeconds(delayKnobAngleFromPointer(event)));
+});
+elements.delayKnob.addEventListener('pointermove', (event) => {
+  if (!elements.delayKnob.hasPointerCapture(event.pointerId)) {
+    return;
+  }
+  setDelaySeconds(knobAngleToDelaySeconds(delayKnobAngleFromPointer(event)));
+});
+['pointerup', 'pointercancel'].forEach((eventName) => {
+  elements.delayKnob.addEventListener(eventName, (event) => {
+    if (elements.delayKnob.hasPointerCapture(event.pointerId)) {
+      elements.delayKnob.releasePointerCapture(event.pointerId);
+    }
+  });
+});
+elements.delayKnob.addEventListener('keydown', (event) => {
+  if (event.key === 'Home') {
+    event.preventDefault();
+    setDelaySeconds(DELAY_MIN_SECONDS);
+    return;
+  }
+  if (event.key === 'End') {
+    event.preventDefault();
+    setDelaySeconds(DELAY_MAX_SECONDS);
+    return;
+  }
+  const steps = {
+    ArrowRight: 1,
+    ArrowUp: 1,
+    ArrowLeft: -1,
+    ArrowDown: -1,
+    PageUp: 5,
+    PageDown: -5
+  };
+  const step = steps[event.key];
+  if (!step) {
+    return;
+  }
+  event.preventDefault();
+  setDelaySeconds(delaySeconds + step);
 });
 
 document.querySelectorAll('[data-camera-mode]').forEach((button) => {

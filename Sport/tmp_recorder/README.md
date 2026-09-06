@@ -2,6 +2,18 @@
 
 Eine installierbare, datensparsame Progressive Web App für direktes Foto- und Video-Feedback im Sportunterricht. Die Anwendung besteht nur aus lokalem HTML, CSS und JavaScript, benötigt keinen Build-Schritt und ist für GitHub Pages vorbereitet.
 
+## Funktionen
+
+Der Startbildschirm führt in drei Funktionen: **Foto** und **Video** nehmen auf und lassen die Aufnahme anschließend analysieren, speichern und mit einem Leitbild vergleichen. **Verzögerte Wiedergabe** zeigt das Kamerabild stattdessen fortlaufend zeitversetzt an. Die geschützte Galerie erscheint zusätzlich, sobald eine Anmeldung erfolgt ist.
+
+## Verzögerte Wiedergabe
+
+Die Ansicht startet sofort mit der Kamera und puffert das Bild im Arbeitsspeicher. Bis der eingestellte Vorlauf erreicht ist, zeigt die Bühne ausschließlich einen Countdown der verbleibenden Sekunden; das Livebild bleibt verdeckt. Erst danach erscheint das zugehörige, zeitversetzte Bild und läuft fortlaufend weiter. So kann eine Übung ausgeführt und unmittelbar danach am Gerät angesehen werden, ohne die Aufnahme zu bedienen.
+
+Das Zahnrad in der Ansicht öffnet einen Drehregler im Stil eines Backofenknopfs. Er deckt 1 bis 60 Sekunden auf einem 270-Grad-Bogen ab und lässt sich mit Finger, Stift oder Maus drehen; über die Tastatur ändern Pfeiltasten den Wert um eine, Bild auf/ab um fünf Sekunden, Pos1 und Ende springen an die Enden. Voreingestellt sind 15 Sekunden. Jede Änderung verwirft den Puffer und startet Countdown und Wiedergabe neu.
+
+Die Einzelbilder werden dafür verkleinert als JPEG im Arbeitsspeicher gehalten, nicht als Video aufgezeichnet. Bei 60 Sekunden Vorlauf sind das rund 30 MB. Nichts davon wird gespeichert, heruntergeladen oder übertragen: Beim Verlassen der Ansicht, beim Wechsel in den Hintergrund und beim Schließen der App wird der Puffer zusammen mit der Kamera verworfen. Auf langsameren Geräten sinkt die Bildrate der Wiedergabe, der zeitliche Abstand bleibt davon unberührt.
+
 ## Datenschutz und lokale Speicherung
 
 Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
@@ -14,7 +26,8 @@ Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein 
 - Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
 - Dateien werden nur über die Downloadfunktionen in der geschützten Galerie an den Browser übergeben. Beim Einzeldownload versucht die App WebM-Videos vollständig auf dem Gerät in H.264-MP4-Dateien umzuwandeln; der bewährte hardwarebeschleunigte Safari-/iPad-Pfad hat dabei Vorrang. Chrome und Firefox erhalten bei Bedarf einen zweiten H.264-Versuch ohne erzwungenen Hardware-Encoder. Ist dort kein H.264-Encoder verfügbar, werden die vorhandenen VP8-/VP9-Videodaten ohne Qualitätsverlust in einen MP4-Container umgepackt. Das gespeicherte WebM-Original bleibt immer unverändert. Mehrere ausgewählte Medien bündelt die App lokal in einem ZIP mit den unveränderten Originaldateien. In der Aufnahmeansicht gibt es keinen Download.
 - Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
-- Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
+- Die verzögerte Wiedergabe puffert Einzelbilder ausschließlich im Arbeitsspeicher. Sie werden weder gespeichert noch heruntergeladen und beim Verlassen der Ansicht sowie beim Wechsel in den Hintergrund verworfen.
+- Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente und den Bildpuffer der verzögerten Wiedergabe, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 
 Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, etwa zum Abruf von HTML, CSS, JavaScript und Symbolen. GitHub beziehungsweise beteiligte Netzbetreiber können dabei übliche Verbindungsdaten wie IP-Adresse, Zeitpunkt und User-Agent verarbeiten. Bild- oder Videodaten werden bei diesen Aufrufen nicht übertragen.
 
@@ -50,7 +63,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
 
 ## GitHub Pages aktivieren
 
@@ -97,15 +110,16 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 3. Foto und Video aufnehmen, beim Video einen eigenen Namen vergeben, beide mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
 4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
-6. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
-7. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
-8. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
-9. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
-10. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
-11. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
-12. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-13. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
-14. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
+6. **Verzögerte Wiedergabe** öffnen: Der Countdown startet bei 15 Sekunden, danach läuft das zeitversetzte Bild. Über das Zahnrad den Drehregler auf 1 und auf 60 Sekunden stellen und prüfen, dass jede Änderung den Countdown neu startet. Anschließend Kamera wechseln, in den Hintergrund wechseln und zurückkehren; die Ansicht darf kein altes Bild zeigen.
+7. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+8. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
+9. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+10. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
+11. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
+12. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
+13. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
+14. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
+15. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
 
@@ -113,13 +127,13 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 
 - `index.html` – semantische, barrierearme deutschsprachige Oberfläche
 - `styles.css` – responsive Touch-Gestaltung für Hoch- und Querformat samt Safe Areas
-- `app.js` – Kamera, Aufnahme, Galerie, Mehrfachdownload und zentrale temporäre Medienbereinigung
+- `app.js` – Kamera, Aufnahme, verzögerte Wiedergabe, Galerie, Mehrfachdownload und zentrale temporäre Medienbereinigung
 - `zip-utils.js` – lokale, offlinefähige Bündelung ausgewählter Galerieaufnahmen als ZIP
 - `video-converter.js` – lokale WebM-zu-H.264-MP4-Konvertierung für Galeriedownloads
 - `annotation.js` – lokale Annotation eines aktuellen Videoframes
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
 - `teacher-auth.js` – PBKDF2-Prüfung des festen Passworts, Reset und optionale WebAuthn-Anmeldung
-- `media-utils.js` – getestete Formatauswahl und Zeitformatierung
+- `media-utils.js` – getestete Formatauswahl, Zeitformatierung und Reglerarithmetik der verzögerten Wiedergabe
 - `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
 - `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos
 - `manifest.webmanifest` und `icons/` – Installation als PWA und Apple-Touch-Icon

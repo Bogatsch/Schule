@@ -416,6 +416,7 @@ try {
     secure: window.isSecureContext,
     photoButtons: document.querySelectorAll('[data-start-mode="photo"]').length,
     videoButtons: document.querySelectorAll('[data-start-mode="video"]').length,
+    delayButtons: document.querySelectorAll('#delay-entry').length,
     guideLinks: document.querySelectorAll('.guide-entry').length,
     externalResources: [...document.querySelectorAll('[src],[href]')]
       .map((node) => node.src || node.href)
@@ -423,6 +424,7 @@ try {
     horizontalOverflow: document.documentElement.scrollWidth > innerWidth
   })`);
   assert.equal(initial.title, 'Sportkamera');
+  assert.equal(initial.delayButtons, 1);
   assert.equal(initial.view, 'start');
   assert.equal(initial.secure, true);
   assert.equal(initial.photoButtons, 1);

@@ -65,7 +65,7 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle] = await Promise.all([
+const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle, mediaUtils] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('video-converter.js'),
@@ -84,7 +84,8 @@ const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAu
   read('pages/leitbilder/volleyball/angriffsschlag/app.js'),
   read('pages/leitbilder/volleyball/pritschen-seitlich/index.html'),
   read('THIRD_PARTY_NOTICES.md'),
-  read('vendor/mediabunny/mediabunny-1.55.2.min.js')
+  read('vendor/mediabunny/mediabunny-1.55.2.min.js'),
+  read('media-utils.js')
 ]);
 const manifest = JSON.parse(manifestText);
 
@@ -146,6 +147,17 @@ assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-
 assert.match(html, /id="account-login-form"/, 'Allgemeines Anmeldeformular fehlt');
 assert.doesNotMatch(html, /id="account-new-password"|id="account-confirm-password"|id="account-setup-step"/, 'Eigene Passwortvergabe ist noch im Anmeldedialog vorhanden');
 assert.match(html, /id="account-password"[^>]*type="password"/, 'verdecktes Anmeldepasswort fehlt');
+assert.match(html, /id="delay-entry"/, 'Startkarte für die verzögerte Wiedergabe fehlt');
+assert.match(html, /id="delay-view"/, 'Ansicht für die verzögerte Wiedergabe fehlt');
+assert.match(html, /id="delay-video"[^>]*playsinline/, 'Livebild der verzögerten Wiedergabe fehlt');
+assert.match(html, /<canvas id="delay-canvas"/, 'Zeichenfläche der verzögerten Wiedergabe fehlt');
+assert.match(html, /id="delay-countdown"[^>]*role="timer"/, 'Countdown der verzögerten Wiedergabe fehlt');
+assert.match(html, /id="delay-settings"[^>]*aria-controls="delay-dialog"/, 'Zahnrad für die Verzögerung fehlt');
+assert.match(
+  html,
+  /id="delay-knob"[^>]*role="slider"[^>]*aria-valuemin="1"[^>]*aria-valuemax="60"/,
+  'Drehregler der Verzögerung fehlt oder deckt nicht 1 bis 60 Sekunden ab'
+);
 assert.match(html, /id="account-biometric-section"/, 'Bereich für die Gerätebestätigung fehlt');
 assert.match(html, /id="account-biometric-button"/, 'Taste für die Gerätebestätigung fehlt');
 assert.match(html, /id="account-enrollment-step"/, 'Einrichtungsschritt für die Gerätebestätigung fehlt');
@@ -184,8 +196,8 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=34/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=36/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=35/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=37/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -210,6 +222,20 @@ assert.match(app, /resetMediaStore/, 'Komplettlöschung der Galerie ist nicht ve
 assert.match(app, /BroadcastChannel\('sportkamera-account-v1'\)/, 'Komplett-Reset wird nicht an weitere offene App-Fenster gemeldet');
 assert.match(app, /authenticateWithPlatform/, 'Gerätebestätigung der Anmeldung ist nicht verbunden');
 assert.match(app, /enrollPlatformCredential/, 'Einrichtung der Gerätebestätigung ist nicht verbunden');
+assert.match(app, /startDelayedPlayback/, 'Start der verzögerten Wiedergabe ist nicht verbunden');
+assert.match(app, /restartDelaySession/, 'Neustart der verzögerten Wiedergabe fehlt');
+assert.match(
+  app,
+  /function setDelaySeconds[\s\S]*?restartDelaySession\(\)/,
+  'Eine geänderte Verzögerung startet die Wiedergabe nicht neu'
+);
+assert.match(app, /createImageBitmap/, 'Dekodierung der gepufferten Einzelbilder fehlt');
+assert.match(app, /stopDelaySession\(\)/, 'Bildpuffer wird nicht zentral bereinigt');
+assert.match(
+  app,
+  /function cleanupMedia\([\s\S]{0,120}stopDelaySession\(\)/,
+  'Verzögerte Wiedergabe hängt nicht an der zentralen Bereinigung'
+);
 assert.match(app, /gallerySelectedIds|selectedGalleryIds/, 'Mehrfachauswahl der Galerie fehlt');
 assert.match(app, /createZip/, 'Gebündelter ZIP-Download der Galerie fehlt');
 assert.match(app, /selectedItems\.length === 1[\s\S]*downloadGalleryItem/, 'Ein einzelner ausgewählter Eintrag wird nicht direkt heruntergeladen');
@@ -301,6 +327,15 @@ assert.match(mediaStore, /export async function resetMediaStore/, 'Schnittstelle
 assert.match(mediaStore, /IDB_METADATA_STORE[\s\S]*\.clear\(\)/, 'IndexedDB-Metadaten werden beim Reset nicht geleert');
 assert.match(mediaStore, /removeEntry\(STORE_DIRECTORY, \{ recursive: true \}\)/, 'OPFS-Medien werden beim Reset nicht vollständig entfernt');
 assert.match(mediaStore, /storage\.persist\(\)/, 'bestmögliche dauerhafte Speicherung wird nicht angefragt');
+assert.match(mediaUtils, /export const DELAY_MAX_SECONDS = 60;/, 'Obergrenze von 60 Sekunden Verzögerung fehlt');
+assert.match(mediaUtils, /export function knobAngleToDelaySeconds/, 'Umrechnung des Drehreglers fehlt');
+assert.match(mediaUtils, /export function formatDelayCountdown/, 'Countdown-Formatierung der Verzögerung fehlt');
+assert.match(styles, /\.delay-knob/, 'Drehregler ist nicht gestaltet');
+assert.match(
+  styles,
+  /\.delay-countdown \{[^}]*background:\s*#071d24;/,
+  'Countdown der verzögerten Wiedergabe verdeckt das Livebild nicht vollständig'
+);
 assert.match(mediaStore, /createdAt/, 'Zeitstempel für die Galeriesortierung fehlt');
 assert.match(mediaStore, /titleDownloadStem[\s\S]*suggestedDownloadName/, 'Videoname wird nicht als Download-Dateiname verwendet');
 assert.match(mediaStore, /records\.sort\([\s\S]*right\.createdAtMs\s*-\s*left\.createdAtMs/, 'Galerie wird nicht mit den neuesten Aufnahmen zuerst sortiert');
@@ -357,9 +392,10 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v40'/, 'Cache-Version v40 fehlt');
-assert.match(worker, /\.\/app\.js\?v=36/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=34/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v41'/, 'Cache-Version v41 fehlt');
+assert.match(worker, /\.\/app\.js\?v=37/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=35/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/media-utils\.js\?v=37/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
