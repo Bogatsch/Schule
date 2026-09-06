@@ -6,6 +6,18 @@ export const GUIDE_TREE = Object.freeze(
     path: "",
     children: [
       {
+        name: "Kräftigung",
+        path: "Kr%C3%A4ftigung",
+        children: [
+          {
+            name: "Sprungkrafttraining",
+            path: "Kr%C3%A4ftigung/Sprungkrafttraining",
+            src: "Videos/Kr%C3%A4ftigung/Sprungkraft/Sprungkrafttraining.mp4?v=8cc902f6",
+            bytes: 58097873
+          }
+        ]
+      },
+      {
         name: "Spielsportarten",
         path: "Spielsportarten",
         children: [
@@ -24,6 +36,12 @@ export const GUIDE_TREE = Object.freeze(
                 path: "Spielsportarten/Volleyball/Pritschen%20seitlich",
                 src: "Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=c829a942",
                 bytes: 1146006
+              },
+              {
+                name: "Unteres Zuspiel",
+                path: "Spielsportarten/Volleyball/Unteres%20Zuspiel",
+                src: "Videos/Spielsportarten/Volleyball/Unteres%20Zuspiel.mp4?v=b2fd72c4",
+                bytes: 6826526
               }
             ]
           }
@@ -33,4 +51,4 @@ export const GUIDE_TREE = Object.freeze(
   }
 );
 
-export const GUIDE_VIDEO_COUNT = 2;
+export const GUIDE_VIDEO_COUNT = 4;

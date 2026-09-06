@@ -43,8 +43,10 @@ const APP_SHELL = Object.freeze([
 ]);
 
 const GUIDE_VIDEOS = Object.freeze([
+  './Videos/Kr%C3%A4ftigung/Sprungkraft/Sprungkrafttraining.mp4?v=8cc902f6',
   './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4?v=a7a3907f',
-  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=c829a942'
+  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=c829a942',
+  './Videos/Spielsportarten/Volleyball/Unteres%20Zuspiel.mp4?v=b2fd72c4'
 ]);
 
 const ALLOWED_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
