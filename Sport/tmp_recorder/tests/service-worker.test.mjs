@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
+import { GUIDE_TREE } from '../pages/leitbilder/guide-tree.js';
+import { flattenVideos } from '../tools/build-leitbilder.mjs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
@@ -50,10 +52,11 @@ async function requestRange(range) {
 }
 
 test('Leitbild-Videos sind vollständig für den Offline-Cache aufgelistet', () => {
-  assert.deepEqual(Array.from(workerScope.testApi.GUIDE_VIDEOS), [
-    './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
-    './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38'
-  ]);
+  // Die Liste wird aus dem Ordner Videos erzeugt und darf nicht davon abweichen.
+  assert.deepEqual(
+    Array.from(workerScope.testApi.GUIDE_VIDEOS),
+    flattenVideos(GUIDE_TREE).map((video) => `./${video.src}`)
+  );
 });
 
 test('vollständige Leitbild-Anfragen bleiben normale 200-Antworten', async () => {

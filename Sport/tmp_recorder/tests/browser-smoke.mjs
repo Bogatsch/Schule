@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { GUIDE_TREE } from '../pages/leitbilder/guide-tree.js';
+import { flattenVideos } from '../tools/build-leitbilder.mjs';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { access, mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
@@ -12,6 +14,10 @@ const pritschenVideoPath = path.join(
   'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4'
 );
 const pritschenVideoSize = (await stat(pritschenVideoPath)).size;
+const guideVideos = flattenVideos(GUIDE_TREE);
+const pritschenGuide = guideVideos.find((video) => video.name === 'Pritschen seitlich');
+assert.ok(pritschenGuide, 'Das Leitbild "Pritschen seitlich" fehlt im erzeugten Index.');
+const guideCacheName = 'sportkamera-guides-store';
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'sportkamera-browser-'));
 const profileDirectory = path.join(tempRoot, 'profile');
 await mkdir(profileDirectory);
@@ -438,15 +444,16 @@ try {
 
   await click('.guide-entry');
   await waitFor(`document.title === 'Leitbilder | Sportkamera'
-    && document.querySelectorAll('[data-category]').length === 2
+    && document.querySelectorAll('#guides-list a').length >= 1
     && document.body.dataset.ready === 'true'`);
-  await click('[data-category="spielsportarten"]');
-  await waitFor(`!document.querySelector('[data-category-content="spielsportarten"]').hidden`);
-  await click('[data-sport="volleyball"]');
+  await click('a[href="#/Spielsportarten"]');
+  await waitFor(`document.title === 'Spielsportarten | Sportkamera'`);
+  await click('a[href="#/Spielsportarten/Volleyball"]');
   await waitFor(`document.title === 'Volleyball | Sportkamera'
-    && document.querySelectorAll('[data-guide]').length >= 2`);
-  await click('[data-guide="pritschen-seitlich"]');
+    && document.querySelectorAll('#guides-list a').length >= 2`);
+  await click(`a[href="#/${pritschenGuide.path}"]`);
   await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
+    && !document.querySelector('#guides-player').hidden
     && document.querySelector('#guide-video').readyState >= 1`);
   assert.equal(await evaluate(`document.querySelector('#guide-video').muted`), true);
   assert.equal(await evaluate(`document.querySelector('#guide-play-button').textContent.trim()`), '▶');
@@ -456,13 +463,19 @@ try {
   results.push('Leitbild-Frame mit Stift und Radierer annotieren und verwerfen');
   await click('[data-guide-speed="0.5"]');
   assert.equal(await evaluate(`document.querySelector('#guide-video').playbackRate`), 0.5);
-  await click('.video-back');
-  await waitFor(`document.title === 'Volleyball | Sportkamera'`);
-  await click('.sport-back');
-  await waitFor(`document.title === 'Leitbilder | Sportkamera'
-    && document.body.dataset.ready === 'true'
-    && !document.querySelector('[data-category-content="spielsportarten"]').hidden`);
-  await click('.guides-back');
+  // Das Leitbild landet erst durch das Ansehen im Offline-Cache.
+  await waitFor(`caches.open('${guideCacheName}')
+    .then((cache) => cache.match('${pritschenGuide.src}'))
+    .then(Boolean)`, 20_000);
+  results.push('Leitbild wird beim Ansehen für die Offline-Nutzung abgelegt');
+  await click('#guides-back');
+  await waitFor(`document.title === 'Volleyball | Sportkamera'
+    && document.querySelector('#guides-player').hidden`);
+  await click('#guides-back');
+  await waitFor(`document.title === 'Spielsportarten | Sportkamera'`);
+  await click('#guides-back');
+  await waitFor(`document.title === 'Leitbilder | Sportkamera'`);
+  await click('#guides-back');
   await waitFor(`document.title === 'Sportkamera'
     && document.body.dataset.view === 'start'
     && document.body.dataset.ready === 'true'`);
@@ -547,21 +560,17 @@ try {
   assert.equal(await evaluate(`document.querySelector('#comparison-controls').hidden`), false);
   await click('#comparison-button');
   await waitFor(`document.querySelector('#comparison-picker').open
-    && !document.querySelector('[data-comparison-step="category"]').hidden`);
-  await click('[data-comparison-category="individualsportarten"]');
-  await waitFor(`!document.querySelector('[data-comparison-step="sport"]').hidden
-    && !document.querySelector('[data-comparison-sport-list="individualsportarten"]').hidden`);
-  assert.match(
-    await evaluate(`document.querySelector('[data-comparison-sport-list="individualsportarten"]').textContent`),
-    /noch keine Leitbilder/i
-  );
-  await click('[data-comparison-back="category"]');
-  await waitFor(`!document.querySelector('[data-comparison-step="category"]').hidden`);
-  await click('[data-comparison-category="spielsportarten"]');
-  await waitFor(`!document.querySelector('[data-comparison-sport-list="spielsportarten"]').hidden`);
-  await click('[data-comparison-sport="volleyball"]');
-  await waitFor(`!document.querySelector('[data-comparison-step="guide"]').hidden`);
-  await click('[data-comparison-title="Volleyball · Pritschen seitlich"]');
+    && document.querySelectorAll('#comparison-list button').length >= 1
+    && document.querySelector('#comparison-up').hidden`);
+  await click('[data-comparison-path="Spielsportarten"]');
+  await waitFor(`!document.querySelector('#comparison-up').hidden
+    && document.querySelector('#comparison-breadcrumb').textContent === 'Spielsportarten'`);
+  await click('#comparison-up');
+  await waitFor(`document.querySelector('#comparison-up').hidden`);
+  await click('[data-comparison-path="Spielsportarten"]');
+  await click('[data-comparison-path="Spielsportarten/Volleyball"]');
+  await waitFor(`document.querySelectorAll('#comparison-list button').length >= 2`);
+  await click(`[data-comparison-path="${pritschenGuide.path}"]`);
   await waitFor(`!document.querySelector('#comparison-pane').hidden
     && !document.querySelector('#comparison-playback-controls').hidden
     && !document.querySelector('#comparison-picker').open
@@ -907,7 +916,7 @@ try {
   ].includes(name)));
   assert.deepEqual(
     [...storageState.cacheState.names].sort(),
-    ['sportkamera-guides-v39', 'sportkamera-shell-v39']
+    [guideCacheName, 'sportkamera-shell-v42']
   );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
@@ -919,7 +928,7 @@ try {
   await waitFor(`navigator.serviceWorker.controller !== null`, 5_000);
   await new Promise((resolve) => webServer.close(resolve));
   try {
-    const offlineRange = await evaluate(`fetch('./Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38', {
+    const offlineRange = await evaluate(`fetch('./${pritschenGuide.src}', {
       headers: { Range: 'bytes=0-31' }
     }).then(async (response) => ({
       status: response.status,
@@ -930,7 +939,7 @@ try {
     assert.equal(offlineRange.contentRange, `bytes 0-31/${pritschenVideoSize}`);
     assert.equal(offlineRange.length, 32);
 
-    await navigate(`${appUrl}pages/leitbilder/volleyball/pritschen-seitlich/index.html`);
+    await navigate(`${appUrl}pages/leitbilder/index.html#/${pritschenGuide.path}`);
     await waitFor(`document.title === 'Pritschen seitlich | Sportkamera'
       && document.querySelector('#guide-video').readyState >= 1`);
     assert.equal(await evaluate(`document.querySelector('#guide-video').error`), null);

@@ -2376,16 +2376,9 @@ input.gallery-card-selection {
   letter-spacing: -0.025em;
 }
 
-.comparison-category-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.comparison-category-card,
 .comparison-list-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: center;
   width: 100%;
@@ -2400,41 +2393,10 @@ input.gallery-card-selection {
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.comparison-category-card:hover,
 .comparison-list-card:hover {
   border-color: var(--teal-2);
   box-shadow: 0 10px 26px rgb(7 59 76 / 11%);
   transform: translateY(-2px);
-}
-
-.comparison-category-icon,
-.comparison-list-icon {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  background: var(--aqua);
-  border-radius: 16px;
-  place-items: center;
-}
-
-.comparison-category-icon.team-icon,
-.comparison-list-icon {
-  background: #fff0eb;
-}
-
-.comparison-category-icon svg,
-.comparison-list-icon svg {
-  width: 40px;
-  height: 40px;
-  fill: none;
-  stroke: var(--teal);
-  stroke-width: 2.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.comparison-category-icon .icon-accent {
-  stroke: var(--coral);
 }
 
 .comparison-card-text {
@@ -2453,7 +2415,6 @@ input.gallery-card-selection {
   line-height: 1.35;
 }
 
-.comparison-sport-list,
 .comparison-guide-list {
   display: grid;
   gap: 0.8rem;
@@ -2913,21 +2874,6 @@ noscript {
 
   .comparison-dialog-header {
     gap: 0.8rem;
-  }
-
-  .comparison-category-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .comparison-category-card {
-    min-height: 94px;
-  }
-
-  .comparison-category-icon,
-  .comparison-list-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
   }
 
 }

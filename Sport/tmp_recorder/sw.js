@@ -1,14 +1,14 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v41';
+const CACHE_VERSION = 'v42';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
-const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}${CACHE_VERSION}`;
+const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
 // Nur diese statischen Dateien dürfen in Cache Storage gelangen.
 const APP_SHELL = Object.freeze([
   './',
   './index.html',
-  './styles.css?v=35',
+  './styles.css?v=36',
   './annotation.js',
   './annotation.js?v=27',
   './annotation.js?v=29',
@@ -29,15 +29,12 @@ const APP_SHELL = Object.freeze([
   './zip-utils.js',
   './zip-utils.js?v=33',
   './vendor/mediabunny/mediabunny-1.55.2.min.js?v=1.55.2',
-  './app.js?v=37',
+  './app.js?v=38',
   './manifest.webmanifest',
   './pages/leitbilder/index.html',
-  './pages/leitbilder/styles.css',
-  './pages/leitbilder/app.js',
-  './pages/leitbilder/volleyball/index.html',
-  './pages/leitbilder/volleyball/angriffsschlag/index.html',
-  './pages/leitbilder/volleyball/angriffsschlag/app.js?v=38',
-  './pages/leitbilder/volleyball/pritschen-seitlich/index.html',
+  './pages/leitbilder/styles.css?v=39',
+  './pages/leitbilder/app.js?v=39',
+  './pages/leitbilder/guide-tree.js?v=39',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
@@ -46,8 +43,8 @@ const APP_SHELL = Object.freeze([
 ]);
 
 const GUIDE_VIDEOS = Object.freeze([
-  './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
-  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=38'
+  './Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4?v=a7a3907f',
+  './Videos/Spielsportarten/Volleyball/Pritschen/Pritschen%20seitlich.mp4?v=c829a942'
 ]);
 
 const ALLOWED_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
@@ -111,12 +108,58 @@ async function createVideoResponse(request, cachedResponse) {
   });
 }
 
+const guideDownloads = new Set();
+
+/**
+ * Legt ein Leitbild beim ersten Ansehen vollständig im Offline-Cache ab.
+ * Das ist die einzige Stelle, an der der Service Worker etwas dynamisch
+ * speichert, und sie greift ausschließlich für Adressen aus GUIDE_VIDEO_URLS.
+ */
+async function cacheGuideVideo(url) {
+  if (!GUIDE_VIDEO_URLS.has(url) || guideDownloads.has(url)) {
+    return;
+  }
+  const cache = await caches.open(GUIDE_CACHE_NAME);
+  if (await cache.match(url)) {
+    return;
+  }
+  guideDownloads.add(url);
+  try {
+    const response = await fetch(url);
+    if (response.ok && response.status === 200) {
+      await cache.put(url, response);
+    }
+  } catch {
+    // Ohne Netz bleibt das Leitbild ungecacht und wird beim nächsten Mal geholt.
+  } finally {
+    guideDownloads.delete(url);
+  }
+}
+
+async function serveGuideVideo(request, url) {
+  const cache = await caches.open(GUIDE_CACHE_NAME);
+  const cachedResponse = await cache.match(url);
+  if (cachedResponse) {
+    return createVideoResponse(request, cachedResponse);
+  }
+  return fetch(request);
+}
+
+/** Entfernt Leitbilder, die nicht mehr im Index stehen oder ersetzt wurden. */
+async function pruneGuideCache() {
+  const cache = await caches.open(GUIDE_CACHE_NAME);
+  const requests = await cache.keys();
+  await Promise.all(
+    requests
+      .filter((request) => !GUIDE_VIDEO_URLS.has(request.url))
+      .map((request) => cache.delete(request))
+  );
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    Promise.all([
-      caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
-      caches.open(GUIDE_CACHE_NAME).then((cache) => cache.addAll(GUIDE_VIDEOS))
-    ])
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
       .then(() => self.skipWaiting())
   );
 });
@@ -132,6 +175,7 @@ self.addEventListener('activate', (event) => {
           ))
           .map((name) => caches.delete(name))
       ))
+      .then(() => pruneGuideCache())
       .then(() => self.clients.claim())
   );
 });
@@ -159,13 +203,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (GUIDE_VIDEO_URLS.has(requestUrl.href)) {
-    event.respondWith(
-      caches.open(GUIDE_CACHE_NAME)
-        .then((cache) => cache.match(requestUrl.href))
-        .then((cachedResponse) => (
-          cachedResponse ? createVideoResponse(request, cachedResponse) : fetch(request)
-        ))
-    );
+    event.respondWith(serveGuideVideo(request, requestUrl.href));
+    event.waitUntil(cacheGuideVideo(requestUrl.href));
     return;
   }
 

@@ -14,6 +14,27 @@ Das Zahnrad in der Ansicht öffnet einen Drehregler im Stil eines Backofenknopfs
 
 Die Einzelbilder werden dafür verkleinert als JPEG im Arbeitsspeicher gehalten, nicht als Video aufgezeichnet. Bei 60 Sekunden Vorlauf sind das rund 30 MB. Nichts davon wird gespeichert, heruntergeladen oder übertragen: Beim Verlassen der Ansicht, beim Wechsel in den Hintergrund und beim Schließen der App wird der Puffer zusammen mit der Kamera verworfen. Auf langsameren Geräten sinkt die Bildrate der Wiedergabe, der zeitliche Abstand bleibt davon unberührt.
 
+## Leitbilder hinzufügen
+
+Leitbilder werden nicht von Hand eingetragen. Maßgeblich ist allein der Ordner `Videos/`:
+
+1. Video an die passende Stelle in `Videos/` legen, zum Beispiel `Videos/Spielsportarten/Volleyball/Aufschlag/Aufschlag von oben.mp4`.
+2. Committen und pushen.
+
+Den Rest erledigt `tools/build-leitbilder.mjs`. Der GitHub-Workflow *Leitbild-Index* startet bei jeder Änderung unter `Videos/`, erzeugt den Index neu und committet ihn. Lokal geht dasselbe mit `npm run leitbilder`; `npm test` schlägt fehl, solange der Index nicht zum Ordner passt.
+
+Erzeugt werden dabei `pages/leitbilder/guide-tree.js` und die Videoliste in `sw.js`. Beide Dateien sind Maschinenerzeugnisse und sollten nicht von Hand geändert werden. Aus ihnen speisen sich sowohl die Leitbilder-Seite als auch die Auswahl hinter **Leitbild daneben**.
+
+Regeln für die Anzeige:
+
+- **Ordner werden zu Ebenen, Dateinamen zu Titeln** – ohne Endung. Aus `Aufschlag von oben.mp4` wird der Eintrag *Aufschlag von oben*. Sortiert wird alphabetisch.
+- **Ein Ordner mit genau einem Video und ohne Unterordner** wird direkt als dieses Video angezeigt. Der Zwischenklick entfällt. Kommt ein zweites Video dazu, wird der Ordner wieder zur Ebene.
+- **Unterstützt sind `.mp4`, `.m4v` und `.webm`.** Andere Dateien und leere Ordner werden übersprungen und beim Erzeugen als Hinweis gemeldet.
+- **Leitbilder müssen ohne Tonspur vorliegen.** Der Generator warnt bei einer Tonspur, und `npm test` schlägt fehl. Die App schaltet Leitbilder zusätzlich zur Laufzeit stumm.
+- **Umbenennen oder Verschieben** ändert nur den Index; es sind keine weiteren Anpassungen nötig.
+
+Da die App statisch auf GitHub Pages liegt, kann sie zur Laufzeit kein Verzeichnis auflisten. Deshalb entsteht der Index vorab beim Committen statt im Browser.
+
 ## Datenschutz und lokale Speicherung
 
 Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
@@ -28,6 +49,7 @@ Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein 
 - Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
 - Die verzögerte Wiedergabe puffert Einzelbilder ausschließlich im Arbeitsspeicher. Sie werden weder gespeichert noch heruntergeladen und beim Verlassen der Ansicht sowie beim Wechsel in den Hintergrund verworfen.
 - Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente und den Bildpuffer der verzögerten Wiedergabe, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
+- Leitbilder werden erst beim Ansehen in den Offline-Cache gelegt, nicht mehr vorab vollständig geladen. Der Erstaufruf bleibt dadurch unabhängig von der Größe der Sammlung; offline stehen die zuvor angesehenen Leitbilder bereit. Nicht mehr im Index gelistete Videos entfernt der Service Worker beim nächsten Start aus dem Cache.
 
 Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, etwa zum Abruf von HTML, CSS, JavaScript und Symbolen. GitHub beziehungsweise beteiligte Netzbetreiber können dabei übliche Verbindungsdaten wie IP-Adresse, Zeitpunkt und User-Agent verarbeiten. Bild- oder Videodaten werden bei diesen Aufrufen nicht übertragen.
 
@@ -63,7 +85,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, den Leitbild-Index samt Tonspurprüfung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
 
 ## GitHub Pages aktivieren
 
@@ -96,7 +118,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
 - Über den Stift-Button lässt sich der aktuelle Videoframe in einem temporären Annotationsfenster öffnen. Dort gibt es Freihandstift, fünf Farben und einen Radierer; beim Schließen wird die Annotation verworfen.
 - Mit **Leitbild daneben** lässt sich ein Leitbild neben die eigene Aufnahme schalten. Beide Videos besitzen unabhängige Bedienelemente.
-- Unter **Leitbilder ansehen → Spielsportarten → Volleyball** stehen die Leitbilder **Angriffsschlag** und **Pritschen seitlich** bereit. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
+- Unter **Leitbilder ansehen** führt dieselbe Ordnerstruktur wie im Ordner `Videos/` zum gewünschten Leitbild. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
 - **Aufnahme verwerfen**, **Neue Aufnahme** und **Zurück** entfernen die aktuelle, nicht gespeicherte Aufnahme vor dem Ansichtswechsel.
 
 Nach der Anmeldung zeigt die geschützte Galerie gespeicherte Fotos und benannte Videos nach Datum sortiert, die neuesten zuerst. Einzelne Medien lassen sich öffnen, Videos abspielen und annotieren. Das Download-Symbol exportiert bei genau einer markierten Aufnahme diese einzelne Datei und übernimmt bei Videos den zuvor vergebenen Namen. WebM-Aufnahmen werden dafür nach Möglichkeit lokal mit bevorzugter Hardwarebeschleunigung in H.264-MP4 umgewandelt. Scheitert der Hardwarepfad, versucht die App H.264 erneut mit den allgemeinen Browsereinstellungen. Ohne verfügbaren H.264-Encoder verpackt sie die vorhandene VP8-/VP9-Spur direkt als MP4; dieser schnelle Fallback benötigt kein WebCodecs. Ein Fortschrittsfenster bleibt währenddessen in der App; danach startet die Lehrkraft den fertigen MP4-Download mit einem zweiten Tippen. Je nach Videolänge und Gerät kann eine H.264-Umwandlung Zeit und zusätzlichen Arbeitsspeicher benötigen, daher sollte die App im Vordergrund bleiben. Sind auch die MP4-Fallbacks nicht möglich, bietet die App das unveränderte WebM-Original an. Bereits als MP4 gespeicherte Videos und Fotos werden direkt heruntergeladen. Sind mehrere Einträge markiert, bündelt dasselbe Download-Symbol ihre unveränderten Originaldateien vollständig lokal in einem ZIP. Über das Papierkorb-Symbol lässt sich dieselbe Auswahl gemeinsam löschen. Sowohl Einzel- als auch Mehrfachlöschungen erfordern eine Bestätigung.
@@ -110,16 +132,17 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 3. Foto und Video aufnehmen, beim Video einen eigenen Namen vergeben, beide mit dem Symbol speichern, die App vollständig schließen und beide Medien nach dem Neustart in der Galerie wiederfinden.
 4. Eine nicht gespeicherte Aufnahme schließen beziehungsweise die App in den Hintergrund schicken; sie darf nach der Rückkehr nicht wieder erscheinen.
 5. Video manuell und automatisch nach drei Minuten stoppen sowie Wiedergabe, Zeitleiste, Tempostufen und Annotation prüfen.
-6. **Verzögerte Wiedergabe** öffnen: Der Countdown startet bei 15 Sekunden, danach läuft das zeitversetzte Bild. Über das Zahnrad den Drehregler auf 1 und auf 60 Sekunden stellen und prüfen, dass jede Änderung den Countdown neu startet. Anschließend Kamera wechseln, in den Hintergrund wechseln und zurückkehren; die Ansicht darf kein altes Bild zeigen.
-7. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
-8. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
-9. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
-10. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
-11. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
-12. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
-13. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-14. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
-15. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
+6. Ein zusätzliches Video in einen Unterordner von `Videos/` legen, `npm run leitbilder` ausführen und prüfen, dass es unter **Leitbilder ansehen** und hinter **Leitbild daneben** auftaucht und abspielbar ist.
+7. **Verzögerte Wiedergabe** öffnen: Der Countdown startet bei 15 Sekunden, danach läuft das zeitversetzte Bild. Über das Zahnrad den Drehregler auf 1 und auf 60 Sekunden stellen und prüfen, dass jede Änderung den Countdown neu startet. Anschließend Kamera wechseln, in den Hintergrund wechseln und zurückkehren; die Ansicht darf kein altes Bild zeigen.
+8. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+9. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
+10. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+11. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
+12. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
+13. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
+14. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
+15. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
+16. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
 
@@ -134,10 +157,11 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
 - `teacher-auth.js` – PBKDF2-Prüfung des festen Passworts, Reset und optionale WebAuthn-Anmeldung
 - `media-utils.js` – getestete Formatauswahl, Zeitformatierung und Reglerarithmetik der verzögerten Wiedergabe
-- `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos
-- `Videos/` – unveränderte Ordnerstruktur der lokalen Leitbild-Videos
+- `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos; `guide-tree.js` darin wird erzeugt
+- `Videos/` – Ordnerstruktur der lokalen Leitbild-Videos; sie bestimmt die Navigation
 - `manifest.webmanifest` und `icons/` – Installation als PWA und Apple-Touch-Icon
 - `sw.js` – versionierter Offline-Cache ausschließlich für statische App-Dateien
 - `vendor/mediabunny/` und `THIRD_PARTY_NOTICES.md` – lokal gebündelter Videokonverter samt Lizenz- und Prüfsummenhinweis
 - `tests/` – automatisierte Funktions-, Datenschutz- und PWA-Prüfungen
+- `tools/build-leitbilder.mjs` – erzeugt den Leitbild-Index aus dem Ordner `Videos/`
 - `tools/generate-icons.ps1` – reproduzierbare lokale Erzeugung der PNG-App-Symbole

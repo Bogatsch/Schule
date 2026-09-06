@@ -33,10 +33,8 @@ const requiredFiles = [
   'pages/leitbilder/index.html',
   'pages/leitbilder/styles.css',
   'pages/leitbilder/app.js',
-  'pages/leitbilder/volleyball/index.html',
-  'pages/leitbilder/volleyball/angriffsschlag/index.html',
-  'pages/leitbilder/volleyball/angriffsschlag/app.js',
-  'pages/leitbilder/volleyball/pritschen-seitlich/index.html',
+  'pages/leitbilder/guide-tree.js',
+  'tools/build-leitbilder.mjs',
   'Videos/Spielsportarten/Volleyball/Angriffsschlag/Angriffschlag.mp4',
   'Videos/Spielsportarten/Volleyball/Pritschen/Pritschen seitlich.mp4',
   'icons/favicon-64.png',
@@ -65,7 +63,7 @@ await Promise.all([...expectedIconSizes].map(async ([file, expectedSize]) => {
   assert.equal(png.readUInt32BE(20), expectedSize, `${file} hat die falsche Höhe`);
 }));
 
-const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, volleyballHtml, playerHtml, playerApp, pritschenHtml, thirdPartyNotices, mediabunnyBundle, mediaUtils] = await Promise.all([
+const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAuth, worker, styles, manifestText, guidesHtml, guidesStyles, guidesApp, guideTree, guideBuilder, thirdPartyNotices, mediabunnyBundle, mediaUtils] = await Promise.all([
   read('index.html'),
   read('app.js'),
   read('video-converter.js'),
@@ -79,10 +77,8 @@ const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAu
   read('pages/leitbilder/index.html'),
   read('pages/leitbilder/styles.css'),
   read('pages/leitbilder/app.js'),
-  read('pages/leitbilder/volleyball/index.html'),
-  read('pages/leitbilder/volleyball/angriffsschlag/index.html'),
-  read('pages/leitbilder/volleyball/angriffsschlag/app.js'),
-  read('pages/leitbilder/volleyball/pritschen-seitlich/index.html'),
+  read('pages/leitbilder/guide-tree.js'),
+  read('tools/build-leitbilder.mjs'),
   read('THIRD_PARTY_NOTICES.md'),
   read('vendor/mediabunny/mediabunny-1.55.2.min.js'),
   read('media-utils.js')
@@ -105,15 +101,15 @@ assert.match(html, /pages\/leitbilder\/index\.html/, 'Link zur Leitbilder-Seite 
 assert.match(html, /id="comparison-button"/, 'Button für den Leitbildvergleich fehlt');
 assert.doesNotMatch(html, /class="preview-pane-label"(?![^>]*\shidden)/, 'Beschriftung verdeckt die eigene Aufnahme');
 assert.doesNotMatch(html, /id="comparison-pane-label"[^>]*(?<!\shidden)>/, 'Leitbildtitel verdeckt das Vergleichsvideo');
-assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4"/, 'Leitbildauswahl für den Vergleich fehlt');
-assert.match(html, /data-comparison-src="\.\/Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4\?v=38"/, 'Pritschen fehlt in der Leitbildauswahl für den Vergleich');
+assert.match(html, /id="comparison-list"/, 'Leitbildauswahl für den Vergleich fehlt');
+assert.doesNotMatch(html, /data-comparison-src=/, 'Die Leitbildauswahl ist noch fest verdrahtet statt erzeugt');
+assert.match(app, /from '\.\/pages\/leitbilder\/guide-tree\.js/, 'Die Vergleichsauswahl nutzt den erzeugten Leitbild-Index nicht');
 assert.match(html, /id="comparison-play-button"/, 'eigene Start-/Pause-Taste des Leitbilds fehlt');
 assert.match(html, /id="comparison-timeline"/, 'eigene Zeitleiste des Leitbilds fehlt');
 assert.match(html, /<video id="comparison-video"[^>]*\smuted(?:\s|=|>)/i, 'Leitbildvergleich muss stummgeschaltet sein');
 assert.match(html, /<dialog id="comparison-picker"/, 'modale Leitbildauswahl fehlt');
-assert.match(html, /data-comparison-category="individualsportarten"/, 'Individualsport-Schritt der Vergleichsauswahl fehlt');
-assert.match(html, /data-comparison-category="spielsportarten"/, 'Spielsport-Schritt der Vergleichsauswahl fehlt');
-assert.match(html, /data-comparison-sport="volleyball"/, 'Sportart-Schritt der Vergleichsauswahl fehlt');
+assert.match(html, /id="comparison-up"/, 'Rückschritt der Vergleichsauswahl fehlt');
+assert.match(html, /id="comparison-breadcrumb"/, 'Pfadanzeige der Vergleichsauswahl fehlt');
 assert.match(html, /id="speed-menu"/, 'kompakte Tempoauswahl der eigenen Aufnahme fehlt');
 assert.match(html, /id="comparison-speed-menu"/, 'kompakte Tempoauswahl des Leitbilds fehlt');
 assert.match(html, /id="photo-save-controls"/, 'Speicherbereich für Fotos fehlt');
@@ -196,8 +192,8 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=35/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=37/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=36/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=38/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -266,50 +262,35 @@ assert.match(thirdPartyNotices, /Mozilla Public License 2\.0/, 'Mediabunny-Lizen
 assert.match(thirdPartyNotices, /ADDD26C70765F44C93EDFA03331B6E6D6B17B2689F9E035A4F4085F17EA9578A/, 'Prüfsumme des Mediabunny-Bundles fehlt');
 assert.match(mediabunnyBundle.slice(0, 1000), /Mozilla Public\s+\*?\s*License/, 'Lizenzkopf fehlt im Mediabunny-Bundle');
 
-[html, guidesHtml, volleyballHtml, playerHtml, pritschenHtml].forEach((pageHtml) => {
+[html, guidesHtml].forEach((pageHtml) => {
   assert.doesNotMatch(pageHtml, /class="step-label"><span>\d+<\/span>/, 'Nummerierung der Ablaufschritte ist noch vorhanden');
 });
 
 assert.match(guidesHtml, /Content-Security-Policy/i, 'CSP der Leitbilder-Seite fehlt');
-assert.match(guidesHtml, /Individualsportarten/, 'Auswahl für Individualsportarten fehlt');
-assert.match(guidesHtml, /Spielsportarten/, 'Auswahl für Spielsportarten fehlt');
-assert.match(guidesHtml, /data-sport="volleyball"/, 'Volleyball-Auswahl fehlt');
-assert.match(guidesHtml, /href="\.\/volleyball\/index\.html"/, 'Volleyball-Link zur Leitbilderliste fehlt');
+assert.match(guidesHtml, /id="guides-list"/, 'Liste der Leitbilder fehlt');
+assert.match(guidesHtml, /id="guides-player"/, 'Player der Leitbilder-Seite fehlt');
+assert.match(guidesHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiedergabe fehlt');
+assert.match(guidesHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
+assert.match(guidesHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');
+assert.match(guidesHtml, /id="guide-annotation-button"/, 'Annotations-Button der Leitbilder fehlt');
+assert.match(guidesHtml, /<dialog id="annotation-dialog"/, 'Annotationsfenster der Leitbilder fehlt');
+assert.doesNotMatch(guidesHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Leitbild verwendet native Videosteuerung');
+assert.match(guidesHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Leitbild muss stummgeschaltet sein');
 assert.doesNotMatch(guidesHtml, /https?:\/\//i, 'Leitbilder-Seite enthält eine externe Ressource');
+assert.doesNotMatch(guidesHtml, /Videos\//, 'Die Leitbilder-Seite darf keine Videoadresse fest enthalten');
 assert.doesNotMatch(guidesApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Leitbilder-Code enthält eine Netzwerk- oder Speicher-API');
-assert.match(guidesStyles, /prefers-reduced-motion/, 'Bewegungsreduktion der Leitbilder-Seite fehlt');
+assert.match(guidesApp, /from '\.\/guide-tree\.js/, 'Die Leitbilder-Seite nutzt den erzeugten Index nicht');
+assert.match(guidesApp, /playbackRate/, 'Geschwindigkeitssteuerung für Leitbilder fehlt');
+assert.match(guidesApp, /annotation\.open/, 'Annotationsfunktion für Leitbilder fehlt');
+assert.match(guidesApp, /function enforceMuted[\s\S]*?muted = true/, 'Leitbilder erzwingen die Stummschaltung nicht');
+assert.match(guidesApp, /addEventListener\('volumechange', enforceMuted\)/, 'Eine geänderte Lautstärke wird nicht zurückgesetzt');
 
-assert.match(volleyballHtml, /Content-Security-Policy/i, 'CSP der Volleyball-Seite fehlt');
-assert.match(volleyballHtml, /data-guide="angriffsschlag"/, 'Angriffsschlag fehlt in der Leitbilderliste');
-assert.match(volleyballHtml, /href="\.\/angriffsschlag\/index\.html"/, 'Link zum Angriffsschlag-Player fehlt');
-assert.match(volleyballHtml, /data-guide="pritschen-seitlich"/, 'Pritschen fehlt in der Leitbilderliste');
-assert.match(volleyballHtml, /href="\.\/pritschen-seitlich\/index\.html"/, 'Link zum Pritschen-Player fehlt');
-assert.doesNotMatch(volleyballHtml, /https?:\/\//i, 'Volleyball-Seite enthält eine externe Ressource');
-
-assert.match(playerHtml, /Content-Security-Policy/i, 'CSP der Player-Seite fehlt');
-assert.match(playerHtml, /Videos\/Spielsportarten\/Volleyball\/Angriffsschlag\/Angriffschlag\.mp4/, 'Volleyball-Leitbild fehlt');
-assert.match(playerHtml, /data-guide-speed="0\.25"/, 'langsame Leitbild-Wiedergabe fehlt');
-assert.match(playerHtml, /data-guide-speed="0\.5"/, 'mittlere Leitbild-Wiedergabe fehlt');
-assert.match(playerHtml, /data-guide-speed="1"/, 'normale Leitbild-Wiedergabe fehlt');
-assert.match(playerHtml, /id="guide-annotation-button"/, 'Annotations-Button des Angriffsschlags fehlt');
-assert.match(playerHtml, /<dialog id="annotation-dialog"/, 'Annotationsfenster des Angriffsschlags fehlt');
-assert.doesNotMatch(playerHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Leitbild verwendet native Videosteuerung');
-assert.match(playerHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Angriffsschlag muss stummgeschaltet sein');
-assert.doesNotMatch(playerHtml, /https?:\/\//i, 'Player-Seite enthält eine externe Ressource');
-assert.doesNotMatch(playerApp, /\b(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB)\b/, 'Player-Code enthält eine Netzwerk- oder Speicher-API');
-assert.match(playerApp, /playbackRate/, 'Geschwindigkeitssteuerung für Leitbilder fehlt');
-assert.match(playerApp, /annotation\.open/, 'Annotationsfunktion für Leitbilder fehlt');
-
-assert.match(pritschenHtml, /Content-Security-Policy/i, 'CSP der Pritschen-Seite fehlt');
-assert.match(pritschenHtml, /Videos\/Spielsportarten\/Volleyball\/Pritschen\/Pritschen%20seitlich\.mp4\?v=38/, 'Pritschen-Leitbild fehlt');
-assert.match(pritschenHtml, /data-guide-speed="0\.25"/, 'langsame Pritschen-Wiedergabe fehlt');
-assert.match(pritschenHtml, /data-guide-speed="0\.5"/, 'mittlere Pritschen-Wiedergabe fehlt');
-assert.match(pritschenHtml, /data-guide-speed="1"/, 'normale Pritschen-Wiedergabe fehlt');
-assert.match(pritschenHtml, /id="guide-annotation-button"/, 'Annotations-Button des Pritschen-Leitbilds fehlt');
-assert.match(pritschenHtml, /<dialog id="annotation-dialog"/, 'Annotationsfenster des Pritschen-Leitbilds fehlt');
-assert.doesNotMatch(pritschenHtml, /<video[^>]*\scontrols(?:\s|=|>)/i, 'Pritschen-Player verwendet native Videosteuerung');
-assert.match(pritschenHtml, /<video id="guide-video"[^>]*\smuted(?:\s|=|>)/i, 'Pritschen muss stummgeschaltet sein');
-assert.doesNotMatch(pritschenHtml, /https?:\/\//i, 'Pritschen-Seite enthält eine externe Ressource');
+// Der Index wird erzeugt, nicht von Hand gepflegt.
+assert.match(guideTree, /Automatisch erzeugt von tools\/build-leitbilder\.mjs/, 'Der Leitbild-Index ist nicht als erzeugt gekennzeichnet');
+assert.match(guideTree, /export const GUIDE_TREE = Object\.freeze\(/, 'Der Leitbild-Index exportiert keinen Baum');
+assert.match(guideBuilder, /export function hasAudioTrack/, 'Prüfung auf Tonspuren im Generator fehlt');
+assert.match(guideBuilder, /export function collapse/, 'Zusammenfassen einzelner Videoordner fehlt');
+assert.match(guideBuilder, /VIDEO_EXTENSIONS/, 'Der Generator kennt keine Videoendungen');
 
 const forbiddenAppApis = /\b(?:fetch|XMLHttpRequest|WebSocket|FormData|localStorage|sessionStorage|indexedDB)\b/;
 assert.doesNotMatch(app, forbiddenAppApis, 'App-Code enthält eine verbotene Übertragungs- oder Speicher-API');
@@ -392,20 +373,38 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v41'/, 'Cache-Version v41 fehlt');
-assert.match(worker, /\.\/app\.js\?v=37/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=35/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v42'/, 'Cache-Version v42 fehlt');
+assert.match(worker, /\.\/app\.js\?v=38/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=36/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/media-utils\.js\?v=37/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
 assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/teacher-auth\.js\?v=31/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
-assert.match(worker, /Angriffsschlag\/Angriffschlag\.mp4/, 'Angriffsschlag fehlt im Offline-Leitbildcache');
-assert.match(worker, /Pritschen\/Pritschen%20seitlich\.mp4/, 'Pritschen fehlt im Offline-Leitbildcache');
+assert.match(
+  worker,
+  /const GUIDE_VIDEOS = Object\.freeze\(\[\n(?:\s*'\.\/Videos\/[^']+',?\n)+\]\);/,
+  'Die erzeugte Leitbildliste des Service Workers fehlt oder hat ein anderes Format'
+);
 assert.match(worker, /status:\s*206/, 'Byte-Range-Antwort für Offline-Leitbilder fehlt');
 assert.match(worker, /Content-Range/, 'Content-Range für Offline-Leitbilder fehlt');
-assert.doesNotMatch(worker, /\.put\s*\(/, 'Service Worker darf Laufzeitdaten nicht dynamisch cachen');
+assert.equal(
+  (worker.match(/\.put\s*\(/gu) || []).length,
+  1,
+  'Der Service Worker darf ausschließlich Leitbilder dynamisch cachen'
+);
+assert.match(
+  worker,
+  /async function cacheGuideVideo\(url\) \{[\s\S]*?GUIDE_VIDEO_URLS\.has\(url\)[\s\S]*?cache\.put\(url, response\)/,
+  'Das nachträgliche Cachen ist nicht auf die Leitbild-Positivliste beschränkt'
+);
+assert.doesNotMatch(
+  worker,
+  /addAll\(GUIDE_VIDEOS\)/,
+  'Leitbilder dürfen nicht mehr vorab vollständig geladen werden'
+);
+assert.match(worker, /async function pruneGuideCache/, 'Aufräumen entfernter Leitbilder fehlt');
 assert.doesNotMatch(worker, /blob:/i, 'Service Worker darf keine Blob-Adresse enthalten');
 assert.doesNotMatch(worker, /sportkamera-media-v1/, 'Service Worker darf das OPFS-Medienverzeichnis nicht cachen');
 

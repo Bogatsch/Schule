@@ -15,6 +15,7 @@ import {
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
+import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=39';
 import {
   deleteMedia,
   getMedia,
@@ -123,9 +124,11 @@ const elements = {
   comparisonButtonLabel: document.querySelector('#comparison-button-label'),
   comparisonPicker: document.querySelector('#comparison-picker'),
   comparisonClose: document.querySelector('#comparison-close'),
-  comparisonSteps: [...document.querySelectorAll('[data-comparison-step]')],
-  comparisonSportTitle: document.querySelector('#comparison-sport-title'),
-  comparisonSportLists: [...document.querySelectorAll('[data-comparison-sport-list]')],
+  comparisonUp: document.querySelector('#comparison-up'),
+  comparisonBreadcrumb: document.querySelector('#comparison-breadcrumb'),
+  comparisonBrowseTitle: document.querySelector('#comparison-browse-title'),
+  comparisonList: document.querySelector('#comparison-list'),
+  comparisonEmpty: document.querySelector('#comparison-empty'),
   comparisonActive: document.querySelector('#comparison-active'),
   comparisonActiveLabel: document.querySelector('#comparison-active-label'),
   comparisonRemove: document.querySelector('#comparison-remove'),
@@ -231,7 +234,7 @@ let recordingTimer = null;
 let recordingLimitTimer = null;
 let isRecording = false;
 let operationId = 0;
-let selectedComparisonCategory = 'spielsportarten';
+let comparisonPath = [];
 let currentSavedMediaId = null;
 let videoNameSaving = false;
 let videoNameRestoreFocus = true;
@@ -328,36 +331,81 @@ function resetComparisonPlaybackUI() {
   });
 }
 
-function showComparisonStep(stepName) {
-  let selectedStep = null;
-  elements.comparisonSteps.forEach((step) => {
-    step.hidden = step.dataset.comparisonStep !== stepName;
-    if (!step.hidden) {
-      selectedStep = step;
+function comparisonNodeAt(pathSegments) {
+  let node = GUIDE_TREE;
+  for (const segment of pathSegments) {
+    const next = node.children?.find((child) => child.name === segment);
+    if (!next) {
+      return GUIDE_TREE;
+    }
+    node = next;
+  }
+  return node;
+}
+
+function countComparisonVideos(node) {
+  if (node.src) {
+    return 1;
+  }
+  return node.children.reduce((total, child) => total + countComparisonVideos(child), 0);
+}
+
+function comparisonEntryCard(child) {
+  const button = document.createElement('button');
+  button.className = 'comparison-list-card';
+  button.type = 'button';
+  button.dataset.comparisonPath = child.path;
+
+  const text = document.createElement('span');
+  text.className = 'comparison-card-text';
+  const name = document.createElement('strong');
+  name.textContent = child.name;
+  const subtitle = document.createElement('small');
+  const count = child.src ? 0 : countComparisonVideos(child);
+  subtitle.textContent = child.src
+    ? 'Video auswählen'
+    : `${count} ${count === 1 ? 'Leitbild' : 'Leitbilder'}`;
+  text.append(name, subtitle);
+
+  const arrow = document.createElement('span');
+  arrow.className = 'arrow';
+  arrow.setAttribute('aria-hidden', 'true');
+  arrow.textContent = '→';
+
+  button.append(text, arrow);
+  button.addEventListener('click', () => {
+    if (child.src) {
+      selectComparison(child);
+    } else {
+      showComparisonLevel([...comparisonPath, child.name]);
     }
   });
-  if (elements.comparisonPicker.open) {
-    selectedStep?.querySelector('h3')?.focus({ preventScroll: true });
+  return button;
+}
+
+function showComparisonLevel(pathSegments, { focusHeading = true } = {}) {
+  comparisonPath = pathSegments;
+  const node = comparisonNodeAt(pathSegments);
+  const entries = node.children ?? [];
+
+  elements.comparisonUp.hidden = pathSegments.length === 0;
+  elements.comparisonBreadcrumb.textContent = pathSegments.length === 0
+    ? 'Leitbilder'
+    : pathSegments.join(' › ');
+  elements.comparisonBrowseTitle.textContent = pathSegments.length === 0
+    ? 'Leitbilder'
+    : node.name;
+  elements.comparisonList.replaceChildren(...entries.map(comparisonEntryCard));
+  elements.comparisonList.hidden = entries.length === 0;
+  elements.comparisonEmpty.hidden = entries.length > 0;
+
+  if (focusHeading && elements.comparisonPicker.open) {
+    elements.comparisonBrowseTitle.focus({ preventScroll: true });
   }
 }
 
-function showComparisonSports(category) {
-  selectedComparisonCategory = category;
-  const isIndividual = category === 'individualsportarten';
-  elements.comparisonSportTitle.textContent = isIndividual
-    ? 'Individualsportart auswählen'
-    : 'Spielsportart auswählen';
-  elements.comparisonSportLists.forEach((list) => {
-    list.hidden = list.dataset.comparisonSportList !== category;
-  });
-  showComparisonStep('sport');
-}
-
 function openComparisonPicker() {
-  showComparisonStep('category');
-  elements.comparisonSportLists.forEach((list) => {
-    list.hidden = true;
-  });
+  showComparisonLevel([], { focusHeading: false });
   elements.comparisonButton.setAttribute('aria-expanded', 'true');
   if (typeof elements.comparisonPicker.showModal === 'function') {
     elements.comparisonPicker.showModal();
@@ -498,23 +546,24 @@ function resetComparison() {
   resetComparisonPlaybackUI();
 }
 
-function selectComparison(button) {
+function selectComparison(guide) {
   elements.comparisonVideo.pause();
   resetComparisonPlaybackUI();
-  elements.comparisonVideo.src = button.dataset.comparisonSrc;
+  elements.comparisonVideo.muted = true;
+  elements.comparisonVideo.src = `./${guide.src}`;
   elements.comparisonVideo.playbackRate = 1;
   elements.comparisonVideo.load();
-  elements.comparisonPaneLabel.textContent = button.dataset.comparisonTitle;
-  elements.comparisonPlayerLabel.textContent = button.dataset.comparisonTitle;
+  elements.comparisonPaneLabel.textContent = guide.name;
+  elements.comparisonPlayerLabel.textContent = guide.name;
   elements.comparisonPane.hidden = false;
   elements.previewStage.classList.add('comparing');
   elements.previewPlayerGrid.classList.add('comparing');
   elements.comparisonPlaybackControls.hidden = false;
   closeComparisonPicker({ restoreFocus: true });
   elements.comparisonButtonLabel.textContent = 'Leitbild wechseln';
-  elements.comparisonActiveLabel.textContent = button.dataset.comparisonTitle;
+  elements.comparisonActiveLabel.textContent = guide.name;
   elements.comparisonActive.hidden = false;
-  elements.previewStatus.textContent = `${button.dataset.comparisonTitle} wird daneben angezeigt.`;
+  elements.previewStatus.textContent = `${guide.name} wird daneben angezeigt.`;
 }
 
 function stopCameraTracks() {
@@ -2929,26 +2978,8 @@ elements.comparisonPicker.addEventListener('click', (event) => {
   }
 });
 
-document.querySelectorAll('[data-comparison-category]').forEach((button) => {
-  button.addEventListener('click', () => showComparisonSports(button.dataset.comparisonCategory));
-});
-
-document.querySelectorAll('[data-comparison-sport]').forEach((button) => {
-  button.addEventListener('click', () => showComparisonStep('guide'));
-});
-
-document.querySelectorAll('[data-comparison-back]').forEach((button) => {
-  button.addEventListener('click', () => {
-    if (button.dataset.comparisonBack === 'category') {
-      showComparisonStep('category');
-    } else {
-      showComparisonSports(selectedComparisonCategory);
-    }
-  });
-});
-
-document.querySelectorAll('[data-comparison-src]').forEach((button) => {
-  button.addEventListener('click', () => selectComparison(button));
+elements.comparisonUp.addEventListener('click', () => {
+  showComparisonLevel(comparisonPath.slice(0, -1));
 });
 
 elements.comparisonRemove.addEventListener('click', () => {

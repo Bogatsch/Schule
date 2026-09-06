@@ -10,13 +10,13 @@
     <meta name="format-detection" content="telephone=no">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'">
     <title>Leitbilder | Sportkamera</title>
-    <meta name="description" content="Leitbilder für Individual- und Spielsportarten auswählen.">
+    <meta name="description" content="Leitbilder für Individual- und Spielsportarten auswählen und ansehen.">
     <link rel="manifest" href="../../manifest.webmanifest">
     <link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="../../icons/favicon-64.png">
-    <link rel="stylesheet" href="../../styles.css?v=28">
-    <link rel="stylesheet" href="./styles.css">
-    <script type="module" src="./app.js"></script>
+    <link rel="stylesheet" href="../../styles.css?v=36">
+    <link rel="stylesheet" href="./styles.css?v=39">
+    <script type="module" src="./app.js?v=39"></script>
   </head>
   <body data-view="guides">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -34,70 +34,87 @@
 
       <main id="main-content" tabindex="-1">
         <section class="view guides-view" aria-labelledby="guides-title">
-          <a class="text-button guides-back" href="../../index.html">
+          <a id="guides-back" class="text-button guides-back" href="../../index.html">
             <span aria-hidden="true">←</span> Zurück
           </a>
 
-          <div class="guides-panel">
-            <div class="step-label">Leitbilder auswählen</div>
-            <h1 id="guides-title">Welche Sportart möchtest du ansehen?</h1>
+          <div id="guides-panel" class="guides-panel">
+            <div id="guides-breadcrumb" class="step-label">Leitbilder</div>
+            <h1 id="guides-title" tabindex="-1">Welche Sportart möchtest du ansehen?</h1>
 
-            <div class="category-grid" role="group" aria-label="Sportart auswählen">
-              <button class="category-card" type="button" data-category="individualsportarten" aria-pressed="false">
-                <span class="category-icon individual-icon" aria-hidden="true">
-                  <svg viewBox="0 0 48 48" focusable="false">
-                    <path class="icon-accent" d="M19 7h10M24 7v5"></path>
-                    <path d="M34 14l3-3M33 13l3 3"></path>
-                    <circle cx="24" cy="27" r="14"></circle>
-                    <path d="M24 19v8l6 4"></path>
-                  </svg>
-                </span>
-                <span class="category-text">
-                  <strong>Individualsportarten</strong>
-                  <small>Einzelne Bewegungen betrachten</small>
-                </span>
-                <span class="arrow" aria-hidden="true">→</span>
-              </button>
+            <div id="guides-list" class="sport-grid" aria-label="Leitbilder auswählen"></div>
+            <p id="guides-empty" class="guides-empty" hidden>Noch keine Leitbilder hinterlegt.</p>
 
-              <button class="category-card" type="button" data-category="spielsportarten" aria-pressed="false">
-                <span class="category-icon team-icon" aria-hidden="true">
-                  <svg viewBox="0 0 48 48" focusable="false">
-                    <circle cx="24" cy="24" r="17"></circle>
-                    <path class="icon-accent" d="M24 17l7 5-3 8h-8l-3-8z"></path>
-                    <path d="M24 7v10M8 19l9 3M12 36l8-6M36 36l-8-6M40 19l-9 3"></path>
-                  </svg>
-                </span>
-                <span class="category-text">
-                  <strong>Spielsportarten</strong>
-                  <small>Zusammenspiel und Spielsituationen</small>
-                </span>
-                <span class="arrow" aria-hidden="true">→</span>
-              </button>
+            <div id="guides-player" class="guides-player" hidden>
+              <div class="guide-video-stage">
+                <video id="guide-video" class="guide-video" playsinline muted preload="metadata" aria-label="Leitbild-Video" controlslist="nodownload noplaybackrate noremoteplayback" disableremoteplayback disablepictureinpicture></video>
+              </div>
+
+              <div class="playback-controls guide-playback-controls" aria-label="Videowiedergabe">
+                <button id="guide-play-button" class="play-button" type="button" aria-label="Video starten">
+                  <span aria-hidden="true">▶</span>
+                </button>
+                <div class="timeline-wrap">
+                  <label class="visually-hidden" for="guide-timeline">Wiedergabeposition</label>
+                  <input id="guide-timeline" type="range" min="0" max="1000" value="0" step="1">
+                  <output id="guide-playback-time" for="guide-timeline">0:00 / 0:00</output>
+                </div>
+                <div class="guide-player-tools">
+                  <fieldset class="speed-control">
+                    <legend>Tempo</legend>
+                    <div role="group" aria-label="Wiedergabegeschwindigkeit">
+                      <button type="button" data-guide-speed="0.25" aria-pressed="false">0,25×</button>
+                      <button type="button" data-guide-speed="0.5" aria-pressed="false">0,5×</button>
+                      <button type="button" data-guide-speed="1" aria-pressed="true">1×</button>
+                    </div>
+                  </fieldset>
+                  <button id="guide-annotation-button" class="download-icon-button" type="button" aria-label="Aktuellen Frame des Leitbilds annotieren" aria-haspopup="dialog" aria-controls="annotation-dialog" title="Frame annotieren">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <p id="guide-video-status" class="preview-status" role="status" aria-live="polite"></p>
             </div>
 
-            <section class="category-content" data-category-content="individualsportarten" aria-labelledby="individual-title" hidden>
-              <h2 id="individual-title" tabindex="-1">Individualsportarten</h2>
-              <p>Noch keine Leitbilder hinterlegt.</p>
-            </section>
-
-            <section class="category-content" data-category-content="spielsportarten" aria-labelledby="team-title" hidden>
-              <h2 id="team-title" tabindex="-1">Spielsportarten</h2>
-              <div class="sport-grid">
-                <a class="sport-card sport-link" href="./volleyball/index.html" data-sport="volleyball">
-                  <span class="sport-icon" aria-hidden="true">
-                    <svg viewBox="0 0 48 48" focusable="false">
-                      <circle cx="24" cy="24" r="17"></circle>
-                      <path d="M24 7v34M7 24h34M12 12c7 5 11 12 12 21M36 12c-7 5-11 12-12 21"></path>
-                    </svg>
-                  </span>
-                  <span class="sport-text">
-                    <strong>Volleyball</strong>
-                    <small>Leitbilder ansehen</small>
-                  </span>
-                  <span class="arrow" aria-hidden="true">→</span>
-                </a>
+            <dialog id="annotation-dialog" class="annotation-dialog" aria-labelledby="annotation-dialog-title">
+              <div class="annotation-dialog-shell">
+                <header class="annotation-dialog-header">
+                  <div>
+                    <p class="eyebrow">Frame annotieren</p>
+                    <h2 id="annotation-dialog-title">Videoframe annotieren</h2>
+                  </div>
+                  <button id="annotation-close" class="comparison-close" type="button" aria-label="Annotation schließen">×</button>
+                </header>
+                <div class="annotation-toolbar">
+                  <div class="annotation-tool-group" role="group" aria-label="Zeichenwerkzeug">
+                    <button type="button" data-annotation-tool="pen" aria-pressed="true">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20zM13.5 8.5l3 3"></path></svg>
+                      <span>Stift</span>
+                    </button>
+                    <button type="button" data-annotation-tool="eraser" aria-pressed="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 18h11M4.8 13.2l7.7-7.7a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L12 18H9l-4.2-4.8z"></path></svg>
+                      <span>Radierer</span>
+                    </button>
+                  </div>
+                  <fieldset class="annotation-colors">
+                    <legend>Farbe</legend>
+                    <div role="group" aria-label="Stiftfarbe">
+                      <button type="button" data-annotation-color="#ef4f3f" aria-label="Rot" aria-pressed="true"></button>
+                      <button type="button" data-annotation-color="#ffd166" aria-label="Gelb" aria-pressed="false"></button>
+                      <button type="button" data-annotation-color="#118a8b" aria-label="Türkis" aria-pressed="false"></button>
+                      <button type="button" data-annotation-color="#ffffff" aria-label="Weiß" aria-pressed="false"></button>
+                      <button type="button" data-annotation-color="#071d24" aria-label="Dunkelblau" aria-pressed="false"></button>
+                    </div>
+                  </fieldset>
+                </div>
+                <div id="annotation-canvas-stage" class="annotation-canvas-stage">
+                  <canvas id="annotation-frame-canvas" aria-hidden="true"></canvas>
+                  <canvas id="annotation-drawing-canvas" aria-label="Zeichenfläche für den aktuellen Videoframe"></canvas>
+                </div>
               </div>
-            </section>
+            </dialog>
           </div>
         </section>
       </main>

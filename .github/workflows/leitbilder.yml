@@ -1,0 +1,50 @@
+name: Leitbild-Index
+
+# Legt jemand ein Video unter Sport/tmp_recorder/Videos/ ab, erzeugt dieser Lauf
+# den Leitbild-Index neu und committet ihn. Dadurch reicht es, die Videodatei
+# selbst zu committen.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Sport/tmp_recorder/Videos/**'
+      - 'Sport/tmp_recorder/tools/build-leitbilder.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leitbilder-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Sport/tmp_recorder
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Leitbild-Index erzeugen
+        run: npm run leitbilder
+
+      - name: Änderungen committen
+        run: |
+          if git diff --quiet -- pages/leitbilder/guide-tree.js sw.js; then
+            echo "Der Leitbild-Index war bereits aktuell."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pages/leitbilder/guide-tree.js sw.js
+          git commit -m "Leitbild-Index aktualisiert"
+          git push
+
+      - name: Tests
+        run: npm test
