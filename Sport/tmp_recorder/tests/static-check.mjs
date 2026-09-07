@@ -408,7 +408,17 @@ assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v47'/, 'Cache-Version v47 fehlt');
+// Die Cache-Version hebt der Leitbild-Generator selbst an, deshalb wird hier
+// nur die Form geprüft und dass jede versionierte Adresse im Cache steht.
+assert.match(worker, /CACHE_VERSION = 'v\d+';/, 'Cache-Version fehlt oder hat eine unerwartete Form');
+for (const [quelle, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Seite'], [app, 'app.js'], [guidesApp, 'Leitbilder-Code']]) {
+  for (const [, adresse] of quelle.matchAll(/(?:\.\/|\.\.\/\.\.\/)([\w-]+\.(?:js|css)\?v=[\w.]+)/gu)) {
+    assert.ok(
+      worker.includes(`./${adresse}`) || worker.includes(`./pages/leitbilder/${adresse}`),
+      `${adresse} aus ${name} fehlt in der App-Shell des Service Workers`
+    );
+  }
+}
 assert.match(worker, /\.\/app\.js\?v=42/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=40/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/media-utils\.js\?v=39/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');

@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v47';
+const CACHE_VERSION = 'v49';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
@@ -36,7 +36,7 @@ const APP_SHELL = Object.freeze([
   './pages/leitbilder/index.html',
   './pages/leitbilder/styles.css?v=39',
   './pages/leitbilder/app.js?v=42',
-  './pages/leitbilder/guide-tree.js?v=39',
+  './pages/leitbilder/guide-tree.js?v=0da59186',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',

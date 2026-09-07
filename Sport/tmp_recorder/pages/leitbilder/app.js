@@ -1,4 +1,4 @@
-import { GUIDE_TREE } from './guide-tree.js?v=39';
+import { GUIDE_TREE } from './guide-tree.js?v=0da59186';
 import { formatPlaybackTime, nextStepTime } from '../../media-utils.js?v=39';
 import { setupVideoAnnotation } from '../../annotation.js?v=29';
 

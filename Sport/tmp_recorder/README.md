@@ -25,6 +25,8 @@ Den Rest erledigt `tools/build-leitbilder.mjs`. Der GitHub-Workflow *Leitbild-In
 
 Erzeugt werden dabei `pages/leitbilder/guide-tree.js` und die Videoliste in `sw.js`. Beide Dateien sind Maschinenerzeugnisse und sollten nicht von Hand geändert werden. Aus ihnen speisen sich sowohl die Leitbilder-Seite als auch die Auswahl hinter **Leitbild daneben**.
 
+Zusätzlich setzt der Generator die Versionskennung hinter `guide-tree.js` neu — sie ist eine Prüfsumme des Index — und hebt `CACHE_VERSION` in `sw.js` an. Beides ist nötig, weil ein installierter Service Worker die App-Dateien zuerst aus seinem Cache beantwortet: Ohne neue Kennung zeigt ein Gerät nach einem Videotausch weiter den alten Index und damit einen toten Videolink. Die statische Abnahme prüft, dass jede versionierte Adresse aus den Seiten auch in der App-Shell des Service Workers steht.
+
 Regeln für die Anzeige:
 
 - **Ordner werden zu Ebenen, Dateinamen zu Titeln** – ohne Endung. Aus `Aufschlag von oben.mp4` wird der Eintrag *Aufschlag von oben*. Sortiert wird alphabetisch.
@@ -68,6 +70,8 @@ Das Passwort steht weder im Repository noch im ausgelieferten JavaScript im Klar
 Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
 
 ## Lokal testen
+
+Der lokale Server sollte Byte-Ranges beherrschen (HTTP 206). `python3 -m http.server` tut das nicht: Videos spielen zwar, lassen sich aber nicht durchsuchen — Zeitstrahl und Sprungtasten bleiben bei Leitbildern ohne Wirkung. Eigene Aufnahmen sind davon nicht betroffen, sie laufen über Blob-Adressen.
 
 Ein Doppelklick auf `index.html` reicht nicht aus: Kamera, WebAuthn, lokaler App-Speicher und Service Worker sind nur in einem sicheren Kontext zuverlässig verfügbar. Browser behandeln `http://localhost` für die Entwicklung als sicheren Kontext; im Internet ist HTTPS erforderlich.
 

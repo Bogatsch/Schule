@@ -6,6 +6,11 @@
  *
  * - `pages/leitbilder/guide-tree.js` – ES-Modul mit dem Ordnerbaum
  * - die Liste `GUIDE_VIDEOS` in `sw.js` – Positivliste des Offline-Caches
+ * - die Versionskennung hinter `guide-tree.js` in `sw.js`, `app.js` und
+ *   `pages/leitbilder/app.js` – ohne sie liefert ein installierter Service
+ *   Worker nach einem Videotausch weiter den alten Index aus
+ * - `CACHE_VERSION` in `sw.js` – damit der Offline-Cache die geänderten Dateien
+ *   erneut holt statt sie aus dem alten Bestand zu beantworten
  *
  * Ordner werden zu Navigationsebenen, Dateinamen ohne Endung zu Titeln. Ein
  * Ordner mit genau einem Video und ohne Unterordner wird direkt als dieses
@@ -23,6 +28,12 @@ export const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 export const videoRoot = path.join(appRoot, 'Videos');
 export const treeFile = path.join(appRoot, 'pages/leitbilder/guide-tree.js');
 export const workerFile = path.join(appRoot, 'sw.js');
+// Alle Dateien, die den Index über eine versionierte Adresse laden.
+export const treeReferenceFiles = Object.freeze([
+  workerFile,
+  path.join(appRoot, 'app.js'),
+  path.join(appRoot, 'pages/leitbilder/app.js')
+]);
 
 export const VIDEO_EXTENSIONS = new Set(['.mp4', '.m4v', '.webm']);
 
@@ -188,6 +199,34 @@ export function renderWorkerList(videos) {
 }
 
 const WORKER_PATTERN = /const GUIDE_VIDEOS = Object\.freeze\(\[[\s\S]*?\]\);/u;
+const TREE_REFERENCE_PATTERN = /guide-tree\.js\?v=[\w.]+/gu;
+
+/**
+ * Die Kennung folgt dem Inhalt des Index, nicht einer fortlaufenden Nummer.
+ * Damit zeigt jede Änderung am Videoordner auf eine neue Adresse, und ein
+ * bereits ausgelieferter Cache kann sie nicht mit einem alten Stand beantworten.
+ */
+export function treeVersion(moduleSource) {
+  return createHash('sha256').update(normalizeNewlines(moduleSource)).digest('hex').slice(0, 8);
+}
+
+export function applyTreeVersion(source, version) {
+  return source.replace(TREE_REFERENCE_PATTERN, `guide-tree.js?v=${version}`);
+}
+
+const CACHE_VERSION_PATTERN = /(const CACHE_VERSION = 'v)(\d+)(';)/u;
+
+/**
+ * Hebt die Cache-Version an. Nötig, weil sich beim Neuerzeugen auch Dateien
+ * ändern, deren Adresse gleich bleibt; ein cachender Service Worker würde sonst
+ * den alten Stand weiterreichen.
+ */
+export function bumpCacheVersion(workerSource) {
+  return workerSource.replace(
+    CACHE_VERSION_PATTERN,
+    (_match, prefix, digits, suffix) => `${prefix}${Number(digits) + 1}${suffix}`
+  );
+}
 
 /**
  * Zeilenenden unterscheiden sich zwischen Windows-Checkout und Linux-Runner.
@@ -215,25 +254,44 @@ export async function buildLeitbilderIndex() {
   const currentModule = await readFile(treeFile, 'utf8').catch(() => '');
 
   const moduleOut = matchNewlines(renderModule(tree, videos), currentModule || workerSource);
+  const version = treeVersion(moduleOut);
   const workerOut = workerSource.replace(
     WORKER_PATTERN,
     () => matchNewlines(renderWorkerList(videos), workerSource)
   );
 
+  // Der Service Worker bekommt zusätzlich die neue Videoliste, alle anderen
+  // Dateien nur die neue Kennung.
+  const references = await Promise.all(treeReferenceFiles.map(async (file) => {
+    const source = file === workerFile ? workerSource : await readFile(file, 'utf8');
+    const withList = file === workerFile ? workerOut : source;
+    return { file, source, updated: applyTreeVersion(withList, version) };
+  }));
+
+  const indexChanged = normalizeNewlines(currentModule) !== normalizeNewlines(moduleOut)
+    || references.some(({ source, updated }) => normalizeNewlines(source) !== normalizeNewlines(updated));
+  // Die Cache-Version steigt nur, wenn sich sonst etwas geändert hat. Sonst
+  // würde jeder Aufruf des Generators eine neue Version erzeugen.
+  const finalReferences = indexChanged
+    ? references.map((reference) => (reference.file === workerFile
+      ? { ...reference, updated: bumpCacheVersion(reference.updated) }
+      : reference))
+    : references;
+
   return {
     tree,
     videos,
     warnings,
+    version,
     moduleOut,
-    workerOut,
-    stale: normalizeNewlines(currentModule) !== normalizeNewlines(moduleOut)
-      || normalizeNewlines(workerSource) !== normalizeNewlines(workerOut)
+    references: finalReferences,
+    stale: indexChanged
   };
 }
 
 async function main() {
   const checkOnly = process.argv.includes('--check');
-  const { videos, warnings, moduleOut, workerOut, stale } = await buildLeitbilderIndex();
+  const { videos, warnings, moduleOut, references, stale, version } = await buildLeitbilderIndex();
 
   warnings.forEach((warning) => console.warn(`Hinweis: ${warning}`));
   videos
@@ -246,14 +304,16 @@ async function main() {
       process.exitCode = 1;
       return;
     }
-    console.log(`Leitbild-Index ist aktuell: ${videos.length} Video(s).`);
+    console.log(`Leitbild-Index ist aktuell: ${videos.length} Video(s), Kennung v=${version}.`);
     return;
   }
 
   if (stale) {
     await writeFile(treeFile, moduleOut);
-    await writeFile(workerFile, workerOut);
-    console.log(`Leitbild-Index erzeugt: ${videos.length} Video(s).`);
+    for (const { file, updated } of references) {
+      await writeFile(file, updated);
+    }
+    console.log(`Leitbild-Index erzeugt: ${videos.length} Video(s), Kennung v=${version}.`);
   } else {
     console.log(`Leitbild-Index war bereits aktuell: ${videos.length} Video(s).`);
   }

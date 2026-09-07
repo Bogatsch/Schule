@@ -11,7 +11,10 @@ import {
   encodePath,
   flattenVideos,
   hasAudioTrack,
+  applyTreeVersion,
+  bumpCacheVersion,
   renderWorkerList,
+  treeVersion,
   workerFile
 } from '../tools/build-leitbilder.mjs';
 import { GUIDE_TREE, GUIDE_VIDEO_COUNT } from '../pages/leitbilder/guide-tree.js';
@@ -108,4 +111,43 @@ test('erkennt Tonspuren in MP4- und WebM-Dateien', () => {
   assert.equal(hasAudioTrack(mp4WithoutAudio, '.mp4'), false);
   assert.equal(hasAudioTrack(Buffer.from('xxA_OPUSxx', 'latin1'), '.webm'), true);
   assert.equal(hasAudioTrack(Buffer.from('V_VP9', 'latin1'), '.webm'), false);
+});
+
+test('die Kennung des Index folgt seinem Inhalt', () => {
+  const a = treeVersion('export const GUIDE_TREE = 1;');
+  assert.match(a, /^[0-9a-f]{8}$/u);
+  assert.equal(a, treeVersion('export const GUIDE_TREE = 1;'));
+  assert.notEqual(a, treeVersion('export const GUIDE_TREE = 2;'));
+  // Zeilenenden dürfen die Kennung nicht verändern.
+  assert.equal(treeVersion('a\nb'), treeVersion('a\r\nb'));
+});
+
+test('die Kennung wird in jeder Verweisstelle ersetzt', () => {
+  const quelle = [
+    "import { GUIDE_TREE } from './guide-tree.js?v=39';",
+    "  './pages/leitbilder/guide-tree.js?v=39',"
+  ].join('\n');
+  const ersetzt = applyTreeVersion(quelle, 'abc12345');
+  assert.equal(ersetzt.match(/guide-tree\.js\?v=abc12345/gu).length, 2);
+  assert.doesNotMatch(ersetzt, /v=39/u);
+});
+
+test('der ausgelieferte Index trägt überall dieselbe Kennung', async () => {
+  const erwartet = treeVersion(index.moduleOut);
+  for (const { updated, file } of index.references) {
+    assert.match(
+      updated,
+      new RegExp(`guide-tree\\.js\\?v=${erwartet}`, 'u'),
+      `${file} verweist auf eine andere Fassung des Index`
+    );
+  }
+});
+
+test('die Cache-Version steigt um genau eins', () => {
+  assert.equal(
+    bumpCacheVersion("const CACHE_VERSION = 'v48';"),
+    "const CACHE_VERSION = 'v49';"
+  );
+  // Ohne passende Zeile bleibt die Datei unverändert.
+  assert.equal(bumpCacheVersion('nichts zu tun'), 'nichts zu tun');
 });
