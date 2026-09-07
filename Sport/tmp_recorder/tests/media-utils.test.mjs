@@ -2,18 +2,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  CAMERA_TARGET_FRAME_RATE,
   DELAY_DEFAULT_SECONDS,
   DELAY_MAX_SECONDS,
   DELAY_MIN_SECONDS,
+  DELAY_MAX_BUFFERED_FRAMES,
+  DELAY_MIN_FPS,
+  DELAY_TARGET_FPS,
   MAX_RECORDING_MS,
+  MAX_VIDEO_BITRATE,
+  MIN_VIDEO_BITRATE,
   VIDEO_MIME_CANDIDATES,
   clampDelaySeconds,
+  delayCaptureFps,
+  delayCaptureIntervalMs,
   delaySecondsToKnobAngle,
   formatDelayCountdown,
   formatPlaybackTime,
   formatRecordingTime,
   knobAngleToDelaySeconds,
-  selectSupportedVideoMimeType
+  selectSupportedVideoMimeType,
+  videoBitrateForFrameRate
 } from '../media-utils.js';
 
 test('bevorzugt WebM, wenn der Browser es unterstützt', () => {
@@ -118,4 +127,46 @@ test('zählt die Restzeit bis zur verzögerten Wiedergabe in ganzen Sekunden', (
   assert.equal(formatDelayCountdown(0), '0');
   assert.equal(formatDelayCountdown(-500), '0');
   assert.equal(formatDelayCountdown(Number.NaN), '0');
+});
+
+test('fragt die Kamera nach 60 Bildern pro Sekunde', () => {
+  assert.equal(CAMERA_TARGET_FRAME_RATE, 60);
+});
+
+test('koppelt die Datenrate der Aufnahme an die gelieferte Bildrate', () => {
+  assert.equal(videoBitrateForFrameRate(30), MIN_VIDEO_BITRATE);
+  assert.equal(videoBitrateForFrameRate(60), MAX_VIDEO_BITRATE);
+  assert.ok(videoBitrateForFrameRate(50) > MIN_VIDEO_BITRATE);
+  assert.ok(videoBitrateForFrameRate(50) < MAX_VIDEO_BITRATE);
+});
+
+test('fällt ohne bekannte Bildrate auf die kleinste Datenrate zurück', () => {
+  assert.equal(videoBitrateForFrameRate(0), MIN_VIDEO_BITRATE);
+  assert.equal(videoBitrateForFrameRate(-24), MIN_VIDEO_BITRATE);
+  assert.equal(videoBitrateForFrameRate(Number.NaN), MIN_VIDEO_BITRATE);
+  assert.equal(videoBitrateForFrameRate(undefined), MIN_VIDEO_BITRATE);
+  assert.equal(videoBitrateForFrameRate(1000), MAX_VIDEO_BITRATE);
+});
+
+test('puffert kurze Vorläufe mit voller Bildrate', () => {
+  assert.equal(delayCaptureFps(DELAY_MIN_SECONDS), DELAY_TARGET_FPS);
+  assert.equal(delayCaptureFps(DELAY_DEFAULT_SECONDS), DELAY_TARGET_FPS);
+  assert.equal(delayCaptureIntervalMs(DELAY_DEFAULT_SECONDS), 1000 / DELAY_TARGET_FPS);
+});
+
+test('hält das Bildbudget des Puffers über alle Vorläufe ein', () => {
+  let previous = Number.POSITIVE_INFINITY;
+  for (let seconds = DELAY_MIN_SECONDS; seconds <= DELAY_MAX_SECONDS; seconds += 1) {
+    const fps = delayCaptureFps(seconds);
+    assert.ok(fps <= DELAY_TARGET_FPS && fps >= DELAY_MIN_FPS, `${seconds} s liegt außerhalb der Bildrate`);
+    assert.ok(fps * seconds <= DELAY_MAX_BUFFERED_FRAMES + 1, `${seconds} s sprengt das Bildbudget`);
+    assert.ok(fps <= previous, 'längerer Vorlauf darf die Bildrate nicht erhöhen');
+    previous = fps;
+  }
+  assert.equal(delayCaptureFps(DELAY_MAX_SECONDS), DELAY_MIN_FPS);
+});
+
+test('bleibt bei unbrauchbaren Vorlaufwerten beim Standard', () => {
+  assert.equal(delayCaptureFps(Number.NaN), delayCaptureFps(DELAY_DEFAULT_SECONDS));
+  assert.equal(delayCaptureFps(999), delayCaptureFps(DELAY_MAX_SECONDS));
 });

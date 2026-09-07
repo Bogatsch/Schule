@@ -1,5 +1,5 @@
 import { GUIDE_TREE } from './guide-tree.js?v=39';
-import { formatPlaybackTime } from '../../media-utils.js?v=37';
+import { formatPlaybackTime } from '../../media-utils.js?v=38';
 import { setupVideoAnnotation } from '../../annotation.js?v=29';
 
 const elements = {

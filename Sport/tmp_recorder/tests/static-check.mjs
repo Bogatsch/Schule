@@ -191,7 +191,7 @@ assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(html, /styles\.css\?v=37/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=39/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /app\.js\?v=40/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -365,16 +365,35 @@ assert.match(app, /IntersectionObserver/, 'Speicherschonendes Nachladen der Gale
 assert.match(app, /getTracks\(\)\.forEach\(\(track\) => track\.stop\(\)\)/, 'Kameratracks werden nicht beendet');
 assert.match(app, /width:\s*\{ ideal: 1280 \}/, 'ideale 720p-Breite fehlt');
 assert.match(app, /height:\s*\{ ideal: 720 \}/, 'ideale 720p-Höhe fehlt');
-assert.match(app, /frameRate:\s*\{ ideal: 30 \}/, 'ideale Bildrate fehlt');
+assert.match(
+  app,
+  /frameRate:\s*\{ ideal: CAMERA_TARGET_FRAME_RATE \}/,
+  'ideale Bildrate fehlt'
+);
+assert.match(
+  mediaUtils,
+  /CAMERA_TARGET_FRAME_RATE\s*=\s*60/,
+  'Zielbildrate von 60 Bildern pro Sekunde fehlt'
+);
+assert.match(
+  app,
+  /videoBitsPerSecond:\s*videoBitrateForFrameRate\(activeFrameRate\(cameraStream\)\)/,
+  'an die Bildrate gekoppelte Datenrate der Aufnahme fehlt'
+);
+assert.match(
+  app,
+  /delayCaptureIntervalMs\(delaySeconds\)/,
+  'bildratenabhängiger Aufnahmetakt der verzögerten Wiedergabe fehlt'
+);
 
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v43'/, 'Cache-Version v43 fehlt');
-assert.match(worker, /\.\/app\.js\?v=39/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v44'/, 'Cache-Version v44 fehlt');
+assert.match(worker, /\.\/app\.js\?v=40/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/styles\.css\?v=37/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/media-utils\.js\?v=37/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
+assert.match(worker, /\.\/media-utils\.js\?v=38/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');

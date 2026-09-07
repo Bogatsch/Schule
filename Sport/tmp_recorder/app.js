@@ -1,18 +1,21 @@
 import {
+  CAMERA_TARGET_FRAME_RATE,
   DELAY_DEFAULT_SECONDS,
   DELAY_KNOB_SWEEP_DEGREES,
   DELAY_MAX_SECONDS,
   DELAY_MIN_SECONDS,
   MAX_RECORDING_MS,
   clampDelaySeconds,
+  delayCaptureIntervalMs,
   delayKnobProgress,
   delaySecondsToKnobAngle,
   formatDelayCountdown,
   formatPlaybackTime,
   formatRecordingTime,
   knobAngleToDelaySeconds,
-  selectSupportedVideoMimeType
-} from './media-utils.js?v=37';
+  selectSupportedVideoMimeType,
+  videoBitrateForFrameRate
+} from './media-utils.js?v=38';
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
@@ -40,14 +43,14 @@ import {
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
   height: { ideal: 720 },
-  frameRate: { ideal: 30 }
+  frameRate: { ideal: CAMERA_TARGET_FRAME_RATE }
 });
 
-// Die verzögerte Wiedergabe puffert JPEG-Einzelbilder im Arbeitsspeicher. Breite,
-// Qualität und Bildrate halten 60 Sekunden Vorlauf bei rund 30 MB.
+// Die verzögerte Wiedergabe puffert JPEG-Einzelbilder im Arbeitsspeicher. Breite
+// und Qualität halten zusammen mit dem Bildbudget aus `delayCaptureIntervalMs`
+// auch 60 Sekunden Vorlauf bei rund 30 MB.
 const DELAY_CAPTURE_MAX_WIDTH = 720;
 const DELAY_FRAME_QUALITY = 0.6;
-const DELAY_CAPTURE_INTERVAL_MS = 1000 / 15;
 const DELAY_BUFFER_MARGIN_MS = 2000;
 
 const elements = {
@@ -996,7 +999,7 @@ function runDelayLoop() {
     return;
   }
   const now = performance.now();
-  if (now - delayLastCaptureAt >= DELAY_CAPTURE_INTERVAL_MS) {
+  if (now - delayLastCaptureAt >= delayCaptureIntervalMs(delaySeconds)) {
     delayLastCaptureAt = now;
     void captureDelayFrame();
   }
@@ -1263,6 +1266,19 @@ function stopVideoRecording(reason = 'manual') {
   mediaRecorder.stop();
 }
 
+/**
+ * Liest die Bildrate, die die Kamera wirklich liefert. Der Wunsch aus den
+ * Constraints sagt darüber nichts aus: Ältere Geräte bleiben bei 30 Bildern.
+ */
+function activeFrameRate(stream) {
+  const track = stream?.getVideoTracks?.()[0];
+  if (typeof track?.getSettings !== 'function') {
+    return 0;
+  }
+  const { frameRate } = track.getSettings();
+  return Number.isFinite(frameRate) && frameRate > 0 ? frameRate : 0;
+}
+
 function startVideoRecording() {
   if (!cameraStream || isRecording) {
     return;
@@ -1281,7 +1297,7 @@ function startVideoRecording() {
   try {
     mediaRecorder = new MediaRecorder(cameraStream, {
       mimeType,
-      videoBitsPerSecond: 4_000_000
+      videoBitsPerSecond: videoBitrateForFrameRate(activeFrameRate(cameraStream))
     });
   } catch {
     showError('Die Videoaufnahme konnte mit dem erkannten Format nicht gestartet werden. Bitte verwende die Fotoaufnahme oder einen anderen Browser.');

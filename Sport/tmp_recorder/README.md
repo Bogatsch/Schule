@@ -12,7 +12,7 @@ Die Ansicht startet sofort mit der Kamera und puffert das Bild im Arbeitsspeiche
 
 Das Zahnrad in der Ansicht öffnet einen Drehregler im Stil eines Backofenknopfs. Er deckt 1 bis 60 Sekunden auf einem 270-Grad-Bogen ab und lässt sich mit Finger, Stift oder Maus drehen; über die Tastatur ändern Pfeiltasten den Wert um eine, Bild auf/ab um fünf Sekunden, Pos1 und Ende springen an die Enden. Voreingestellt sind 15 Sekunden. Jede Änderung verwirft den Puffer und startet Countdown und Wiedergabe neu.
 
-Die Einzelbilder werden dafür verkleinert als JPEG im Arbeitsspeicher gehalten, nicht als Video aufgezeichnet. Bei 60 Sekunden Vorlauf sind das rund 30 MB. Nichts davon wird gespeichert, heruntergeladen oder übertragen: Beim Verlassen der Ansicht, beim Wechsel in den Hintergrund und beim Schließen der App wird der Puffer zusammen mit der Kamera verworfen. Auf langsameren Geräten sinkt die Bildrate der Wiedergabe, der zeitliche Abstand bleibt davon unberührt.
+Die Einzelbilder werden dafür verkleinert als JPEG im Arbeitsspeicher gehalten, nicht als Video aufgezeichnet. Der Puffer fasst rund 900 Bilder und damit etwa 30 MB. Kurze Vorläufe nutzen dieses Budget mit 30 Bildern pro Sekunde aus, längere dünnen die Bildrate gleitend bis auf 15 Bilder pro Sekunde bei 60 Sekunden Vorlauf aus. Nichts davon wird gespeichert, heruntergeladen oder übertragen: Beim Verlassen der Ansicht, beim Wechsel in den Hintergrund und beim Schließen der App wird der Puffer zusammen mit der Kamera verworfen. Auf langsameren Geräten sinkt die Bildrate der Wiedergabe, der zeitliche Abstand bleibt davon unberührt.
 
 ## Leitbilder hinzufügen
 
@@ -112,7 +112,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 ## Bedienung
 
 - **Foto** erstellt einen Schnappschuss über Canvas.
-- **Video** zeichnet maximal drei Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 als Fallback, wenn der Browser WebM nicht aufnehmen kann.
+- **Video** zeichnet maximal drei Minuten ohne Ton auf und beendet die Aufnahme automatisch. Erneutes Tippen auf die Aufnahmetaste beendet sie früher. Die App bevorzugt WebM und verwendet MP4 als Fallback, wenn der Browser WebM nicht aufnehmen kann Die Kamera wird mit 1280 × 720 Bildpunkten und 60 Bildern pro Sekunde angefragt; liefert das Gerät weniger, nimmt die App mit dessen höchster Bildrate auf. Die Datenrate folgt der tatsächlichen Bildrate und liegt zwischen 4 Mbit/s bei 30 und 8 Mbit/s bei 60 Bildern pro Sekunde. Eine höhere Bildrate zahlt sich vor allem in der Zeitlupe aus: Bei 0,25× zeigt eine 60er-Aufnahme doppelt so viele echte Bilder wie eine 30er.
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei vorhandene, nicht gespeicherte Aufnahmedaten.
 - Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Bei Videos öffnet es zuvor ein Benennungsfenster; Fotos werden direkt gespeichert. Es öffnet keine Downloadseite.
 - In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.

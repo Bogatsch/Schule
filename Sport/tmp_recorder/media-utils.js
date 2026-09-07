@@ -9,6 +9,27 @@ export const VIDEO_MIME_CANDIDATES = Object.freeze([
   'video/mp4'
 ]);
 
+// Die Kamera wird nach 60 Bildern pro Sekunde gefragt. Der Wert ist bewusst nur
+// ein Wunsch: Geräte ohne 60-Hz-Modus liefern weiterhin ihre höchste Bildrate,
+// statt die Aufnahme mit einer harten Bedingung scheitern zu lassen.
+export const CAMERA_TARGET_FRAME_RATE = 60;
+
+// Doppelte Bildrate braucht bei gleicher Bildqualität etwa die doppelte
+// Datenrate. Die Aufnahme richtet sich deshalb nach der Bildrate, die die Kamera
+// tatsächlich liefert: 4 Mbit/s bei 30 Bildern, 8 Mbit/s bei 60 Bildern.
+export const REFERENCE_FRAME_RATE = 30;
+export const MIN_VIDEO_BITRATE = 4_000_000;
+export const MAX_VIDEO_BITRATE = 8_000_000;
+
+export function videoBitrateForFrameRate(frameRate) {
+  const fps = Number(frameRate);
+  if (!Number.isFinite(fps) || fps <= 0) {
+    return MIN_VIDEO_BITRATE;
+  }
+  const bitrate = Math.round((fps / REFERENCE_FRAME_RATE) * MIN_VIDEO_BITRATE);
+  return Math.min(MAX_VIDEO_BITRATE, Math.max(MIN_VIDEO_BITRATE, bitrate));
+}
+
 export function selectSupportedVideoMimeType(MediaRecorderClass) {
   if (!MediaRecorderClass || typeof MediaRecorderClass.isTypeSupported !== 'function') {
     return null;
@@ -76,6 +97,23 @@ export function knobAngleToDelaySeconds(angle) {
   return clampDelaySeconds(
     DELAY_MIN_SECONDS + progress * (DELAY_MAX_SECONDS - DELAY_MIN_SECONDS)
   );
+}
+
+// Die verzögerte Wiedergabe puffert JPEG-Einzelbilder im Arbeitsspeicher. Der
+// Speicherbedarf hängt an der Anzahl der Bilder, nicht an der Bildrate: Kurze
+// Vorläufe laufen deshalb mit voller Bildrate, lange dünnen sie so weit aus,
+// dass der Puffer bei rund 30 MB bleibt.
+export const DELAY_TARGET_FPS = 30;
+export const DELAY_MIN_FPS = 15;
+export const DELAY_MAX_BUFFERED_FRAMES = 900;
+
+export function delayCaptureFps(seconds) {
+  const budgetFps = DELAY_MAX_BUFFERED_FRAMES / clampDelaySeconds(seconds);
+  return Math.min(DELAY_TARGET_FPS, Math.max(DELAY_MIN_FPS, budgetFps));
+}
+
+export function delayCaptureIntervalMs(seconds) {
+  return 1000 / delayCaptureFps(seconds);
 }
 
 export function formatDelayCountdown(milliseconds) {
