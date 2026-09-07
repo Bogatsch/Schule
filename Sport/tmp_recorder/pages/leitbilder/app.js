@@ -1,5 +1,5 @@
 import { GUIDE_TREE } from './guide-tree.js?v=39';
-import { formatPlaybackTime } from '../../media-utils.js?v=38';
+import { formatPlaybackTime, nextStepTime } from '../../media-utils.js?v=39';
 import { setupVideoAnnotation } from '../../annotation.js?v=29';
 
 const elements = {
@@ -12,12 +12,23 @@ const elements = {
   video: document.querySelector('#guide-video'),
   playButton: document.querySelector('#guide-play-button'),
   timeline: document.querySelector('#guide-timeline'),
+  stepBack: document.querySelector('#guide-step-back'),
+  stepForward: document.querySelector('#guide-step-forward'),
   playbackTime: document.querySelector('#guide-playback-time'),
   status: document.querySelector('#guide-video-status'),
   annotationButton: document.querySelector('#guide-annotation-button')
 };
 
 const speedButtons = [...document.querySelectorAll('[data-guide-speed]')];
+/** Springt mit den Tasten neben dem Zeitstrahl durch das Video. */
+function stepPlayback(direction) {
+  const duration = Number.isFinite(elements.video.duration) ? elements.video.duration : 0;
+  if (!duration) {
+    return;
+  }
+  elements.video.pause();
+  elements.video.currentTime = nextStepTime(elements.video.currentTime, duration, direction);
+}
 const annotation = setupVideoAnnotation({ statusElement: elements.status });
 const APP_ROOT = '../../';
 
@@ -195,6 +206,8 @@ function render() {
 }
 
 elements.playButton.addEventListener('click', () => void togglePlayback());
+elements.stepBack.addEventListener('click', () => stepPlayback(-1));
+elements.stepForward.addEventListener('click', () => stepPlayback(1));
 
 elements.timeline.addEventListener('input', () => {
   const duration = elements.video.duration;
@@ -221,6 +234,7 @@ elements.video.addEventListener('play', updatePlayButton);
 elements.video.addEventListener('pause', updatePlayButton);
 elements.video.addEventListener('ended', updatePlayButton);
 elements.video.addEventListener('timeupdate', updatePlaybackUI);
+elements.video.addEventListener('seeked', updatePlaybackUI);
 elements.video.addEventListener('durationchange', updatePlaybackUI);
 elements.video.addEventListener('loadedmetadata', updatePlaybackUI);
 elements.video.addEventListener('volumechange', enforceMuted);

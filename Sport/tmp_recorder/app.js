@@ -13,9 +13,10 @@ import {
   formatPlaybackTime,
   formatRecordingTime,
   knobAngleToDelaySeconds,
+  nextStepTime,
   selectSupportedVideoMimeType,
   videoBitrateForFrameRate
-} from './media-utils.js?v=38';
+} from './media-utils.js?v=39';
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
@@ -104,6 +105,8 @@ const elements = {
   playbackControls: document.querySelector('#playback-controls'),
   playButton: document.querySelector('#play-button'),
   timeline: document.querySelector('#timeline'),
+  stepBack: document.querySelector('#step-back'),
+  stepForward: document.querySelector('#step-forward'),
   playbackTime: document.querySelector('#playback-time'),
   speedMenu: document.querySelector('#speed-menu'),
   speedValue: document.querySelector('#speed-value'),
@@ -119,6 +122,8 @@ const elements = {
   comparisonPlayerLabel: document.querySelector('#comparison-player-label'),
   comparisonPlayButton: document.querySelector('#comparison-play-button'),
   comparisonTimeline: document.querySelector('#comparison-timeline'),
+  comparisonStepBack: document.querySelector('#comparison-step-back'),
+  comparisonStepForward: document.querySelector('#comparison-step-forward'),
   comparisonPlaybackTime: document.querySelector('#comparison-playback-time'),
   comparisonSpeedMenu: document.querySelector('#comparison-speed-menu'),
   comparisonSpeedValue: document.querySelector('#comparison-speed-value'),
@@ -175,6 +180,8 @@ const elements = {
   galleryPlaybackControls: document.querySelector('#gallery-playback-controls'),
   galleryPlayButton: document.querySelector('#gallery-play-button'),
   galleryTimeline: document.querySelector('#gallery-timeline'),
+  galleryStepBack: document.querySelector('#gallery-step-back'),
+  galleryStepForward: document.querySelector('#gallery-step-forward'),
   galleryPlaybackTime: document.querySelector('#gallery-playback-time'),
   gallerySpeedMenu: document.querySelector('#gallery-speed-menu'),
   gallerySpeedValue: document.querySelector('#gallery-speed-value'),
@@ -271,6 +278,7 @@ const galleryCardObjectUrls = new Set();
 const galleryLoadedMedia = new Map();
 const delayedDownloadObjectUrls = new Set();
 const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
+
 let accountSyncChannel = null;
 if ('BroadcastChannel' in window) {
   try {
@@ -1361,6 +1369,16 @@ function handleCapture() {
   } else {
     startVideoRecording();
   }
+}
+
+/** Springt mit den Tasten neben dem Zeitstrahl durch das Video. */
+function stepPlayback(video, direction) {
+  const duration = Number.isFinite(video.duration) ? video.duration : 0;
+  if (!duration) {
+    return;
+  }
+  video.pause();
+  video.currentTime = nextStepTime(video.currentTime, duration, direction);
 }
 
 function updatePlaybackUI() {
@@ -2832,6 +2850,8 @@ elements.galleryViewerDialog.addEventListener('click', (event) => {
   }
 });
 elements.galleryPlayButton.addEventListener('click', () => void toggleGalleryPlayback());
+elements.galleryStepBack.addEventListener('click', () => stepPlayback(elements.galleryViewerVideo, -1));
+elements.galleryStepForward.addEventListener('click', () => stepPlayback(elements.galleryViewerVideo, 1));
 elements.galleryTimeline.addEventListener('input', () => {
   const duration = elements.galleryViewerVideo.duration;
   if (Number.isFinite(duration) && duration > 0) {
@@ -2931,6 +2951,11 @@ elements.galleryDeleteDialog.addEventListener('click', (event) => {
   }
 });
 
+elements.stepBack.addEventListener('click', () => stepPlayback(elements.videoPreview, -1));
+elements.stepForward.addEventListener('click', () => stepPlayback(elements.videoPreview, 1));
+elements.comparisonStepBack.addEventListener('click', () => stepPlayback(elements.comparisonVideo, -1));
+elements.comparisonStepForward.addEventListener('click', () => stepPlayback(elements.comparisonVideo, 1));
+
 elements.timeline.addEventListener('input', () => {
   const duration = elements.videoPreview.duration;
   if (Number.isFinite(duration) && duration > 0) {
@@ -3029,12 +3054,14 @@ elements.videoPreview.addEventListener('play', updatePlayButton);
 elements.videoPreview.addEventListener('pause', updatePlayButton);
 elements.videoPreview.addEventListener('ended', updatePlayButton);
 elements.videoPreview.addEventListener('timeupdate', updatePlaybackUI);
+elements.videoPreview.addEventListener('seeked', updatePlaybackUI);
 elements.videoPreview.addEventListener('durationchange', updatePlaybackUI);
 elements.videoPreview.addEventListener('contextmenu', (event) => event.preventDefault());
 elements.comparisonVideo.addEventListener('play', updateComparisonPlayButton);
 elements.comparisonVideo.addEventListener('pause', updateComparisonPlayButton);
 elements.comparisonVideo.addEventListener('ended', updateComparisonPlayButton);
 elements.comparisonVideo.addEventListener('timeupdate', updateComparisonPlaybackUI);
+elements.comparisonVideo.addEventListener('seeked', updateComparisonPlaybackUI);
 elements.comparisonVideo.addEventListener('durationchange', updateComparisonPlaybackUI);
 elements.comparisonVideo.addEventListener('loadedmetadata', updateComparisonPlaybackUI);
 elements.comparisonVideo.addEventListener('error', () => {
@@ -3048,6 +3075,7 @@ elements.galleryViewerVideo.addEventListener('play', updateGalleryPlayButton);
 elements.galleryViewerVideo.addEventListener('pause', updateGalleryPlayButton);
 elements.galleryViewerVideo.addEventListener('ended', updateGalleryPlayButton);
 elements.galleryViewerVideo.addEventListener('timeupdate', updateGalleryPlaybackUI);
+elements.galleryViewerVideo.addEventListener('seeked', updateGalleryPlaybackUI);
 elements.galleryViewerVideo.addEventListener('durationchange', updateGalleryPlaybackUI);
 elements.galleryViewerVideo.addEventListener('loadedmetadata', updateGalleryPlaybackUI);
 elements.galleryViewerVideo.addEventListener('error', () => {

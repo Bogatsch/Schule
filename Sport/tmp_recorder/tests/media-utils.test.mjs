@@ -12,6 +12,7 @@ import {
   MAX_RECORDING_MS,
   MAX_VIDEO_BITRATE,
   MIN_VIDEO_BITRATE,
+  PLAYBACK_STEP_SECONDS,
   VIDEO_MIME_CANDIDATES,
   clampDelaySeconds,
   delayCaptureFps,
@@ -21,6 +22,7 @@ import {
   formatPlaybackTime,
   formatRecordingTime,
   knobAngleToDelaySeconds,
+  nextStepTime,
   selectSupportedVideoMimeType,
   videoBitrateForFrameRate
 } from '../media-utils.js';
@@ -169,4 +171,29 @@ test('hält das Bildbudget des Puffers über alle Vorläufe ein', () => {
 test('bleibt bei unbrauchbaren Vorlaufwerten beim Standard', () => {
   assert.equal(delayCaptureFps(Number.NaN), delayCaptureFps(DELAY_DEFAULT_SECONDS));
   assert.equal(delayCaptureFps(999), delayCaptureFps(DELAY_MAX_SECONDS));
+});
+
+test('springt in festen Schritten von 0,1 Sekunden', () => {
+  assert.equal(PLAYBACK_STEP_SECONDS, 0.1);
+  assert.ok(Math.abs(nextStepTime(1, 10, 1) - 1.1) < 1e-9);
+  assert.ok(Math.abs(nextStepTime(1, 10, -1) - 0.9) < 1e-9);
+});
+
+test('bleibt an beiden Enden des Videos stehen', () => {
+  assert.equal(nextStepTime(0, 10, -1), 0);
+  assert.equal(nextStepTime(0.05, 10, -1), 0);
+  assert.equal(nextStepTime(10, 10, 1), 10);
+  assert.equal(nextStepTime(9.95, 10, 1), 10);
+});
+
+test('behandelt eine unbekannte Schrittrichtung als Vorwärtssprung', () => {
+  assert.equal(nextStepTime(1, 10, 0), nextStepTime(1, 10, 1));
+  // Ein negativer Schrittwert darf die Richtung nicht umdrehen.
+  assert.equal(nextStepTime(1, 10, -1, -0.1), nextStepTime(1, 10, -1, 0.1));
+});
+
+test('liefert ohne brauchbare Werte den Videoanfang', () => {
+  assert.equal(nextStepTime(5, 0, 1), 0);
+  assert.equal(nextStepTime(Number.NaN, 10, 1), 0);
+  assert.equal(nextStepTime(5, 10, 1, Number.NaN), 0);
 });

@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=37">
-    <script type="module" src="./app.js?v=40"></script>
+    <link rel="stylesheet" href="./styles.css?v=40">
+    <script type="module" src="./app.js?v=42"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -191,8 +191,12 @@
               </button>
               <div class="timeline-wrap">
                 <label class="visually-hidden" for="timeline">Wiedergabeposition der eigenen Aufnahme</label>
-                <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
-                <output id="playback-time" for="timeline">0:00 / 0:00</output>
+                <div class="timeline-row">
+                  <button id="step-back" class="step-button" type="button" aria-label="Eigene Aufnahme 0,1 Sekunden zurück" title="0,1 s zurück"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M8 5v14"></path></svg></button>
+                  <input id="timeline" type="range" min="0" max="1000" value="0" step="1">
+                  <button id="step-forward" class="step-button" type="button" aria-label="Eigene Aufnahme 0,1 Sekunden vor" title="0,1 s vor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"></path><path d="M16 5v14"></path></svg></button>
+                  <output id="playback-time" for="timeline">0:00 / 0:00</output>
+                </div>
               </div>
               <div class="player-tools">
                 <details id="speed-menu" class="speed-menu">
@@ -223,8 +227,12 @@
               </button>
               <div class="timeline-wrap">
                 <label class="visually-hidden" for="comparison-timeline">Wiedergabeposition des Leitbilds</label>
-                <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
-                <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
+                <div class="timeline-row">
+                  <button id="comparison-step-back" class="step-button" type="button" aria-label="Leitbild 0,1 Sekunden zurück" title="0,1 s zurück"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M8 5v14"></path></svg></button>
+                  <input id="comparison-timeline" type="range" min="0" max="1000" value="0" step="1">
+                  <button id="comparison-step-forward" class="step-button" type="button" aria-label="Leitbild 0,1 Sekunden vor" title="0,1 s vor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"></path><path d="M16 5v14"></path></svg></button>
+                  <output id="comparison-playback-time" for="comparison-timeline">0:00 / 0:00</output>
+                </div>
               </div>
               <div class="player-tools">
                 <details id="comparison-speed-menu" class="speed-menu">
@@ -477,8 +485,12 @@
             </button>
             <div class="timeline-wrap">
               <label class="visually-hidden" for="gallery-timeline">Wiedergabeposition des gespeicherten Videos</label>
-              <input id="gallery-timeline" type="range" min="0" max="1000" value="0" step="1">
-              <output id="gallery-playback-time" for="gallery-timeline">0:00 / 0:00</output>
+              <div class="timeline-row">
+                <button id="gallery-step-back" class="step-button" type="button" aria-label="Gespeichertes Video 0,1 Sekunden zurück" title="0,1 s zurück"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M8 5v14"></path></svg></button>
+                <input id="gallery-timeline" type="range" min="0" max="1000" value="0" step="1">
+                <button id="gallery-step-forward" class="step-button" type="button" aria-label="Gespeichertes Video 0,1 Sekunden vor" title="0,1 s vor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"></path><path d="M16 5v14"></path></svg></button>
+                <output id="gallery-playback-time" for="gallery-timeline">0:00 / 0:00</output>
+              </div>
             </div>
             <details id="gallery-speed-menu" class="speed-menu">
               <summary aria-label="Tempo des gespeicherten Videos ändern">

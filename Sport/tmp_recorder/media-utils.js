@@ -52,6 +52,20 @@ export function formatRecordingTime(milliseconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${tenths}`;
 }
 
+// Die Tasten neben dem Zeitstrahl springen in festen Schritten durch das Video.
+export const PLAYBACK_STEP_SECONDS = 0.1;
+
+export function nextStepTime(currentTime, duration, direction, stepSeconds = PLAYBACK_STEP_SECONDS) {
+  const total = Number(duration);
+  const start = Number(currentTime);
+  const step = Number(stepSeconds);
+  if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(start) || !Number.isFinite(step)) {
+    return 0;
+  }
+  const shift = Math.abs(step) * (Number(direction) < 0 ? -1 : 1);
+  return Math.min(total, Math.max(0, start + shift));
+}
+
 export function formatPlaybackTime(seconds) {
   const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
   const minutes = Math.floor(safeSeconds / 60);

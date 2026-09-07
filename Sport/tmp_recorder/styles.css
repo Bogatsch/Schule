@@ -919,27 +919,65 @@ h2 {
 }
 
 .timeline-wrap {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.3rem 0.75rem;
+  min-width: 0;
+}
+
+/* Zeitstrahl, Sprungtasten und Zeitanzeige stehen in einer Zeile, damit sie mit
+   Start-Taste und Werkzeugen auf derselben Höhe sitzen. */
+.timeline-row {
+  display: flex;
+  gap: 0.4rem;
   align-items: center;
   min-width: 0;
 }
 
 .timeline-wrap input {
-  grid-column: 1 / -1;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 44px;
   margin: 0;
   accent-color: var(--coral);
   cursor: pointer;
 }
 
+.step-button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  color: var(--teal);
+  cursor: pointer;
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: 11px;
+  place-items: center;
+}
+
+.step-button:hover,
+.step-button:focus-visible {
+  color: white;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.step-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .timeline-wrap output {
-  grid-column: 2;
+  flex: 0 0 auto;
+  padding-inline-start: 0.15rem;
   color: var(--muted);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .speed-menu {
@@ -2731,6 +2769,22 @@ noscript {
   .save-icon-button {
     width: 44px;
     height: 44px;
+  }
+
+  /* Auf schmalen Geräten darf der Zeitstrahl nicht von den Tasten
+     zusammengedrückt werden. */
+  .timeline-row {
+    gap: 0.3rem;
+  }
+
+  .step-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .step-button svg {
+    width: 18px;
+    height: 18px;
   }
 
   .gallery-heading {

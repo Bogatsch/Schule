@@ -14,9 +14,9 @@
     <link rel="manifest" href="../../manifest.webmanifest">
     <link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="../../icons/favicon-64.png">
-    <link rel="stylesheet" href="../../styles.css?v=37">
+    <link rel="stylesheet" href="../../styles.css?v=40">
     <link rel="stylesheet" href="./styles.css?v=39">
-    <script type="module" src="./app.js?v=40"></script>
+    <script type="module" src="./app.js?v=42"></script>
   </head>
   <body data-view="guides">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -56,8 +56,12 @@
                 </button>
                 <div class="timeline-wrap">
                   <label class="visually-hidden" for="guide-timeline">Wiedergabeposition</label>
-                  <input id="guide-timeline" type="range" min="0" max="1000" value="0" step="1">
-                  <output id="guide-playback-time" for="guide-timeline">0:00 / 0:00</output>
+                  <div class="timeline-row">
+                    <button id="guide-step-back" class="step-button" type="button" aria-label="Leitbild 0,1 Sekunden zurück" title="0,1 s zurück"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M8 5v14"></path></svg></button>
+                    <input id="guide-timeline" type="range" min="0" max="1000" value="0" step="1">
+                    <button id="guide-step-forward" class="step-button" type="button" aria-label="Leitbild 0,1 Sekunden vor" title="0,1 s vor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"></path><path d="M16 5v14"></path></svg></button>
+                    <output id="guide-playback-time" for="guide-timeline">0:00 / 0:00</output>
+                  </div>
                 </div>
                 <div class="guide-player-tools">
                   <fieldset class="speed-control">

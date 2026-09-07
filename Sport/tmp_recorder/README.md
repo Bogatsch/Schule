@@ -116,6 +116,7 @@ Falls die Kameraberechtigung zuvor verweigert wurde, in Safari über die Seitene
 - **Kamera wechseln** schaltet zwischen Front- und Rückkamera um und verwirft dabei vorhandene, nicht gespeicherte Aufnahmedaten.
 - Das Speichern-Symbol in der Vorschau legt die aktuelle Aufnahme in der lokalen Galerie ab. Bei Videos öffnet es zuvor ein Benennungsfenster; Fotos werden direkt gespeichert. Es öffnet keine Downloadseite.
 - In Videovorschauen stehen eigene Start-/Pause-Steuerung, Zeitleiste sowie 0,25×, 0,5× und 1× zur Verfügung. Native Videosteuerungen sind deaktiviert.
+- Links und rechts vom Zeitstrahl springt je eine Taste um 0,1 Sekunden vor oder zurück; die Wiedergabe hält dabei an. Am Anfang und am Ende des Videos läuft der Sprung gegen die jeweilige Grenze und bleibt dort stehen.
 - Über den Stift-Button lässt sich der aktuelle Videoframe in einem temporären Annotationsfenster öffnen. Dort gibt es Freihandstift, fünf Farben und einen Radierer; beim Schließen wird die Annotation verworfen.
 - Mit **Leitbild daneben** lässt sich ein Leitbild neben die eigene Aufnahme schalten. Beide Videos besitzen unabhängige Bedienelemente.
 - Unter **Leitbilder ansehen** führt dieselbe Ordnerstruktur wie im Ordner `Videos/` zum gewünschten Leitbild. Alle Leitbild-Videos werden ohne Ton wiedergegeben.
@@ -136,13 +137,14 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 7. **Verzögerte Wiedergabe** öffnen: Der Countdown startet bei 15 Sekunden, danach läuft das zeitversetzte Bild. Über das Zahnrad den Drehregler auf 1 und auf 60 Sekunden stellen und prüfen, dass jede Änderung den Countdown neu startet. Anschließend Kamera wechseln, in den Hintergrund wechseln und zurückkehren; die Ansicht darf kein altes Bild zeigen.
 8. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
 9. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
-10. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
-11. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
-12. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
-13. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
-14. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-15. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
-16. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
+10. In der Vorschau und beim Leitbild mehrfach auf die Tasten neben dem Zeitstrahl tippen und prüfen, dass jedes Tippen 0,1 Sekunden weiterspringt und die Zeitanzeige mitläuft. Am Anfang und am Ende des Videos darf der Sprung nicht darüber hinauslaufen.
+11. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
+12. Einzelne und mehrere Medien auswählen und löschen; jeweils Abbruch und Bestätigung prüfen. Nach dem Neustart dürfen bestätigte Löschungen nicht wieder erscheinen.
+13. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
+14. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
+15. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
+16. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
+17. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
 

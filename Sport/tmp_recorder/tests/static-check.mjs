@@ -190,8 +190,9 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(html, /styles\.css\?v=37/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=40/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(guidesHtml, /styles\.css\?v=40/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
+assert.match(html, /styles\.css\?v=40/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=42/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -386,14 +387,31 @@ assert.match(
   'bildratenabhängiger Aufnahmetakt der verzögerten Wiedergabe fehlt'
 );
 
+assert.match(
+  mediaUtils,
+  /PLAYBACK_STEP_SECONDS\s*=\s*0\.1/,
+  'fester Sprung von 0,1 Sekunden fehlt'
+);
+for (const [markup, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Seite']]) {
+  assert.match(markup, /class="timeline-row"/, `Zeitstrahl-Zeile fehlt in ${name}`);
+  assert.match(markup, /class="step-button"[^>]*aria-label="[^"]*0,1 Sekunden zurück"/, `Taste für 0,1 Sekunden zurück fehlt in ${name}`);
+  assert.match(markup, /class="step-button"[^>]*aria-label="[^"]*0,1 Sekunden vor"/, `Taste für 0,1 Sekunden vor fehlt in ${name}`);
+}
+assert.match(app, /function stepPlayback\(video, direction\)/, 'Sprungfunktion der Player fehlt');
+assert.match(app, /stepPlayback\(elements\.videoPreview, -1\)/, 'Sprung in der eigenen Aufnahme fehlt');
+assert.match(app, /stepPlayback\(elements\.comparisonVideo, 1\)/, 'Sprung im Leitbild fehlt');
+assert.match(app, /stepPlayback\(elements\.galleryViewerVideo, 1\)/, 'Sprung in der Galerie fehlt');
+assert.match(guidesApp, /function stepPlayback\(direction\)/, 'Sprung auf der Leitbilder-Seite fehlt');
+assert.match(styles, /\.step-button/, 'Tasten für den Sprung sind nicht gestaltet');
+
 assert.match(worker, /const APP_SHELL/, 'statische App-Shell fehlt');
 assert.match(worker, /const GUIDE_VIDEOS/, 'Offline-Liste der Leitbild-Videos fehlt');
 assert.match(worker, /ALLOWED_URLS\.has/, 'Service Worker hat keine feste Positivliste');
 assert.match(worker, /name\.startsWith\(CACHE_PREFIX\)/, 'alte App-Caches werden nicht bereinigt');
-assert.match(worker, /CACHE_VERSION\s*=\s*'v44'/, 'Cache-Version v44 fehlt');
-assert.match(worker, /\.\/app\.js\?v=40/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=37/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/media-utils\.js\?v=38/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
+assert.match(worker, /CACHE_VERSION\s*=\s*'v47'/, 'Cache-Version v47 fehlt');
+assert.match(worker, /\.\/app\.js\?v=42/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=40/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/media-utils\.js\?v=39/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
