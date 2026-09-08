@@ -38,6 +38,12 @@ export const GUIDE_TREE = Object.freeze(
                 bytes: 5348743
               },
               {
+                name: "Aufschlag von Unten",
+                path: "Spielsportarten/Volleyball/Aufschlag%20von%20Unten",
+                src: "Videos/Spielsportarten/Volleyball/Aufschlag%20von%20Unten.mp4?v=3594d3a9",
+                bytes: 5501273
+              },
+              {
                 name: "Pritschen seitlich",
                 path: "Spielsportarten/Volleyball/Pritschen%20seitlich",
                 src: "Videos/Spielsportarten/Volleyball/Pritschen%20seitlich.mp4?v=c829a942",
@@ -57,4 +63,4 @@ export const GUIDE_TREE = Object.freeze(
   }
 );
 
-export const GUIDE_VIDEO_COUNT = 5;
+export const GUIDE_VIDEO_COUNT = 6;
