@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v49';
+const CACHE_VERSION = 'v50';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
@@ -36,7 +36,7 @@ const APP_SHELL = Object.freeze([
   './pages/leitbilder/index.html',
   './pages/leitbilder/styles.css?v=39',
   './pages/leitbilder/app.js?v=42',
-  './pages/leitbilder/guide-tree.js?v=0da59186',
+  './pages/leitbilder/guide-tree.js?v=57592319',
   './icons/favicon-64.png',
   './icons/apple-touch-icon.png',
   './icons/icon-192.png',
@@ -47,6 +47,7 @@ const APP_SHELL = Object.freeze([
 const GUIDE_VIDEOS = Object.freeze([
   './Videos/Kr%C3%A4ftigung/Sprungkraft/Sprungkrafttraining.mp4?v=8cc902f6',
   './Videos/Spielsportarten/Volleyball/Angriffsschlag.mp4?v=a7ebcfb6',
+  './Videos/Spielsportarten/Volleyball/Aufschlag%20von%20Oben.mp4?v=191b9cb1',
   './Videos/Spielsportarten/Volleyball/Pritschen%20seitlich.mp4?v=c829a942',
   './Videos/Spielsportarten/Volleyball/Unteres%20Zuspiel.mp4?v=b2fd72c4'
 ]);
