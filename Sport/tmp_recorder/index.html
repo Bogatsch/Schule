@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=40">
-    <script type="module" src="./app.js?v=42"></script>
+    <link rel="stylesheet" href="./styles.css?v=41">
+    <script type="module" src="./app.js?v=43"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -129,9 +129,14 @@
             <button id="delay-switch-camera" class="text-button" type="button" aria-label="Zwischen Front- und Rückkamera wechseln">
               Kamera wechseln <span aria-hidden="true">↻</span>
             </button>
-            <button id="delay-settings" class="text-button align-right delay-settings-button" type="button" aria-label="Verzögerung einstellen" aria-haspopup="dialog" aria-controls="delay-dialog">
-              <span aria-hidden="true">⚙</span>
-            </button>
+            <div class="toolbar-actions">
+              <button id="delay-fullscreen" class="text-button delay-icon-button" type="button" aria-label="Bild auf Vollbild vergrößern" aria-pressed="false" title="Vollbild">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+              </button>
+              <button id="delay-settings" class="text-button delay-settings-button" type="button" aria-label="Verzögerung einstellen" aria-haspopup="dialog" aria-controls="delay-dialog">
+                <span aria-hidden="true">⚙</span>
+              </button>
+            </div>
           </div>
 
           <div class="camera-heading">
@@ -151,6 +156,7 @@
             <div id="delay-countdown" class="delay-countdown" role="timer" aria-live="off" hidden>
               <strong id="delay-countdown-value">15</strong>
             </div>
+            <button id="delay-exit-fullscreen" class="delay-exit-button" type="button" hidden>Beenden</button>
           </div>
         </section>
 

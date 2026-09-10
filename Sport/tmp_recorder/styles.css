@@ -723,9 +723,29 @@ h2 {
   margin-bottom: 1.1rem;
 }
 
-.delay-settings-button {
+/* Vollbild und Zahnrad teilen sich die rechte Spalte der Werkzeugleiste, damit
+   deren dreispaltiges Raster erhalten bleibt. */
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-self: end;
+}
+
+.delay-settings-button,
+.delay-icon-button {
   min-width: 48px;
   justify-content: center;
+}
+
+.delay-icon-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .delay-settings-button > span {
@@ -760,6 +780,74 @@ h2 {
 
 .delay-stage canvas.mirrored {
   transform: scaleX(-1);
+}
+
+/* Vollbild. Die drei Regeln sind bewusst getrennt: Kennt ein Browser eine der
+   Schreibweisen nicht, verwirft er sonst den ganzen Block. Die Klasse ist der
+   Ersatzweg für Browser ohne Vollbild-API, etwa Safari auf dem iPhone. */
+.delay-stage:fullscreen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+}
+
+.delay-stage:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+}
+
+.delay-stage.delay-stage-fullscreen {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+}
+
+/* Hinter dem Ersatz-Vollbild darf die Seite nicht mitscrollen. */
+body.delay-fullscreen-active {
+  overflow: hidden;
+}
+
+.delay-exit-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  padding: 1rem 2.6rem;
+  color: var(--teal);
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 850;
+  background: rgb(255 255 255 / 94%);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 12px 34px rgb(0 0 0 / 45%);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.delay-exit-button:hover,
+.delay-exit-button:focus-visible {
+  color: white;
+  background: var(--teal);
 }
 
 .delay-countdown {

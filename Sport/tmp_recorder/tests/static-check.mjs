@@ -147,6 +147,12 @@ assert.match(html, /id="delay-video"[^>]*playsinline/, 'Livebild der verzögerte
 assert.match(html, /<canvas id="delay-canvas"/, 'Zeichenfläche der verzögerten Wiedergabe fehlt');
 assert.match(html, /id="delay-countdown"[^>]*role="timer"/, 'Countdown der verzögerten Wiedergabe fehlt');
 assert.match(html, /id="delay-settings"[^>]*aria-controls="delay-dialog"/, 'Zahnrad für die Verzögerung fehlt');
+assert.match(html, /id="delay-fullscreen"[^>]*aria-pressed/, 'Vollbild-Knopf der verzögerten Wiedergabe fehlt');
+assert.match(
+  html,
+  /<button id="delay-exit-fullscreen"[^>]*hidden>Beenden<\/button>/,
+  'Verdeckter Beenden-Knopf im Vollbild fehlt'
+);
 assert.match(
   html,
   /id="delay-knob"[^>]*role="slider"[^>]*aria-valuemin="1"[^>]*aria-valuemax="60"/,
@@ -190,9 +196,9 @@ assert.match(html, /<dialog id="annotation-dialog"/, 'Annotationsfenster fehlt')
 assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
-assert.match(guidesHtml, /styles\.css\?v=40/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
-assert.match(html, /styles\.css\?v=40/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=42/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(guidesHtml, /styles\.css\?v=41/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
+assert.match(html, /styles\.css\?v=41/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
+assert.match(html, /app\.js\?v=43/, 'Versionskennung gegen veraltete Player-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -311,6 +317,17 @@ assert.match(mediaUtils, /export const DELAY_MAX_SECONDS = 60;/, 'Obergrenze von
 assert.match(mediaUtils, /export function knobAngleToDelaySeconds/, 'Umrechnung des Drehreglers fehlt');
 assert.match(mediaUtils, /export function formatDelayCountdown/, 'Countdown-Formatierung der Verzögerung fehlt');
 assert.match(styles, /\.delay-knob/, 'Drehregler ist nicht gestaltet');
+// Vollbild: Die beiden Schreibweisen müssen getrennt stehen, sonst verwirft ein
+// Browser, der eine davon nicht kennt, die ganze Regel.
+assert.match(styles, /\.delay-stage:fullscreen \{/, 'Vollbild-Regel für die Bühne fehlt');
+assert.match(styles, /\.delay-stage:-webkit-full-screen \{/, 'Vollbild-Regel in Safari-Schreibweise fehlt');
+assert.doesNotMatch(
+  styles,
+  /:fullscreen[^{]*,[^{]*-webkit-full-screen/,
+  'Die Vollbild-Schreibweisen stehen in einer gemeinsamen Regel und fallen so gemeinsam aus'
+);
+assert.match(styles, /\.delay-stage\.delay-stage-fullscreen \{[^}]*position: fixed;/, 'Ersatz-Vollbild ohne API fehlt');
+assert.match(styles, /\.delay-exit-button \{/, 'Beenden-Knopf ist nicht gestaltet');
 assert.match(
   styles,
   /\.delay-countdown \{[^}]*background:\s*#071d24;/,
@@ -383,6 +400,26 @@ assert.match(
 );
 assert.match(
   app,
+  /stage\.requestFullscreen \?\? stage\.webkitRequestFullscreen/,
+  'Vollbild nutzt nicht beide Schreibweisen der Browser-API'
+);
+assert.match(
+  app,
+  /classList\.add\(DELAY_FULLSCREEN_CLASS\)/,
+  'Ersatzweg für Browser ohne Vollbild-API fehlt'
+);
+assert.match(
+  app,
+  /function stopDelaySession\(\)[\s\S]*?exitDelayFullscreen\(\)/,
+  'Beim Verlassen der verzögerten Wiedergabe wird das Vollbild nicht beendet'
+);
+assert.match(
+  app,
+  /addEventListener\('webkitfullscreenchange', updateDelayFullscreenUI\)/,
+  'Ein von außen beendetes Vollbild wird in Safari nicht bemerkt'
+);
+assert.match(
+  app,
   /delayCaptureIntervalMs\(delaySeconds\)/,
   'bildratenabhängiger Aufnahmetakt der verzögerten Wiedergabe fehlt'
 );
@@ -419,8 +456,8 @@ for (const [quelle, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Sei
     );
   }
 }
-assert.match(worker, /\.\/app\.js\?v=42/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=40/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/app\.js\?v=43/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=41/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/media-utils\.js\?v=39/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');

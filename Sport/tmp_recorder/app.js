@@ -54,6 +54,11 @@ const DELAY_CAPTURE_MAX_WIDTH = 720;
 const DELAY_FRAME_QUALITY = 0.6;
 const DELAY_BUFFER_MARGIN_MS = 2000;
 
+// Im Vollbild blendet ein Tippen den Beenden-Knopf ein; danach verschwindet er
+// von selbst wieder, damit er das Bild nicht dauerhaft verdeckt.
+const DELAY_FULLSCREEN_CLASS = 'delay-stage-fullscreen';
+const DELAY_EXIT_VISIBLE_MS = 4000;
+
 const elements = {
   startView: document.querySelector('#start-view'),
   cameraView: document.querySelector('#camera-view'),
@@ -85,6 +90,8 @@ const elements = {
   delayVideo: document.querySelector('#delay-video'),
   delayCanvas: document.querySelector('#delay-canvas'),
   delayPlaceholder: document.querySelector('#delay-placeholder'),
+  delayFullscreen: document.querySelector('#delay-fullscreen'),
+  delayExitFullscreen: document.querySelector('#delay-exit-fullscreen'),
   delayCountdown: document.querySelector('#delay-countdown'),
   delayCountdownValue: document.querySelector('#delay-countdown-value'),
   delayDialog: document.querySelector('#delay-dialog'),
@@ -229,6 +236,7 @@ let delayFrameCounter = 0;
 let delayRenderedFrameId = 0;
 let delaySessionStart = 0;
 let delayLoopHandle = null;
+let delayExitTimer = null;
 let delayLastCaptureAt = 0;
 let delayCapturePending = false;
 let delayDecodePending = false;
@@ -855,6 +863,90 @@ function restartDelaySession() {
   }
 }
 
+/** Das Element, das gerade echtes Vollbild belegt – auch in Safaris Schreibweise. */
+function activeFullscreenElement() {
+  return document.fullscreenElement ?? document.webkitFullscreenElement ?? null;
+}
+
+function isDelayFullscreen() {
+  return activeFullscreenElement() === elements.delayStage
+    || elements.delayStage.classList.contains(DELAY_FULLSCREEN_CLASS);
+}
+
+function hideDelayExitButton() {
+  if (delayExitTimer !== null) {
+    window.clearTimeout(delayExitTimer);
+    delayExitTimer = null;
+  }
+  elements.delayExitFullscreen.hidden = true;
+}
+
+function showDelayExitButton() {
+  if (delayExitTimer !== null) {
+    window.clearTimeout(delayExitTimer);
+  }
+  elements.delayExitFullscreen.hidden = false;
+  elements.delayExitFullscreen.focus({ preventScroll: true });
+  delayExitTimer = window.setTimeout(hideDelayExitButton, DELAY_EXIT_VISIBLE_MS);
+}
+
+function updateDelayFullscreenUI() {
+  const active = isDelayFullscreen();
+  elements.delayFullscreen.setAttribute('aria-pressed', String(active));
+  elements.delayFullscreen.setAttribute(
+    'aria-label',
+    active ? 'Vollbild beenden' : 'Bild auf Vollbild vergrößern'
+  );
+  document.body.classList.toggle('delay-fullscreen-active', active);
+  if (!active) {
+    hideDelayExitButton();
+  }
+}
+
+/**
+ * Vergrößert die Bühne. Bevorzugt wird die Vollbild-API; wo es sie nicht gibt
+ * – etwa in Safari auf dem iPhone – legt sich die Bühne stattdessen über die
+ * ganze Seite. Für die Bedienung ist beides gleichwertig.
+ */
+async function enterDelayFullscreen() {
+  const stage = elements.delayStage;
+  const request = stage.requestFullscreen ?? stage.webkitRequestFullscreen;
+  if (typeof request === 'function') {
+    try {
+      await request.call(stage);
+      updateDelayFullscreenUI();
+      return;
+    } catch {
+      // Abgelehntes Vollbild fällt auf die Ersatzlösung zurück.
+    }
+  }
+  stage.classList.add(DELAY_FULLSCREEN_CLASS);
+  updateDelayFullscreenUI();
+}
+
+function exitDelayFullscreen() {
+  const stage = elements.delayStage;
+  stage.classList.remove(DELAY_FULLSCREEN_CLASS);
+  if (activeFullscreenElement() === stage) {
+    const exit = document.exitFullscreen ?? document.webkitExitFullscreen;
+    try {
+      void exit?.call(document);
+    } catch {
+      // Ein bereits beendetes Vollbild braucht keine Behandlung.
+    }
+  }
+  updateDelayFullscreenUI();
+}
+
+function toggleDelayFullscreen() {
+  if (isDelayFullscreen()) {
+    exitDelayFullscreen();
+    elements.delayFullscreen.focus({ preventScroll: true });
+  } else {
+    void enterDelayFullscreen();
+  }
+}
+
 function stopDelaySession() {
   if (delayLoopHandle !== null) {
     window.cancelAnimationFrame(delayLoopHandle);
@@ -870,6 +962,7 @@ function stopDelaySession() {
   elements.delayCountdown.hidden = true;
   elements.delayStage.setAttribute('aria-busy', 'false');
   elements.delayPlaceholder.hidden = false;
+  exitDelayFullscreen();
   closeModal(elements.delayDialog);
 }
 
@@ -2546,6 +2639,28 @@ elements.delayBack.addEventListener('click', () => cleanupMedia({ nextView: 'sta
 elements.delaySwitchCamera.addEventListener('click', () => {
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
   void beginDelayedPlayback();
+});
+elements.delayFullscreen.addEventListener('click', () => toggleDelayFullscreen());
+elements.delayExitFullscreen.addEventListener('click', () => exitDelayFullscreen());
+// Ein Tippen auf das Bild holt den Beenden-Knopf hervor und blendet ihn wieder aus.
+elements.delayStage.addEventListener('click', (event) => {
+  if (!isDelayFullscreen() || elements.delayExitFullscreen.contains(event.target)) {
+    return;
+  }
+  if (elements.delayExitFullscreen.hidden) {
+    showDelayExitButton();
+  } else {
+    hideDelayExitButton();
+  }
+});
+document.addEventListener('fullscreenchange', updateDelayFullscreenUI);
+document.addEventListener('webkitfullscreenchange', updateDelayFullscreenUI);
+// Die Vollbild-API beendet sich bei Escape selbst, die Ersatzlösung nicht.
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && elements.delayStage.classList.contains(DELAY_FULLSCREEN_CLASS)) {
+    exitDelayFullscreen();
+    elements.delayFullscreen.focus({ preventScroll: true });
+  }
 });
 elements.delaySettings.addEventListener('click', () => {
   updateDelayValueUI();
