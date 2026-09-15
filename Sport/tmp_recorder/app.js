@@ -47,6 +47,21 @@ const CAMERA_CONSTRAINTS = Object.freeze({
   frameRate: { ideal: CAMERA_TARGET_FRAME_RATE }
 });
 
+// iPadOS gibt nach einer frisch erteilten Kameraberechtigung gelegentlich einen
+// Stream zurück, dessen Videospur stumm bleibt: Das Vorschaubild bleibt dann
+// dauerhaft schwarz. Kommt in dieser Frist kein einziges Bild an, wird der Stream
+// verworfen und neu angefordert. Der zweite Versuch läuft ohne Berechtigungsdialog
+// und liefert in aller Regel ein Bild.
+const CAMERA_FIRST_FRAME_TIMEOUT_MS = 1500;
+const CAMERA_RELEASE_DELAY_MS = 300;
+const CAMERA_ACQUIRE_ATTEMPTS = 3;
+
+// Unterbricht iPadOS die Kamera (App-Wechsel, Kontrollzentrum, Split View), bleibt
+// die Videospur stumm zurück und nimmt das Bild nicht von selbst wieder auf. Nach
+// dieser Frist startet die App die Kamera deshalb selbsttätig neu.
+const CAMERA_MUTE_GRACE_MS = 700;
+const CAMERA_RECOVERY_COOLDOWN_MS = 4000;
+
 // Die verzögerte Wiedergabe puffert JPEG-Einzelbilder im Arbeitsspeicher. Breite
 // und Qualität halten zusammen mit dem Bildbudget aus `delayCaptureIntervalMs`
 // auch 60 Sekunden Vorlauf bei rund 30 MB.
@@ -243,6 +258,8 @@ let delayDecodePending = false;
 let delayShownCountdown = '';
 const delayCaptureCanvas = document.createElement('canvas');
 let cameraStream = null;
+let cameraRecoveryTimer = null;
+let lastCameraRecoveryAt = 0;
 let mediaRecorder = null;
 let mediaChunks = [];
 let currentBlob = null;
@@ -602,8 +619,10 @@ function stopCameraTracks() {
 function clearTimers() {
   window.clearInterval(recordingTimer);
   window.clearTimeout(recordingLimitTimer);
+  window.clearTimeout(cameraRecoveryTimer);
   recordingTimer = null;
   recordingLimitTimer = null;
+  cameraRecoveryTimer = null;
 }
 
 function resetCanvas() {
@@ -726,6 +745,10 @@ function cameraErrorMessage(error) {
       return 'Die Kamera unterstützt die angeforderte Einstellung nicht. Bitte starte die App neu oder verwende eine andere Kamera.';
     case 'SecurityError':
       return 'Der Browser hat den Kamerazugriff aus Sicherheitsgründen blockiert. Öffne die App über HTTPS und prüfe die Website-Berechtigung.';
+    case 'BlankCameraError':
+      return 'Die Kamera wurde freigegeben, liefert aber kein Bild. Schließe die App im App-Umschalter vollständig und öffne sie erneut. Beende außerdem andere Apps, die gerade die Kamera verwenden.';
+    case 'PlaybackBlockedError':
+      return 'Der Browser hat die Vorschau angehalten. Tippe auf „Erneut versuchen“, um die Kamera zu starten.';
     default:
       return 'Die Kamera konnte nicht gestartet werden. Prüfe die Kameraberechtigung und versuche es erneut.';
   }
@@ -734,6 +757,168 @@ function cameraErrorMessage(error) {
 function showError(message) {
   cleanupMedia({ nextView: 'error', errorMessage: message });
   window.setTimeout(() => elements.retryButton.focus(), 0);
+}
+
+function waitMs(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+/**
+ * Wartet auf das erste tatsächlich dargestellte Kamerabild. Ein Stream, der
+ * innerhalb der Frist kein Bild liefert, gilt als schwarz.
+ */
+function waitForFirstCameraFrame(video, timeoutMs) {
+  return new Promise((resolve) => {
+    let settled = false;
+    let frameHandle = 0;
+    let pollHandle = 0;
+    let timeoutHandle = 0;
+
+    const finish = (hasFrame) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(timeoutHandle);
+      window.clearInterval(pollHandle);
+      if (frameHandle && typeof video.cancelVideoFrameCallback === 'function') {
+        video.cancelVideoFrameCallback(frameHandle);
+      }
+      resolve(hasFrame);
+    };
+
+    timeoutHandle = window.setTimeout(() => finish(false), timeoutMs);
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      frameHandle = video.requestVideoFrameCallback(() => finish(true));
+    }
+    // Rückfallweg für Browser ohne `requestVideoFrameCallback`.
+    pollHandle = window.setInterval(() => {
+      if (video.videoWidth > 0 && video.currentTime > 0) {
+        finish(true);
+      }
+    }, 120);
+  });
+}
+
+function cameraStreamIsLive(stream) {
+  const tracks = stream ? stream.getVideoTracks() : [];
+  return tracks.length > 0 && tracks.every((track) => track.readyState === 'live' && !track.muted);
+}
+
+/**
+ * Beobachtet die Videospur: iPadOS schaltet sie bei einer Unterbrechung stumm und
+ * nimmt das Bild danach nicht von selbst wieder auf. Beides endet in einem
+ * schwarzen Bild, deshalb startet die App die Kamera in diesen Fällen neu.
+ */
+function watchCameraStream(stream) {
+  stream.getVideoTracks().forEach((track) => {
+    track.addEventListener('ended', () => scheduleCameraRecovery(0));
+    track.addEventListener('mute', () => scheduleCameraRecovery(CAMERA_MUTE_GRACE_MS));
+    track.addEventListener('unmute', () => {
+      window.clearTimeout(cameraRecoveryTimer);
+      cameraRecoveryTimer = null;
+    });
+  });
+}
+
+function scheduleCameraRecovery(graceMs) {
+  if (isRecording || cameraRecoveryTimer) {
+    return;
+  }
+  cameraRecoveryTimer = window.setTimeout(() => {
+    cameraRecoveryTimer = null;
+    void recoverCamera();
+  }, graceMs);
+}
+
+/**
+ * Startet die Kamera in der gerade sichtbaren Ansicht neu. Der Mindestabstand
+ * zwischen zwei Versuchen verhindert eine Dauerschleife, falls das Gerät die
+ * Kamera dauerhaft blockiert.
+ */
+async function recoverCamera() {
+  const view = document.body.dataset.view;
+  if (isRecording || (view !== 'camera' && view !== 'delay')) {
+    return;
+  }
+  if (!cameraStream || cameraStreamIsLive(cameraStream)) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastCameraRecoveryAt < CAMERA_RECOVERY_COOLDOWN_MS) {
+    return;
+  }
+  lastCameraRecoveryAt = now;
+
+  stopCameraTracks();
+  await waitMs(CAMERA_RELEASE_DELAY_MS);
+
+  if (view === 'camera') {
+    await startCamera();
+  } else {
+    await startDelayedPlayback();
+  }
+}
+
+/**
+ * Fordert die Kamera an und prüft, ob auch wirklich Bilder ankommen. Bleibt das
+ * Bild schwarz, wird die Kamera kurz freigegeben und erneut angefordert.
+ */
+async function acquireCameraStream(video, operation) {
+  let lastPlaybackError = null;
+
+  for (let attempt = 1; attempt <= CAMERA_ACQUIRE_ATTEMPTS; attempt += 1) {
+    // Der letzte Versuch verzichtet auf Auflösungs- und Bildratenwunsch: Einzelne
+    // iPad-Kameras liefern bei 60 Bildern je Sekunde dauerhaft ein schwarzes Bild.
+    const isLastAttempt = attempt === CAMERA_ACQUIRE_ATTEMPTS;
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: isLastAttempt
+        ? { facingMode: { ideal: facingMode } }
+        : { ...CAMERA_CONSTRAINTS, facingMode: { ideal: facingMode } }
+    });
+
+    cameraStream = stream;
+    video.srcObject = stream;
+
+    if (operation !== operationId) {
+      stopCameraTracks();
+      return null;
+    }
+
+    lastPlaybackError = null;
+    // Auf iPadOS löst `play()` nicht zuverlässig auf; das erste Bild ist das
+    // belastbarere Signal, deshalb wartet der Ablauf hier nicht darauf.
+    void Promise.resolve(video.play()).catch((error) => {
+      lastPlaybackError = error;
+    });
+
+    // Der erste Versuch folgt unmittelbar auf den Berechtigungsdialog, spätere
+    // Versuche bekommen mehr Zeit, damit eine nur langsame Kamera nicht abbricht.
+    const hasFrame = await waitForFirstCameraFrame(video, CAMERA_FIRST_FRAME_TIMEOUT_MS * attempt);
+
+    if (operation !== operationId) {
+      stopCameraTracks();
+      return null;
+    }
+
+    if (hasFrame) {
+      watchCameraStream(stream);
+      return stream;
+    }
+
+    stopCameraTracks();
+    await waitMs(CAMERA_RELEASE_DELAY_MS);
+
+    if (operation !== operationId) {
+      return null;
+    }
+  }
+
+  const blankError = new Error('Die Kamera liefert kein Bild.');
+  blankError.name = lastPlaybackError?.name === 'NotAllowedError' ? 'PlaybackBlockedError' : 'BlankCameraError';
+  throw blankError;
 }
 
 async function startCamera() {
@@ -761,25 +946,8 @@ async function startCamera() {
   elements.captureButton.disabled = true;
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        ...CAMERA_CONSTRAINTS,
-        facingMode: { ideal: facingMode }
-      }
-    });
-
-    if (thisOperation !== operationId) {
-      stream.getTracks().forEach((track) => track.stop());
-      return;
-    }
-
-    cameraStream = stream;
-    elements.liveVideo.srcObject = stream;
-    await elements.liveVideo.play();
-
-    if (thisOperation !== operationId) {
-      stopCameraTracks();
+    const stream = await acquireCameraStream(elements.liveVideo, thisOperation);
+    if (!stream) {
       return;
     }
 
@@ -1137,25 +1305,8 @@ async function startDelayedPlayback() {
   elements.delayPlaceholder.hidden = false;
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        ...CAMERA_CONSTRAINTS,
-        facingMode: { ideal: facingMode }
-      }
-    });
-
-    if (thisOperation !== operationId) {
-      stream.getTracks().forEach((track) => track.stop());
-      return;
-    }
-
-    cameraStream = stream;
-    elements.delayVideo.srcObject = stream;
-    await elements.delayVideo.play();
-
-    if (thisOperation !== operationId) {
-      stopCameraTracks();
+    const stream = await acquireCameraStream(elements.delayVideo, thisOperation);
+    if (!stream) {
       return;
     }
 

@@ -17,6 +17,11 @@ assert.ok(pritschenGuide, 'Im erzeugten Leitbild-Index steht kein Video.');
 const pritschenVideoPath = path.join(appRoot, decodeURIComponent(pritschenGuide.src.split('?')[0]));
 const pritschenVideoSize = (await stat(pritschenVideoPath)).size;
 const guideCacheName = 'sportkamera-guides-store';
+// Der Name des Shell-Caches trägt die Version aus sw.js. Er wird hier ausgelesen
+// statt fest notiert, damit die Prüfung eine Versionsanhebung überlebt.
+const workerSource = await readFile(path.join(appRoot, 'sw.js'), 'utf8');
+const shellCacheName = `sportkamera-shell-${/CACHE_VERSION = '(v\d+)'/u.exec(workerSource)?.[1] ?? ''}`;
+assert.match(shellCacheName, /^sportkamera-shell-v\d+$/u, 'Cache-Version aus sw.js nicht lesbar');
 const tempRoot = await mkdtemp(path.join(tmpdir(), 'sportkamera-browser-'));
 const profileDirectory = path.join(tempRoot, 'profile');
 await mkdir(profileDirectory);
@@ -917,7 +922,7 @@ try {
   ].includes(name)));
   assert.deepEqual(
     [...storageState.cacheState.names].sort(),
-    [guideCacheName, 'sportkamera-shell-v42']
+    [guideCacheName, shellCacheName].sort()
   );
   assert.ok(storageState.cacheState.requests.every((url) => !url.startsWith('blob:')));
   assert.ok(storageState.cacheState.requests.every((url) => url.startsWith(appUrl)));
