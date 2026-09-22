@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#073b4c">
+    <meta name="color-scheme" content="light">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Auslosung">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+    <title>Spieler-Auslosung</title>
+    <meta name="description" content="Lost zufällig und fair aus, welche Spieler pro Team in der nächsten Runde antreten.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23073b4c'/%3E%3Crect x='14' y='14' width='36' height='36' rx='10' fill='%23fffdf8'/%3E%3Ccircle cx='25' cy='25' r='5' fill='%23e5573f'/%3E%3Ccircle cx='39' cy='39' r='5' fill='%23f5c451'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="./styles.css?v=2">
+    <script type="module" src="./app.js?v=2"></script>
+  </head>
+  <body data-view="setup">
+    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+
+    <div class="app-shell">
+      <header class="topbar" aria-label="App-Kopfzeile">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <strong>Spieler-Auslosung</strong>
+        </div>
+      </header>
+
+      <main id="main-content" tabindex="-1">
+
+        <section id="setup-view" class="view setup-view" aria-labelledby="setup-title">
+          <div class="setup-content">
+
+            <div class="panel">
+              <h2 id="setup-title">Wie viele Teams spielen mit?</h2>
+              <div class="stepper stepper-large">
+                <button id="teams-dec" type="button" aria-label="Ein Team weniger">−</button>
+                <input id="teams-count" type="number" inputmode="numeric" min="2" max="12" value="2" aria-label="Anzahl der Teams">
+                <button id="teams-inc" type="button" aria-label="Ein Team mehr">+</button>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h2>Wie viele Spieler hat jedes Team?</h2>
+              <div id="team-list" class="team-list"></div>
+            </div>
+
+            <div class="action-row">
+              <button id="start-session" class="primary-action action-big" type="button">Start</button>
+            </div>
+
+          </div>
+        </section>
+
+        <section id="session-view" class="view session-view" aria-labelledby="result-headline" hidden>
+
+          <div class="size-select" role="group" aria-label="Spieler pro Team festlegen">
+            <span class="size-select-label">Spieler pro Team</span>
+            <div id="size-chips" class="size-chips"></div>
+          </div>
+
+          <div class="result-panel">
+            <p id="result-headline" class="result-headline">Bereit – drücke auf „Start“.</p>
+            <div id="result-grid" class="result-grid"></div>
+          </div>
+
+          <div class="action-row">
+            <button id="draw-button" class="primary-action action-big" type="button">Start</button>
+            <button id="end-session" class="secondary-action danger-action" type="button">Session beenden</button>
+          </div>
+
+        </section>
+
+      </main>
+    </div>
+  </body>
+</html>
