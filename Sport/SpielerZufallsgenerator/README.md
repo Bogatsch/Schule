@@ -13,9 +13,10 @@ ausgeliefert werden können.
 1. Anzahl der Teams wählen (2 bis 12).
 2. Für jedes Team einzeln die Spielerzahl festlegen (1 bis 30). Die Teams dürfen
    unterschiedlich groß sein, Namen lassen sich überschreiben.
-3. **Start** – die Session beginnt.
-4. **Start / Neue Gegner würfeln** – lost eine neue Runde aus.
-5. **Session beenden** – setzt die Einsatzzählung zurück, die Teameinstellung
+3. Spieldauer pro Auslosung einstellen (Standard 2:00).
+4. **Start** – die Session beginnt.
+5. **Start / Neue Gegner würfeln** – lost eine neue Runde aus.
+6. **Session beenden** – setzt die Einsatzzählung zurück, die Teameinstellung
    bleibt erhalten.
 
 Die Leertaste würfelt ebenfalls eine neue Runde, solange kein Eingabefeld den
@@ -30,6 +31,19 @@ möglich.
 Standardmäßig würfelt die App die Größe jeder Runde neu aus (1 bis zum
 Maximum). Über die Chips **Spieler pro Team** lässt sich stattdessen eine feste
 Größe vorgeben, etwa dauerhaft 2 gegen 2.
+
+## Spieldauer
+
+Die Schaltflächen **−1 −5 −10** und **+1 +5 +10** verstellen die Dauer um 1, 5
+bzw. 10 Sekunden, zwischen 0:05 und 60:00. Voreingestellt sind 2:00.
+
+Der Countdown steht unter der Auslosung. Er startet mit jeder neuen Auslosung
+von vorn und bleibt bei 0:00 stehen, dann färbt er sich rot und pulsiert. Die
+Dauer gilt für die gesamte Session und wird beim Start übernommen.
+
+Gezählt wird gegen einen festen Endzeitpunkt statt über einen Sekundenzähler.
+Dadurch stimmt die Restzeit auch, wenn der Browser-Tab im Hintergrund gedrosselt
+wird oder die Seite zwischendurch neu geladen wurde.
 
 ## Faire Verteilung
 

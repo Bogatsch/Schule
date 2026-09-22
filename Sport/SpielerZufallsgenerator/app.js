@@ -4,6 +4,12 @@ const MIN_SIZE = 1;
 const MAX_SIZE = 30;
 const DEFAULT_SIZE = 4;
 
+/* Spieldauer je Auslosung, in Sekunden. */
+const DEFAULT_DURATION = 120;
+const MIN_DURATION = 5;
+const MAX_DURATION = 3600;
+const TICK_MS = 200;
+
 /* Fuer jeden Einsatz Rueckstand auf den Vielspieler des Teams steigt das Gewicht
    um diesen Faktor. Wer eine Runde ausgesetzt hat, wird also deutlich eher
    gezogen - simuliert liegt die Spanne zwischen Viel- und Wenigspieler meist bei
@@ -28,15 +34,20 @@ const el = {
   resultGrid: document.getElementById("result-grid"),
   drawButton: document.getElementById("draw-button"),
   endSession: document.getElementById("end-session"),
+  durationDisplay: document.getElementById("duration-display"),
+  durationSteps: document.querySelectorAll(".duration-step"),
+  timer: document.getElementById("timer"),
 };
 
 const state = {
   teams: [makeTeam(1), makeTeam(2)],
   session: null,
   perTeamChoice: "random",
+  duration: DEFAULT_DURATION,
 };
 
 let rollTimer = null;
+let tickTimer = null;
 
 function makeTeam(index, size = DEFAULT_SIZE) {
   return { name: `Team ${index}`, size };
@@ -86,6 +97,7 @@ function save() {
         teams: state.teams,
         session: state.session,
         perTeamChoice: state.perTeamChoice,
+        duration: state.duration,
       }),
     );
   } catch {
@@ -113,10 +125,16 @@ function load() {
     state.perTeamChoice = stored.perTeamChoice;
   }
 
+  if (Number.isFinite(Number(stored.duration))) {
+    state.duration = clamp(Math.round(Number(stored.duration)), MIN_DURATION, MAX_DURATION);
+  }
+
   const session = stored.session;
   if (session && Array.isArray(session.teams) && session.teams.length >= MIN_TEAMS) {
     state.session = {
       perTeam: Number(session.perTeam) || 0,
+      duration: clamp(Number(session.duration) || DEFAULT_DURATION, MIN_DURATION, MAX_DURATION),
+      deadline: Number(session.deadline) || null,
       picks: Array.isArray(session.picks) ? session.picks : [],
       teams: session.teams.map((team, index) => ({
         name: team?.name || `Team ${index + 1}`,
@@ -233,11 +251,68 @@ function setTeamCount(count) {
   save();
 }
 
+/* ---------- Spieldauer ---------- */
+
+function formatDuration(seconds) {
+  const safe = Math.max(0, Math.round(seconds));
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+function renderDuration() {
+  el.durationDisplay.value = formatDuration(state.duration);
+  for (const button of el.durationSteps) {
+    const step = Number(button.dataset.duration);
+    const next = clamp(state.duration + step, MIN_DURATION, MAX_DURATION);
+    button.disabled = next === state.duration;
+  }
+}
+
+function adjustDuration(step) {
+  state.duration = clamp(state.duration + step, MIN_DURATION, MAX_DURATION);
+  renderDuration();
+  save();
+}
+
+/* Der Timer laeuft gegen einen festen Zeitpunkt statt gegen einen Zaehler. So
+   stimmt die Restzeit auch, wenn der Tab zwischendurch gedrosselt wird oder die
+   Seite neu geladen wurde. */
+function remainingSeconds() {
+  const deadline = state.session?.deadline;
+  if (!deadline) return state.session?.duration ?? state.duration;
+  return Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+}
+
+function renderTimer() {
+  const session = state.session;
+  if (!session) return;
+  const remaining = remainingSeconds();
+  const running = Boolean(session.deadline) && remaining > 0;
+  el.timer.textContent = formatDuration(remaining);
+  el.timer.classList.toggle("idle", !session.deadline);
+  el.timer.classList.toggle("expired", Boolean(session.deadline) && remaining === 0);
+  if (!running) stopTicking();
+}
+
+function stopTicking() {
+  if (tickTimer !== null) {
+    clearInterval(tickTimer);
+    tickTimer = null;
+  }
+}
+
+function startTicking() {
+  stopTicking();
+  renderTimer();
+  if (remainingSeconds() > 0) tickTimer = setInterval(renderTimer, TICK_MS);
+}
+
 /* ---------- Session ---------- */
 
 function startSession() {
   state.session = {
     perTeam: 0,
+    duration: state.duration,
+    deadline: null,
     picks: [],
     teams: state.teams.map((team) => ({
       name: team.name.trim() || "Team",
@@ -257,6 +332,7 @@ function startSession() {
 
 function endSession() {
   stopRolling();
+  stopTicking();
   state.session = null;
   showView("setup");
   renderTeamCount();
@@ -282,8 +358,10 @@ function drawRound() {
     for (const number of numbers) session.teams[teamIndex].counts[number - 1] += 1;
   });
   session.perTeam = perTeam;
+  session.deadline = Date.now() + session.duration * 1000;
 
   renderSession({ animate: true });
+  startTicking();
   save();
 }
 
@@ -321,6 +399,7 @@ function renderSizeChips() {
 function renderSession({ animate = false } = {}) {
   const session = state.session;
   renderSizeChips();
+  renderTimer();
 
   const hasDraw = session.picks.length > 0;
   el.drawButton.textContent = hasDraw ? "Neue Gegner würfeln" : "Start";
@@ -435,6 +514,10 @@ el.teamsCount.addEventListener("change", () => {
   setTeamCount(Number.parseInt(el.teamsCount.value, 10) || MIN_TEAMS);
 });
 
+for (const button of el.durationSteps) {
+  button.addEventListener("click", () => adjustDuration(Number(button.dataset.duration)));
+}
+
 el.startSession.addEventListener("click", startSession);
 el.drawButton.addEventListener("click", drawRound);
 
@@ -453,10 +536,12 @@ document.addEventListener("keydown", (event) => {
 load();
 renderTeamCount();
 renderTeamList();
+renderDuration();
 
 if (state.session) {
   showView("session");
   renderSession();
+  startTicking();
 } else {
   showView("setup");
 }

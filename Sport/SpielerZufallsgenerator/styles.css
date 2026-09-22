@@ -246,6 +246,47 @@ main {
   font-size: 1.9rem;
 }
 
+.duration-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  background: #e4eeeb;
+  border-radius: 16px;
+}
+
+.duration-step {
+  min-width: 56px;
+  height: 52px;
+  padding-inline: 0.5rem;
+  color: var(--teal);
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  background: var(--paper);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+
+.duration-step:hover:not(:disabled) {
+  border-color: var(--teal-2);
+  transform: translateY(-1px);
+}
+
+.duration-display {
+  min-width: 118px;
+  color: var(--teal);
+  font-size: 1.9rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
 .team-list {
   display: grid;
   gap: 0.7rem;
@@ -495,6 +536,34 @@ main {
   line-height: 1;
 }
 
+.timer {
+  margin-top: 1.3rem;
+  padding-top: 1.1rem;
+  color: var(--teal-2);
+  font-size: clamp(2rem, 6vw, 3.1rem);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  border-top: 1px solid rgb(7 59 76 / 10%);
+}
+
+.timer.idle {
+  color: var(--muted);
+  opacity: 0.65;
+}
+
+.timer.expired {
+  color: var(--coral-dark);
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
 @media (max-width: 560px) {
   .team-row {
     grid-template-columns: auto 1fr;
@@ -520,6 +589,24 @@ main {
   .action-row .primary-action,
   .action-row .secondary-action {
     flex: 1 1 100%;
+  }
+
+  /* Anzeige nach oben, darunter die Minus- und die Plus-Reihe. */
+  .duration-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    justify-self: stretch;
+  }
+
+  .duration-display {
+    order: -1;
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .duration-step {
+    min-width: 0;
   }
 }
 
