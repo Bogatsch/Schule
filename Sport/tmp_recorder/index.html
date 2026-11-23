@@ -9,14 +9,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sportkamera">
     <meta name="format-detection" content="telephone=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'self' https:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'self' blob:; manifest-src 'self'">
     <title>Sportkamera</title>
     <meta name="description" content="Datensparsame Foto- und Videoaufnahme für direktes Bewegungsfeedback im Sportunterricht.">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=41">
-    <script type="module" src="./app.js?v=44"></script>
+    <link rel="stylesheet" href="./styles.css?v=43">
+    <script type="module" src="./app.js?v=46"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -330,11 +330,16 @@
               <button id="gallery-download-selected" class="secondary-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen herunterladen" title="Ausgewählte Aufnahmen herunterladen" disabled>
                 <span class="download-action-icon" aria-hidden="true"></span>
               </button>
+              <button id="gallery-upload-selected" class="secondary-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Videos zu WebDAV hochladen" title="Ausgewählte Videos zu WebDAV hochladen" disabled>
+                <span class="upload-action-icon" aria-hidden="true"></span>
+              </button>
               <button id="gallery-delete-selected" class="secondary-action danger-action gallery-selection-icon-button" type="button" aria-label="Ausgewählte Aufnahmen löschen" title="Ausgewählte Aufnahmen löschen" disabled>
                 <span class="delete-action-icon" aria-hidden="true"></span>
               </button>
             </div>
           </div>
+
+          <p id="gallery-upload-status" class="gallery-upload-status" role="status"></p>
 
           <div id="gallery-empty" class="gallery-empty" role="status">
             <span class="gallery-empty-icon" aria-hidden="true"><span></span></span>
@@ -404,6 +409,7 @@
 
           <div class="account-tabs" role="tablist" aria-label="Einstellungsbereich auswählen">
             <button id="account-login-tab" type="button" role="tab" aria-selected="true" aria-controls="account-login-panel">Anmelden</button>
+            <button id="account-webdav-tab" type="button" role="tab" aria-selected="false" aria-controls="account-webdav-panel" tabindex="-1" hidden>WebDAV</button>
             <button id="account-reset-tab" type="button" role="tab" aria-selected="false" aria-controls="account-reset-panel">Zurücksetzen</button>
           </div>
 
@@ -450,11 +456,44 @@
             </section>
           </form>
 
+          <form id="account-webdav-form" hidden>
+            <section id="account-webdav-panel" class="account-panel" role="tabpanel" aria-labelledby="account-webdav-tab">
+              <h3>WebDAV für die Galerie</h3>
+              <p class="dialog-copy">Wähle in der Galerie die Videos aus, die du in diesen Ordner hochladen möchtest.</p>
+              <p id="webdav-selected-target" class="dialog-copy webdav-target" hidden></p>
+              <div id="webdav-new-target" class="account-step">
+                <div class="account-password-field">
+                  <label for="webdav-url">HTTPS-Adresse des WebDAV-Ordners</label>
+                  <input id="webdav-url" type="url" maxlength="2048" autocomplete="url" autocapitalize="none" spellcheck="false">
+                </div>
+                <div class="account-password-field">
+                  <label for="webdav-username">WebDAV-Benutzername</label>
+                  <input id="webdav-username" type="text" maxlength="256" autocomplete="username" autocapitalize="none" spellcheck="false">
+                </div>
+              </div>
+              <div id="webdav-password-field" class="account-password-field">
+                <label for="webdav-password">WebDAV- oder App-Passwort</label>
+                <input id="webdav-password" type="password" maxlength="512" autocomplete="off">
+                <label class="webdav-checkbox" for="webdav-remember">
+                  <input id="webdav-remember" type="checkbox">
+                  Passwort auf diesem Gerät merken
+                </label>
+              </div>
+              <div class="dialog-actions">
+                <button id="webdav-connect" class="primary-action" type="submit">Verbinden</button>
+                <button id="webdav-forget-password" class="secondary-action" type="button" hidden>Passwort entfernen</button>
+                <button id="webdav-forget" class="secondary-action" type="button" hidden>Ziel entfernen</button>
+              </div>
+              <p id="webdav-status" class="dialog-status" role="status"></p>
+            </section>
+          </form>
+
           <form id="account-reset-form" hidden>
             <section id="account-reset-panel" class="account-panel account-reset-panel" role="tabpanel" aria-labelledby="account-reset-tab">
               <span class="delete-confirmation-icon" aria-hidden="true">!</span>
               <h3>Lokalen Zugang zurücksetzen</h3>
               <p class="dialog-copy"><strong>Achtung:</strong> Dabei werden das Passwort, die Gerätebestätigung und alle gespeicherten Fotos und Videos unwiderruflich gelöscht.</p>
+              <p class="dialog-copy">Bereits zu WebDAV hochgeladene Kopien bleiben auf dem Server.</p>
               <div class="account-password-field">
                 <label for="account-reset-confirmation">Zum Bestätigen „Zurücksetzen“ eingeben</label>
                 <input id="account-reset-confirmation" name="reset-confirmation" type="text" autocomplete="off" autocapitalize="sentences" spellcheck="false">

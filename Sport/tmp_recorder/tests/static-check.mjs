@@ -16,6 +16,7 @@ const requiredFiles = [
   'teacher-auth.js',
   'media-utils.js',
   'zip-utils.js',
+  'webdav-upload.js',
   'manifest.webmanifest',
   'package.json',
   'sw.js',
@@ -84,7 +85,7 @@ const [html, app, videoConverter, zipUtils, annotationApp, mediaStore, teacherAu
 const manifest = JSON.parse(manifestText);
 
 assert.match(html, /Content-Security-Policy/i, 'CSP fehlt');
-assert.match(html, /connect-src 'none'/, 'CSP muss externe Verbindungen sperren');
+assert.match(html, /connect-src 'self' https:;/, 'CSP muss externe Verbindungen auf HTTPS beschränken');
 assert.match(html, /media-src 'self' blob:/, 'CSP muss nur lokale Blob-Medien erlauben');
 assert.match(html, /worker-src 'self' blob:/, 'CSP muss den lokalen Blob-Worker des Videokonverters erlauben');
 assert.match(html, /apple-mobile-web-app-capable/, 'Apple-PWA-Metadaten fehlen');
@@ -134,9 +135,13 @@ assert.match(html, /id="gallery-selection-count"/, 'Auswahlzähler der Galerie f
 assert.match(html, /id="gallery-delete-selected"[^>]*disabled/, 'Mehrfachlöschung muss ohne Auswahl deaktiviert sein');
 assert.match(html, /id="gallery-download-selected"[^>]*disabled/, 'Auswahl-Download muss ohne Auswahl deaktiviert sein');
 assert.match(html, /id="gallery-download-selected"[^>]*aria-label="Ausgewählte Aufnahmen herunterladen"[^>]*>[\s\S]*?class="download-action-icon"/, 'Auswahl-Download benötigt eine zugängliche Symboltaste');
+assert.match(html, /id="gallery-upload-selected"[^>]*aria-label="Ausgewählte Videos zu WebDAV hochladen"[^>]*disabled/, 'Auswahl-Upload benötigt eine zugängliche Symboltaste');
 assert.match(html, /id="gallery-delete-selected"[^>]*aria-label="Ausgewählte Aufnahmen löschen"[^>]*>[\s\S]*?class="delete-action-icon"/, 'Auswahl-Löschung benötigt eine zugängliche Symboltaste');
 assert.match(html, /<dialog id="account-dialog"/, 'Pop-up für Anmeldung und Zurücksetzen fehlt');
 assert.match(html, /id="account-login-tab"[^>]*>Anmelden</, 'Anmelden-Option im Zahnrad-Pop-up fehlt');
+assert.match(html, /id="account-webdav-tab"[^>]*hidden[^>]*>WebDAV</, 'WebDAV muss vor der Anmeldung verborgen sein');
+assert.match(html, /id="webdav-password"[^>]*type="password"/, 'Verdeckte WebDAV-Passworteingabe fehlt');
+assert.match(html, /id="webdav-remember"[^>]*type="checkbox"/, 'Speicherung des WebDAV-Passworts benötigt eine ausdrückliche Auswahl');
 assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-Option im Zahnrad-Pop-up fehlt');
 assert.match(html, /id="account-login-form"/, 'Allgemeines Anmeldeformular fehlt');
 assert.doesNotMatch(html, /id="account-new-password"|id="account-confirm-password"|id="account-setup-step"/, 'Eigene Passwortvergabe ist noch im Anmeldedialog vorhanden');
@@ -197,8 +202,8 @@ assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(guidesHtml, /styles\.css\?v=41/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
-assert.match(html, /styles\.css\?v=41/, 'Versionskennung gegen veraltetes Player-CSS fehlt');
-assert.match(html, /app\.js\?v=44/, 'Versionskennung gegen veraltete Player-Logik fehlt');
+assert.match(html, /styles\.css\?v=43/, 'Versionskennung gegen veraltetes App-CSS fehlt');
+assert.match(html, /app\.js\?v=46/, 'Versionskennung gegen veraltete App-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -456,13 +461,14 @@ for (const [quelle, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Sei
     );
   }
 }
-assert.match(worker, /\.\/app\.js\?v=44/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=41/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/app\.js\?v=46/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=43/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/webdav-upload\.js\?v=2/, 'WebDAV-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/media-utils\.js\?v=39/, 'versionierte Hilfsfunktionen fehlen in der statischen App-Shell');
 assert.match(worker, /\.\/video-converter\.js\?v=35/, 'Videokonverter fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/zip-utils\.js\?v=33/, 'ZIP-Erstellung fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/vendor\/mediabunny\/mediabunny-1\.55\.2\.min\.js\?v=1\.55\.2/, 'lokaler Mediabunny-Konverter fehlt im Offline-Cache');
-assert.match(worker, /\.\/media-store\.js\?v=31/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/media-store\.js\?v=32/, 'versionierter Medienspeicher fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/teacher-auth\.js\?v=31/, 'versionierte lokale Anmeldung fehlt in der statischen App-Shell');
 assert.match(
   worker,
