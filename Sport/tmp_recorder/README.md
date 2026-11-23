@@ -41,16 +41,16 @@ Da die App statisch auf GitHub Pages liegt, kann sie zur Laufzeit kein Verzeichn
 
 ## Datenschutz und lokale Speicherung
 
-Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. Bild- und Videodaten werden weder hochgeladen noch synchronisiert.
+Neue Aufnahmen liegen zunächst nur vorübergehend im Arbeitsspeicher. Erst ein ausdrückliches Tippen auf das Speichern-Symbol übernimmt die aktuelle Aufnahme in die lokale geschützte Galerie. Videos können dabei benannt werden; der Name bleibt zusammen mit der Aufnahme erhalten und wird später in der Galerie sowie als Download-Dateiname verwendet. Die App verwendet bevorzugt das Origin Private File System (OPFS). Safari-/iPadOS-Versionen ohne schreibbaren OPFS-Zugriff erhalten automatisch einen lokalen IndexedDB-Fallback. In der Galerie lassen sich ausgewählte Videos ausdrücklich zu WebDAV hochladen.
 
 - Die App fordert ausschließlich die Kameraberechtigung an. Videos werden ohne Ton aufgenommen; eine Mikrofonberechtigung wird weder angefragt noch benötigt.
 - Fotos werden kurzzeitig in einem Canvas verarbeitet. Videos entstehen aus den vorübergehenden Fragmenten des `MediaRecorder`.
 - Nur ausdrücklich gespeicherte Aufnahmen bleiben nach dem Schließen oder Neuladen der App erhalten. Nicht gespeicherte Aufnahmen werden beim Verwerfen, bei einer neuen Aufnahme sowie beim Verlassen oder Wechseln in den Hintergrund aus der App entfernt.
-- Gespeicherte Medien liegen ausschließlich im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
+- Die Galerie liegt im privaten Speicherbereich des jeweiligen Browsers beziehungsweise der installierten Web-App. Safari und eine über den Home-Bildschirm installierte PWA verwenden auf iPadOS getrennte Speicherbereiche; ihre Galerien werden nicht automatisch geteilt.
 - OPFS und IndexedDB sind beständig, aber kein Ersatz für ein Backup. Das Löschen der Websitedaten, eine Speicherbereinigung durch das Betriebssystem oder das Entfernen der Web-App kann die Galerie löschen. Die App bittet den Browser nach Möglichkeit um dauerhafte Speicherung und zeigt an, wenn der Browser sie nicht zugesichert hat.
 - Die Löschfunktion entfernt ausgewählte Medien nach einer Sicherheitsabfrage aus dem lokalen App-Speicher. Dieser Vorgang kann nicht rückgängig gemacht werden.
 - Dateien werden nur über die Downloadfunktionen in der geschützten Galerie an den Browser übergeben. Beim Einzeldownload versucht die App WebM-Videos vollständig auf dem Gerät in H.264-MP4-Dateien umzuwandeln; der bewährte hardwarebeschleunigte Safari-/iPad-Pfad hat dabei Vorrang. Chrome und Firefox erhalten bei Bedarf einen zweiten H.264-Versuch ohne erzwungenen Hardware-Encoder. Ist dort kein H.264-Encoder verfügbar, werden die vorhandenen VP8-/VP9-Videodaten ohne Qualitätsverlust in einen MP4-Container umgepackt. Das gespeicherte WebM-Original bleibt immer unverändert. Mehrere ausgewählte Medien bündelt die App lokal in einem ZIP mit den unveränderten Originaldateien. In der Aufnahmeansicht gibt es keinen Download.
-- Es gibt keine Upload- oder Teilen-Funktion, keine Analyse-Skripte, keine externen Ressourcen und keine Netzwerkaufrufe für Nutzermedien. Der Service Worker lädt und speichert ausschließlich den statischen App-Rahmen für den Offline-Start; Nutzermedien gelangen nie in Cache Storage.
+- Die Upload-Taste der Galerie überträgt markierte Videos direkt an den eingerichteten WebDAV-Server. Fotos bleiben lokal. WebDAV-Uploads laufen in der geöffneten Galerie und gelangen nie in Cache Storage.
 - Die verzögerte Wiedergabe puffert Einzelbilder ausschließlich im Arbeitsspeicher. Sie werden weder gespeichert noch heruntergeladen und beim Verlassen der Ansicht sowie beim Wechsel in den Hintergrund verworfen.
 - Beim Bereinigen stoppt die App die Kamera, leert Recorder-Fragmente und den Bildpuffer der verzögerten Wiedergabe, widerruft Object URLs und entfernt eigene Referenzen. Die endgültige Freigabe des Arbeitsspeichers übernimmt der Browser.
 - Leitbilder werden erst beim Ansehen in den Offline-Cache gelegt, nicht mehr vorab vollständig geladen. Der Erstaufruf bleibt dadurch unabhängig von der Größe der Sammlung; offline stehen die zuvor angesehenen Leitbilder bereit. Nicht mehr im Index gelistete Videos entfernt der Service Worker beim nächsten Start aus dem Cache.
@@ -59,9 +59,28 @@ Beim Hosting finden normale technische Webseitenaufrufe zu GitHub Pages statt, e
 
 Screenshots und Bildschirmaufnahmen durch iPadOS, andere Betriebssystemfunktionen oder Personen mit Zugriff auf das Gerät kann eine Web-App nicht verhindern.
 
+## WebDAV-Upload aus der Galerie
+
+1. Einen Zielordner auf dem WebDAV-Server anlegen und dem WebDAV-Konto Schreibrechte dafür geben.
+2. Über das Zahnrad in der Sportkamera anmelden und **WebDAV** öffnen.
+3. Die vollständige HTTPS-Adresse des Zielordners, den WebDAV-Benutzernamen und das Passwort oder App-Passwort eingeben. Optional **Passwort auf diesem Gerät merken** aktivieren und **Verbinden** wählen.
+4. In der Galerie die gewünschten Videos markieren und auf den Pfeil nach oben neben dem Download-Symbol tippen. Bei einer gemischten Auswahl überträgt die App die Videos.
+
+Der Upload verwendet die lokale Originaldatei als WebM oder MP4. Der Dateiname enthält den vergebenen Namen und eine eindeutige Aufnahme-ID. Eine erneute Übertragung derselben Aufnahme verwendet denselben Dateinamen. Die Galerie zeigt den Uploadstatus und meldet, wie viele Videos der Server angenommen hat. Das Verlassen der Galerie oder der Wechsel in den Hintergrund bricht einen laufenden Upload ab.
+
+Ordneradresse und Benutzername bleiben im jeweiligen Browserprofil gespeichert. Die Option **Passwort auf diesem Gerät merken** speichert die WebDAV-Zugangsdaten verschlüsselt in IndexedDB. Die App kann den zum Entschlüsseln benötigten Schlüssel in diesem Profil verwenden. Auf einem gemeinsam genutzten Gerät lässt sich die Option deaktiviert lassen. Dann gilt das Passwort für die aktuelle App-Sitzung. Mit **Passwort entfernen** lassen sich gespeicherte Zugangsdaten löschen. **Ziel entfernen** löscht auch die Ordneradresse und den Benutzernamen. Lokales Löschen und Zurücksetzen lassen bereits übertragene Kopien auf dem Server bestehen.
+
+Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann einmalig mit der neuen Speicheroption hinterlegt werden. Gespeicherte Aufnahmen werden nur nach Auswahl und Tippen auf die Upload-Taste übertragen.
+
+### Voraussetzungen am Server
+
+Die App verwendet HTTP Basic Auth über HTTPS, `PROPFIND` mit `Depth: 0` zum Prüfen des Zielordners und `PUT` zum Schreiben. Verwende die endgültige Ordneradresse ohne Weiterleitung und ein Zertifikat, dem die Geräte vertrauen. Der Server oder dessen Reverse Proxy muss ausreichend große Uploads zulassen. Bei drei Minuten und 8 Mbit/s kann ein Video rund 180 MB groß sein. [WebDAV-Standard](https://www.rfc-editor.org/rfc/rfc4918.html#section-9.7)
+
+Bei unterschiedlichen Origins muss der Server die Origin der App per CORS erlauben. Für eine Bereitstellung unter `https://BENUTZERNAME.github.io/REPO/Sport/tmp_recorder/` ist das `https://BENUTZERNAME.github.io`. Die `OPTIONS`-Anfrage zur Vorabprüfung muss ohne Authentifizierung beantwortet werden und `PROPFIND`, `PUT` sowie die Header `Authorization`, `Content-Type` und `Depth` zulassen. Auch die eigentlichen Antworten müssen `Access-Control-Allow-Origin` für die App enthalten. Kann der Anbieter das nicht konfigurieren, kann ein eigener Reverse Proxy diese Aufgabe übernehmen. [Fetch-Standard zu CORS](https://fetch.spec.whatwg.org/#http-cors-protocol)
+
 ## Anmeldung mit festem Passwort
 
-Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Die geschützte Galerie öffnet ein fest hinterlegtes Passwort, das für alle Geräte gleich ist und nicht in der App geändert oder neu vergeben werden kann. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
+Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Nach der Anmeldung erscheint zusätzlich **WebDAV**. Die geschützte Galerie öffnet ein fest hinterlegtes Passwort, das für alle Geräte gleich ist und nicht in der App geändert oder neu vergeben werden kann. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
 
 Beim Update von der Version mit selbst vergebenem Passwort bleiben bereits gespeicherte Medien erhalten. Ein zuvor lokal abgelegter Passwortdatensatz wird nicht mehr verwendet und beim nächsten Zurücksetzen entfernt; eine eingerichtete Gerätebestätigung bleibt gültig.
 
@@ -69,7 +88,7 @@ Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann nach einer e
 
 Das Passwort steht weder im Repository noch im ausgelieferten JavaScript im Klartext. Hinterlegt sind nur ein fester Zufalls-Salt und der daraus mit PBKDF2-SHA-256 über 600.000 Runden abgeleitete Prüfwert; die Eingabe wird beim Anmelden genauso abgeleitet und mit diesem Wert verglichen. Da ein solcher Prüfwert öffentlich einsehbar ist, schützt er nur gegen einfaches Auslesen, nicht gegen einen gezielten Rateangriff auf ein schwaches Passwort. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
 
-Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
+Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen, die WebDAV-Konfiguration und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
 
 ## Lokal testen
 
@@ -91,7 +110,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, den Leitbild-Index samt Tonspurprüfung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie das Fehlen eines Klartextpassworts und von Uploadfunktionen. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, den Leitbild-Index samt Tonspurprüfung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie die WebDAV-Auswahl und die optionale Wiederverwendung der Zugangsdaten. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
 
 ## GitHub Pages aktivieren
 

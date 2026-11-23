@@ -13,6 +13,7 @@ const IDB_METADATA_STORE = 'metadata';
 const IDB_BLOB_STORE = 'media';
 const IDB_SETTINGS_STORE = 'settings';
 const IDB_BACKEND_KEY = 'storage-backend';
+const IDB_WEBDAV_KEY = 'webdav-settings';
 
 const MIME_EXTENSIONS = Object.freeze({
   'image/jpeg': 'jpg',
@@ -141,6 +142,47 @@ function requestResult(request) {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error || new Error('IndexedDB-Anfrage fehlgeschlagen.'));
   });
+}
+
+export async function readWebDavSettings() {
+  if (!hasIndexedDbBackend()) {
+    return null;
+  }
+  const database = await openMediaDatabase();
+  const transaction = database.transaction(IDB_SETTINGS_STORE, 'readonly');
+  const [settings] = await Promise.all([
+    requestResult(transaction.objectStore(IDB_SETTINGS_STORE).get(IDB_WEBDAV_KEY)),
+    transactionCompletion(transaction)
+  ]);
+  return settings ?? null;
+}
+
+export async function writeWebDavSettings(settings, { expectedId } = {}) {
+  if (!settings && !hasIndexedDbBackend()) {
+    return;
+  }
+  const database = await openMediaDatabase();
+  const transaction = database.transaction(IDB_SETTINGS_STORE, 'readwrite');
+  const store = transaction.objectStore(IDB_SETTINGS_STORE);
+  const completion = transactionCompletion(transaction);
+  if (expectedId !== undefined) {
+    const existing = store.get(IDB_WEBDAV_KEY);
+    existing.onsuccess = () => {
+      if ((existing.result?.id ?? null) !== expectedId) {
+        transaction.abort();
+        return;
+      }
+      try {
+        store.put(settings, IDB_WEBDAV_KEY);
+      } catch {
+        transaction.abort();
+      }
+    };
+    await completion;
+    return;
+  }
+  const request = settings ? store.put(settings, IDB_WEBDAV_KEY) : store.delete(IDB_WEBDAV_KEY);
+  await Promise.all([requestResult(request), completion]);
 }
 
 async function resolveStorageBackend() {
