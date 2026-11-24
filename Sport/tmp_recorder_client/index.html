@@ -7,9 +7,9 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; media-src 'self' blob:; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>Videoabgabe | Sportkamera</title>
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=2">
   <script defer src="./vendor/jsqr/jsQR-1.4.0.js"></script>
-  <script type="module" src="./client.js?v=3"></script>
+  <script type="module" src="./client.js?v=4"></script>
 </head>
 <body>
   <header class="topbar">
@@ -24,6 +24,15 @@
         <div class="scan-frame" aria-hidden="true"></div>
       </div>
       <button id="scan-start" type="button" hidden>Kamera zum Scannen starten</button>
+    </section>
+
+    <section id="pin-view" aria-labelledby="pin-heading" hidden>
+      <h2 id="pin-heading">Videoabgabe verbinden</h2>
+      <form id="pin-form">
+        <label for="pin-input">Vierstelliger Zahlencode unter dem QR-Code</label>
+        <input id="pin-input" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+        <button id="pin-submit" type="submit">Verbinden</button>
+      </form>
     </section>
 
     <section id="record-view" aria-labelledby="record-heading" hidden>

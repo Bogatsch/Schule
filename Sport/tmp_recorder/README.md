@@ -74,11 +74,9 @@ Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann e
 
 ### QR-Code zur Videoabgabe
 
-Im verbundenen WebDAV-Reiter den Benutzernamen und das Passwort eines separaten Abgabekontos eingeben und **QR-Code erzeugen** wählen. Die Ordneradresse ist vorausgefüllt. Falls der Server denselben Ordner für das Abgabekonto unter einer anderen Adresse bereitstellt, trage diese dort ein.
+Sobald WebDAV verbunden ist, zeigt der WebDAV-Reiter einen QR-Code und darunter einen vierstelligen Zahlencode. Die App verwendet den bereits verbundenen Zugang. Im Schüler-Client den QR-Code scannen, den Zahlencode eingeben und **Verbinden** wählen. Nach der Prüfung lädt der Client jedes abgegebene Video direkt in den WebDAV-Ordner.
 
-Der QR-Code enthält die Adresse und die lesbaren Zugangsdaten des Abgabekontos. Gib diesem Konto nur die nötigen Rechte für den Abgabeordner. Der Schüler-Client prüft den Zugang beim Scan und lädt beim Speichern direkt per WebDAV hoch.
-
-Die Hauptapp hält den QR-Code bis zur Abmeldung im Arbeitsspeicher. Tippe auf den QR-Code, um ihn zu ändern oder auszublenden. Kopierte Codes bleiben gültig, solange der Server die Zugangsdaten akzeptiert. Den Zugang kannst du am WebDAV-Server sperren oder das Abgabepasswort ändern. [Anleitung zum Schüler-Client](../tmp_recorder_client/README.md)
+Der QR-Code enthält den mit der PIN verschlüsselten WebDAV-Zugang. Der Client erhält die Rechte des verbundenen Kontos. Vierstellige PINs lassen sich bei einem kopierten QR-Code durch Ausprobieren ermitteln. Verbinde daher möglichst ein WebDAV-Konto mit auf den Abgabeordner begrenzten Rechten. Kopierte QR-Codes bleiben verwendbar, solange der Server die Zugangsdaten akzeptiert. [Anleitung zum Schüler-Client](../tmp_recorder_client/README.md)
 
 ### Voraussetzungen am Server
 

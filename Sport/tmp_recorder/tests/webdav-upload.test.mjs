@@ -73,6 +73,7 @@ test('sendet nur die ausdrücklich ausgewählten Videos im Originalformat', asyn
   await upload.connect({ ...login, url: 'https://user:password@dav.example.org/Sportkamera' });
   assert.equal(requests.length, 0);
   assert.equal(await upload.connect(login), true);
+  assert.deepEqual(await upload.readAccess(), { url: `${login.url}/`, authorization });
   assert.equal(uploads().length, 0);
 
   const result = await upload.uploadSelected(['aufnahme', 'foto', 'aufnahme', 'zweite-aufnahme']);
@@ -107,6 +108,7 @@ test('verwendet das verschlüsselt gemerkte Passwort nach einem App-Neustart', a
   const reopened = newSession();
   await reopened.refresh();
   assert.equal(reopened.getState().remembered, true);
+  assert.deepEqual(await reopened.readAccess(), { url: `${login.url}/`, authorization });
   assert.equal((await reopened.uploadSelected(['nach-neustart'])).sent, 1);
   assert.deepEqual(requests.map(({ method }) => method), ['PROPFIND', 'PUT']);
   assert.equal(requests[1].headers.Authorization, authorization);
@@ -114,6 +116,7 @@ test('verwendet das verschlüsselt gemerkte Passwort nach einem App-Neustart', a
   await reopened.forget({ passwordOnly: true });
   assert.equal(settings().url, `${login.url}/`);
   assert.equal(settings().credential, undefined);
+  await assert.rejects(reopened.readAccess(), /Verbinde WebDAV erneut/);
   assert.deepEqual(await newSession().uploadSelected(['nach-neustart']), { needsCredentials: true });
   await reopened.forget();
   assert.equal(settings(), null);

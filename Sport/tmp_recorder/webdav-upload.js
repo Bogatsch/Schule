@@ -85,6 +85,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function getState() {
     return {
       target: target && { url: target.url, username: target.username },
+      connectionId: target?.id ?? null,
       ready: Boolean(authorization || (target?.credential && !credentialRejected)),
       remembered: Boolean(target?.credential),
       connecting: probe !== null,
@@ -147,6 +148,29 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
 
   function cancelUpload() {
     upload?.abort();
+  }
+
+  async function readAuthorization(destination) {
+    return authorization ?? await unsealCredential(destination);
+  }
+
+  async function readAccess() {
+    if (!getState().ready) throw new Error('Verbinde WebDAV erneut, um einen QR-Code zu erzeugen.');
+    const destination = target;
+    let header;
+    try {
+      header = await readAuthorization(destination);
+    } catch {
+      if (target === destination) markCredentialUnreadable();
+      throw new Error('Das gespeicherte WebDAV-Passwort konnte nicht gelesen werden.');
+    }
+    if (target !== destination || !getState().ready) throw new Error('Die WebDAV-Verbindung wurde geändert.');
+    return { url: destination.url, authorization: header };
+  }
+
+  function markCredentialUnreadable() {
+    credentialRejected = true;
+    updateStatus('Das gespeicherte Passwort konnte nicht gelesen werden. Verbinde WebDAV erneut.', true);
   }
 
   async function forget({ passwordOnly = false } = {}) {
@@ -241,16 +265,13 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       if (signal.aborted) return { ...result, cancelled: true };
       const destination = target;
       if (!getState().ready) return { needsCredentials: true };
-      let header = authorization;
-      if (!header) {
-        try {
-          header = await unsealCredential(destination);
-        } catch {
-          if (signal.aborted) return { ...result, cancelled: true };
-          credentialRejected = true;
-          updateStatus('Das gespeicherte Passwort konnte nicht gelesen werden. Verbinde WebDAV erneut.', true);
-          return { needsCredentials: true };
-        }
+      let header;
+      try {
+        header = await readAuthorization(destination);
+      } catch {
+        if (signal.aborted) return { ...result, cancelled: true };
+        markCredentialUnreadable();
+        return { needsCredentials: true };
       }
       for (const [index, id] of selected.entries()) {
         if (signal.aborted) break;
@@ -300,5 +321,5 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     return result;
   }
 
-  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget };
+  return { getState, refresh, connect, cancelConnection, readAccess, uploadSelected, cancelUpload, forget };
 }

@@ -54,6 +54,8 @@ main { max-width: 960px; margin-inline: auto; padding: clamp(0.85rem, 3vw, 1.8re
 .step { padding-inline: 0.5rem; }
 form { display: grid; gap: 0.45rem; margin-top: 0.8rem; }
 form .actions { margin-top: 0.3rem; }
+#pin-form { max-width: 24rem; }
+#pin-input { padding-inline: 0.8rem; font-size: 1.25rem; font-variant-numeric: tabular-nums; letter-spacing: 0.16em; }
 .status { min-height: 1.4em; margin: 1rem 0 0; color: var(--teal); font-weight: 650; }
 .status[data-error="true"] { color: var(--coral); }
 .teacher { max-width: 540px; }

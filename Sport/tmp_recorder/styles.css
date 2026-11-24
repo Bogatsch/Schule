@@ -1926,23 +1926,32 @@ input.gallery-card-selection {
   font-size: 0.75rem;
 }
 
-.webdav-qr-button {
-  display: block;
+.webdav-qr-display {
   width: min(100%, 232px);
-  padding: 0;
   justify-self: center;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
 }
 
-.webdav-qr-button canvas {
+.webdav-qr-display canvas {
   display: block;
   width: 100%;
   height: auto;
   image-rendering: pixelated;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.webdav-pin {
+  margin: 0.65rem 0 0;
+  color: var(--teal);
+  text-align: center;
+}
+
+.webdav-pin strong {
+  display: block;
+  font-size: 1.65rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.16em;
 }
 
 .webdav-management-actions {

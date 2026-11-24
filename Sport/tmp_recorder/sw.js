@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v60';
+const CACHE_VERSION = 'v61';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
@@ -12,6 +12,7 @@ const APP_SHELL = Object.freeze([
   './styles.css?v=42',
   './styles.css?v=43',
   './styles.css?v=44',
+  './styles.css?v=45',
   './annotation.js',
   './annotation.js?v=27',
   './annotation.js?v=29',
@@ -44,10 +45,11 @@ const APP_SHELL = Object.freeze([
   './app.js?v=49',
   './app.js?v=50',
   './app.js?v=51',
-  './webdav-upload.js?v=7',
+  './app.js?v=52',
+  './webdav-upload.js?v=8',
   './webdav-protocol.js?v=1',
   './webdav-qr.js?v=3',
-  './client-pairing.js?v=3',
+  './client-pairing.js?v=4',
   './client-hosting.js?v=2',
   './vendor/qrcode-generator/qrcode-2.0.4.js',
   './manifest.webmanifest',

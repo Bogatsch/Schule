@@ -20,9 +20,9 @@ import {
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
-import { createWebDavUpload } from './webdav-upload.js?v=7';
+import { createWebDavUpload } from './webdav-upload.js?v=8';
 import { drawSubmissionQr } from './webdav-qr.js?v=3';
-import { checkSubmissionAccess, createClientPairing, createSubmissionAccess } from './client-pairing.js?v=3';
+import { createClientPairing } from './client-pairing.js?v=4';
 import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=e354de49';
 import {
   deleteMedia,
@@ -210,15 +210,9 @@ const elements = {
   webDavPassword: document.querySelector('#webdav-password'),
   webDavConnectActions: document.querySelector('#webdav-connect-actions'),
   webDavManagementActions: document.querySelector('#webdav-management-actions'),
-  webDavQrButton: document.querySelector('#webdav-qr-button'),
+  webDavQrDisplay: document.querySelector('#webdav-qr-display'),
   webDavQrCanvas: document.querySelector('#webdav-qr'),
-  webDavQrEditor: document.querySelector('#webdav-qr-editor'),
-  webDavQrUrl: document.querySelector('#webdav-qr-url'),
-  webDavQrUsername: document.querySelector('#webdav-qr-username'),
-  webDavQrPassword: document.querySelector('#webdav-qr-password'),
-  webDavQrSave: document.querySelector('#webdav-qr-save'),
-  webDavQrClose: document.querySelector('#webdav-qr-close'),
-  webDavQrCancel: document.querySelector('#webdav-qr-cancel'),
+  webDavPin: document.querySelector('#webdav-pin'),
   webDavConnect: document.querySelector('#webdav-connect'),
   webDavForgetPassword: document.querySelector('#webdav-forget-password'),
   webDavForget: document.querySelector('#webdav-forget'),
@@ -339,11 +333,9 @@ const galleryCardObjectUrls = new Set();
 const galleryLoadedMedia = new Map();
 const delayedDownloadObjectUrls = new Set();
 const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
-let editingWebDavQr = false;
 let webDavQr = null;
-let webDavQrCheck = null;
+let webDavQrJob = null;
 let webDavQrError = '';
-let drawnSubmissionUrl = null;
 const webDav = createWebDavUpload({
   getMedia,
   readSettings: readWebDavSettings,
@@ -1747,69 +1739,70 @@ function updateProtectedAccessUI() {
   );
 }
 
-function renderWebDav({ target, ready, remembered, connecting, uploading, status, error }) {
-  if (!ready || webDavQr?.target !== target?.url) webDavQr = null;
-  const busy = connecting || uploading || Boolean(webDavQrCheck);
-  const submissionUrl = webDavQr?.link;
-  const showQr = ready && submissionUrl && !editingWebDavQr;
-  const showEditor = ready && !showQr;
+function renderWebDav({ target, connectionId, ready, remembered, connecting, uploading, status, error }) {
+  if (!ready || webDavQr?.connectionId !== connectionId) webDavQr = null;
+  if (!ready || (webDavQrJob && webDavQrJob.connectionId !== connectionId)) clearWebDavQrJob();
+  if (ready && !connecting && !uploading && !webDavQr && !webDavQrJob && !webDavQrError
+    && teacherMode && elements.accountDialog.open && !elements.accountWebDavForm.hidden) {
+    void generateWebDavQr(connectionId);
+  }
+  const busy = connecting || uploading;
   elements.webDavNewTarget.hidden = Boolean(target);
   elements.webDavPasswordField.hidden = ready;
   elements.webDavConnectActions.hidden = ready;
   elements.webDavManagementActions.hidden = !target;
   elements.webDavForgetPassword.hidden = !ready && !remembered;
   elements.webDavForget.hidden = !target;
-  elements.webDavQrButton.hidden = !showQr;
-  elements.webDavQrEditor.hidden = !showEditor;
-  elements.webDavQrCancel.hidden = !submissionUrl;
-  elements.webDavQrClose.hidden = !submissionUrl;
+  elements.webDavQrDisplay.hidden = !webDavQr;
+  elements.webDavPin.textContent = webDavQr?.pin ?? '';
   elements.webDavUrl.disabled = busy || Boolean(target);
   elements.webDavUsername.disabled = busy || Boolean(target);
   elements.webDavRemember.disabled = busy || ready;
   elements.webDavPassword.disabled = busy || ready;
   elements.webDavConnect.disabled = busy || ready;
-  if (showEditor && !elements.webDavQrUrl.value) elements.webDavQrUrl.value = webDavQr?.folder ?? target.url;
-  elements.webDavQrUrl.disabled = busy || !showEditor;
-  elements.webDavQrUsername.disabled = busy || !showEditor;
-  elements.webDavQrPassword.disabled = busy || !showEditor;
-  elements.webDavQrSave.disabled = busy || !showEditor;
-  elements.webDavQrSave.textContent = submissionUrl ? 'Neuen QR-Code erzeugen' : 'QR-Code erzeugen';
-  elements.webDavQrClose.disabled = busy || !showEditor;
-  elements.webDavQrCancel.disabled = busy;
-  elements.webDavQrButton.disabled = busy;
   elements.webDavForget.disabled = busy;
   elements.webDavForgetPassword.disabled = busy;
-  if (showQr && submissionUrl !== drawnSubmissionUrl) {
-    drawSubmissionQr(elements.webDavQrCanvas, submissionUrl);
-    drawnSubmissionUrl = submissionUrl;
-  } else if (!showQr && drawnSubmissionUrl) {
+  if (!webDavQr && elements.webDavQrCanvas.width) {
     elements.webDavQrCanvas.width = 0;
     elements.webDavQrCanvas.height = 0;
-    drawnSubmissionUrl = null;
   }
-  const qrStatus = webDavQrCheck ? 'WebDAV-Abgabezugang wird geprüft …' : webDavQrError;
-  elements.webDavStatus.textContent = showEditor && qrStatus ? qrStatus : ready && !error ? '' : status;
-  elements.webDavStatus.dataset.status = error || (showEditor && webDavQrError) ? 'error' : '';
+  const qrStatus = webDavQrJob ? 'QR-Code und Zahlencode werden erstellt …' : webDavQrError;
+  elements.webDavStatus.textContent = ready && !error ? qrStatus : status;
+  elements.webDavStatus.dataset.status = error || webDavQrError ? 'error' : '';
   elements.webDavStatus.hidden = !elements.webDavStatus.textContent;
   updateGalleryUploadButton();
 }
 
-function resetWebDavQrEditor() {
-  webDavQrCheck?.abort();
-  webDavQrCheck = null;
-  editingWebDavQr = false;
+function clearWebDavQrJob() {
+  webDavQrJob = null;
   webDavQrError = '';
-  elements.webDavQrUrl.value = '';
-  elements.webDavQrUsername.value = '';
-  elements.webDavQrPassword.value = '';
-  renderWebDav(webDav.getState());
+}
+
+async function generateWebDavQr(connectionId) {
+  const job = { connectionId };
+  webDavQrJob = job;
+  try {
+    const access = await webDav.readAccess();
+    if (webDavQrJob !== job) return;
+    const { link, pin } = await createClientPairing(access);
+    if (webDavQrJob !== job) return;
+    drawSubmissionQr(elements.webDavQrCanvas, link);
+    webDavQr = { connectionId, pin };
+  } catch (error) {
+    if (webDavQrJob === job) webDavQrError = error.message;
+  } finally {
+    if (webDavQrJob === job) {
+      webDavQrJob = null;
+      renderWebDav(webDav.getState());
+    }
+  }
 }
 
 function focusWebDavPanel() {
   const { ready, target } = webDav.getState();
   let field = target ? elements.webDavPassword : elements.webDavUrl;
   if (ready) {
-    field = elements.webDavQrEditor.hidden ? elements.webDavQrButton : elements.webDavQrUsername;
+    field = webDavQr ? elements.webDavPin : elements.webDavForgetPassword;
   }
   field.focus({ preventScroll: true });
 }
@@ -1818,7 +1811,7 @@ function setAccountPanel(panel, { focus = false } = {}) {
   if (panel !== 'webdav') {
     webDav.cancelConnection();
     elements.webDavPassword.value = '';
-    resetWebDavQrEditor();
+    clearWebDavQrJob();
   }
   for (const [name, { tab, form }] of Object.entries(accountPanels)) {
     const selected = name === panel;
@@ -1826,6 +1819,7 @@ function setAccountPanel(panel, { focus = false } = {}) {
     tab.setAttribute('aria-selected', String(selected));
     tab.tabIndex = selected ? 0 : -1;
   }
+  renderWebDav(webDav.getState());
   elements.accountStatus.textContent = '';
   elements.accountStatus.dataset.status = '';
   if (!focus || !elements.accountDialog.open) {
@@ -2083,7 +2077,6 @@ async function resetLocalAccess() {
 
   try {
     await webDav.forget();
-    resetWebDavQrEditor();
     await resetMediaStore();
     gallerySelectedIds.clear();
     galleryItems = [];
@@ -2933,7 +2926,8 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
   teacherAuthOperationId += 1;
   teacherMode = false;
   webDavQr = null;
-  resetWebDavQrEditor();
+  clearWebDavQrJob();
+  renderWebDav(webDav.getState());
   teacherAuthVerified = false;
   galleryZipDownloadRequestId += 1;
   galleryZipDownloadInProgress = false;
@@ -3211,68 +3205,13 @@ elements.accountEnrollmentSkip.addEventListener('click', () => {
   }
 });
 elements.accountLogout.addEventListener('click', () => exitTeacherMode());
-elements.webDavQrButton.addEventListener('click', () => {
-  editingWebDavQr = true;
-  renderWebDav(webDav.getState());
-  focusWebDavPanel();
-});
-elements.webDavQrCancel.addEventListener('click', () => {
-  resetWebDavQrEditor();
-  focusWebDavPanel();
-});
-elements.webDavQrEditor.addEventListener('input', () => {
-  if (webDavQrError) {
-    webDavQrError = '';
-    elements.webDavStatus.textContent = '';
-    elements.webDavStatus.hidden = true;
-  }
-});
-
-async function saveWebDavQr() {
-  const { target, ready } = webDav.getState();
-  if (webDavQrCheck || !teacherMode || !ready || elements.webDavQrEditor.hidden) return;
-  const controller = new AbortController();
-  webDavQrCheck = controller;
-  webDavQrError = '';
-  const password = elements.webDavQrPassword.value;
-  elements.webDavQrPassword.value = '';
-  renderWebDav(webDav.getState());
-  try {
-    const access = createSubmissionAccess({
-      url: elements.webDavQrUrl.value,
-      username: elements.webDavQrUsername.value,
-      password
-    });
-    const link = createClientPairing(access);
-    await checkSubmissionAccess(access, controller);
-    if (webDavQrCheck !== controller || !teacherMode || webDav.getState().target?.url !== target.url) return;
-    webDavQr = { target: target.url, folder: access.url, link };
-    webDavQrCheck = null;
-    resetWebDavQrEditor();
-  } catch (error) {
-    if (webDavQrCheck === controller) webDavQrError = error.message;
-  } finally {
-    if (webDavQrCheck === controller) webDavQrCheck = null;
-    renderWebDav(webDav.getState());
-    if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) focusWebDavPanel();
-  }
-}
-
-elements.webDavQrClose.addEventListener('click', () => {
-  webDavQr = null;
-  resetWebDavQrEditor();
-  focusWebDavPanel();
-});
 
 elements.accountWebDavForm.addEventListener('submit', (event) => {
   event.preventDefault();
   if (!teacherMode || !elements.accountDialog.open || elements.accountWebDavForm.hidden) {
     return;
   }
-  if (webDav.getState().ready) {
-    if (!elements.webDavQrEditor.hidden) void saveWebDavQr();
-    return;
-  }
+  if (webDav.getState().ready) return;
   const password = elements.webDavPassword.value;
   elements.webDavPassword.value = '';
   void webDav.connect({
@@ -3295,7 +3234,6 @@ async function forgetWebDav(passwordOnly) {
   try {
     await webDav.forget({ passwordOnly });
     elements.accountWebDavForm.reset();
-    resetWebDavQrEditor();
     if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) {
       const field = passwordOnly ? elements.webDavPassword : elements.webDavUrl;
       field.focus({ preventScroll: true });
@@ -3329,7 +3267,8 @@ elements.accountDialog.addEventListener('close', () => {
   teacherAuthVerified = false;
   webDav.cancelConnection();
   elements.accountWebDavForm.reset();
-  resetWebDavQrEditor();
+  clearWebDavQrJob();
+  renderWebDav(webDav.getState());
   elements.accountLoginForm.reset();
   elements.accountResetForm.reset();
   elements.accountPassword.disabled = false;
