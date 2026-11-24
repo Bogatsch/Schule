@@ -43,8 +43,9 @@ import {
   getTeacherAuthState,
   preloadTeacherAuth,
   resetAuthentication,
+  setInitialPassword,
   verifyPassword
-} from './teacher-auth.js?v=31';
+} from './teacher-auth.js?v=32';
 
 const CAMERA_CONSTRAINTS = Object.freeze({
   width: { ideal: 1280 },
@@ -187,6 +188,10 @@ const elements = {
   accountLoginForm: document.querySelector('#account-login-form'),
   accountLoginPanel: document.querySelector('#account-login-panel'),
   accountAuthenticatedStep: document.querySelector('#account-authenticated-step'),
+  accountSetupStep: document.querySelector('#account-setup-step'),
+  accountNewPassword: document.querySelector('#account-new-password'),
+  accountConfirmPassword: document.querySelector('#account-confirm-password'),
+  accountSetupSubmit: document.querySelector('#account-setup-submit'),
   accountPasswordStep: document.querySelector('#account-password-step'),
   accountPassword: document.querySelector('#account-password'),
   accountPasswordSubmit: document.querySelector('#account-password-submit'),
@@ -1830,6 +1835,8 @@ function setAccountPanel(panel, { focus = false } = {}) {
       const state = getTeacherAuthState();
       if (teacherMode) {
         elements.accountLogout.focus({ preventScroll: true });
+      } else if (!state.passwordConfigured) {
+        elements.accountNewPassword.focus({ preventScroll: true });
       } else if (state.platformAvailable && state.platformEnrolled) {
         elements.accountBiometricButton.focus({ preventScroll: true });
       } else {
@@ -1843,6 +1850,28 @@ function setAccountPanel(panel, { focus = false } = {}) {
   });
 }
 
+function renderAccountLoginSteps() {
+  const state = getTeacherAuthState();
+  elements.accountLoginTab.textContent = state.passwordConfigured ? 'Anmelden' : 'Passwort festlegen';
+  elements.accountAuthenticatedStep.hidden = !teacherMode;
+  elements.accountSetupStep.hidden = teacherMode || state.passwordConfigured;
+  elements.accountPasswordStep.hidden = teacherMode || !state.passwordConfigured;
+  elements.accountEnrollmentStep.hidden = true;
+  const showPlatformLogin = !teacherMode && state.ready && state.platformAvailable && state.platformEnrolled;
+  elements.accountBiometricSection.hidden = !showPlatformLogin;
+  elements.accountBiometricDivider.hidden = !showPlatformLogin;
+}
+
+function resetAccountLoginFields() {
+  elements.accountLoginForm.reset();
+  for (const control of [
+    elements.accountNewPassword, elements.accountConfirmPassword, elements.accountSetupSubmit,
+    elements.accountPassword, elements.accountPasswordSubmit, elements.accountBiometricButton
+  ]) {
+    control.disabled = false;
+  }
+}
+
 function selectAccountPanel(panel, { focus = true } = {}) {
   if (accountResetInProgress || (panel === 'webdav' && !teacherMode)) {
     return;
@@ -1850,9 +1879,8 @@ function selectAccountPanel(panel, { focus = true } = {}) {
   teacherAuthOperationId += 1;
   teacherAuthVerified = false;
   teacherPlatformNeedsRepair = false;
-  elements.accountEnrollmentStep.hidden = true;
-  elements.accountAuthenticatedStep.hidden = !teacherMode;
-  elements.accountPasswordStep.hidden = teacherMode;
+  resetAccountLoginFields();
+  renderAccountLoginSteps();
   setAccountPanel(panel, { focus });
 }
 
@@ -1860,25 +1888,13 @@ function resetAccountDialog() {
   accountResetInProgress = false;
   teacherAuthVerified = false;
   teacherPlatformNeedsRepair = false;
-  elements.accountLoginForm.reset();
+  resetAccountLoginFields();
   elements.accountResetForm.reset();
   elements.accountStatus.textContent = '';
   elements.accountStatus.dataset.status = '';
-  elements.accountEnrollmentStep.hidden = true;
-  const state = getTeacherAuthState();
-  elements.accountAuthenticatedStep.hidden = !teacherMode;
-  elements.accountPasswordStep.hidden = teacherMode;
-  const showPlatformLogin = !teacherMode
-    && state.ready
-    && state.platformAvailable
-    && state.platformEnrolled;
-  elements.accountBiometricSection.hidden = !showPlatformLogin;
-  elements.accountBiometricDivider.hidden = !showPlatformLogin;
-  elements.accountBiometricButton.disabled = false;
+  renderAccountLoginSteps();
   elements.accountEnrollmentButton.disabled = false;
   elements.accountEnrollmentButton.textContent = 'Gerätebestätigung einrichten';
-  elements.accountPassword.disabled = false;
-  elements.accountPasswordSubmit.disabled = false;
   elements.accountResetConfirmation.disabled = false;
   elements.accountResetSubmit.disabled = true;
   elements.accountLoginTab.disabled = false;
@@ -1961,38 +1977,46 @@ function authenticateWithDevice() {
 }
 
 async function submitAccountLogin() {
-  if (elements.accountPassword.disabled) {
+  const setup = !elements.accountSetupStep.hidden;
+  const field = setup ? elements.accountNewPassword : elements.accountPassword;
+  if (field.disabled || elements.accountLoginForm.hidden || teacherMode || !elements.accountDialog.open
+    || (!setup && elements.accountPasswordStep.hidden)) {
+    return;
+  }
+  const candidate = field.value;
+  if (setup && candidate !== elements.accountConfirmPassword.value) {
+    elements.accountStatus.textContent = 'Die beiden Passwörter stimmen nicht überein.';
+    elements.accountStatus.dataset.status = 'error';
+    elements.accountConfirmPassword.focus({ preventScroll: true });
     return;
   }
   const authOperation = teacherAuthOperationId;
-  const candidate = elements.accountPassword.value;
   elements.accountStatus.dataset.status = '';
-  elements.accountPassword.disabled = true;
-  elements.accountPasswordSubmit.disabled = true;
-  elements.accountStatus.textContent = 'Passwort wird geprüft …';
-  let verified = false;
+  const controls = setup
+    ? [elements.accountNewPassword, elements.accountConfirmPassword, elements.accountSetupSubmit]
+    : [elements.accountPassword, elements.accountPasswordSubmit, elements.accountBiometricButton];
+  for (const control of controls) control.disabled = true;
+  elements.accountLoginForm.reset();
+  elements.accountStatus.textContent = setup ? 'Passwort wird eingerichtet …' : 'Passwort wird geprüft …';
+  let failure = '';
   try {
-    verified = await verifyPassword(candidate);
+    const verified = setup ? await setInitialPassword(candidate) : await verifyPassword(candidate);
+    if (!verified) failure = 'Das Passwort ist nicht korrekt.';
   } catch (error) {
-    if (error?.message) {
-      elements.accountStatus.textContent = error.message;
-    }
-    verified = false;
+    failure = error?.message ?? 'Die Anmeldung konnte nicht abgeschlossen werden.';
   }
-  elements.accountPassword.value = '';
-  elements.accountPassword.disabled = false;
-  elements.accountPasswordSubmit.disabled = false;
 
   if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
     return;
   }
+  for (const control of controls) control.disabled = false;
 
-  if (!verified) {
-    if (!elements.accountStatus.textContent || elements.accountStatus.textContent.includes('wird')) {
-      elements.accountStatus.textContent = 'Das Passwort ist nicht korrekt.';
-    }
+  if (failure) {
+    renderAccountLoginSteps();
+    elements.accountStatus.textContent = failure;
     elements.accountStatus.dataset.status = 'error';
-    elements.accountPassword.focus({ preventScroll: true });
+    const input = elements.accountSetupStep.hidden ? elements.accountPassword : elements.accountNewPassword;
+    input.focus({ preventScroll: true });
     return;
   }
 
@@ -2015,6 +2039,7 @@ async function submitAccountLogin() {
       elements.accountEnrollmentButton.textContent = 'Gerätebestätigung neu einrichten';
     }
     teacherAuthVerified = true;
+    elements.accountSetupStep.hidden = true;
     elements.accountPasswordStep.hidden = true;
     elements.accountEnrollmentStep.hidden = false;
     elements.accountStatus.textContent = '';
@@ -2059,6 +2084,7 @@ function enrollAccountPlatformCredential() {
 }
 
 async function resetLocalAccess() {
+  if (accountResetInProgress) return;
   if (elements.accountResetConfirmation.value !== 'Zurücksetzen') {
     elements.accountStatus.textContent = 'Bitte gib „Zurücksetzen“ genau wie angezeigt ein.';
     elements.accountStatus.dataset.status = 'error';
@@ -2110,7 +2136,7 @@ async function resetLocalAccess() {
   teacherAuthReady = true;
   accountSyncChannel?.postMessage({ type: 'reset' });
   exitTeacherMode({ restoreFocus: false });
-  elements.environmentStatus.textContent = 'Alle gespeicherten Aufnahmen und Anmeldedaten wurden gelöscht. Für den Zugang gilt weiterhin das feste Passwort.';
+  elements.environmentStatus.textContent = 'Die lokalen Daten wurden gelöscht. Öffne das Zahnrad, um ein neues Passwort festzulegen.';
   window.setTimeout(() => elements.settingsButton.focus({ preventScroll: true }), 0);
 }
 
@@ -3269,9 +3295,8 @@ elements.accountDialog.addEventListener('close', () => {
   elements.accountWebDavForm.reset();
   clearWebDavQrJob();
   renderWebDav(webDav.getState());
-  elements.accountLoginForm.reset();
+  resetAccountLoginFields();
   elements.accountResetForm.reset();
-  elements.accountPassword.disabled = false;
   elements.accountResetConfirmation.disabled = false;
   elements.accountStatus.textContent = '';
   elements.accountStatus.dataset.status = '';
@@ -3630,6 +3655,9 @@ function initialize() {
   preloadTeacherAuth().then(() => {
     teacherAuthReady = true;
     elements.settingsButton.disabled = false;
+    if (document.visibilityState === 'visible' && document.body.dataset.view === 'start') {
+      openAccountDialog();
+    }
   }).catch(() => {
     teacherAuthReady = true;
     elements.settingsButton.disabled = false;

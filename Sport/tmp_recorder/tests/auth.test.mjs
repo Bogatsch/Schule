@@ -97,32 +97,46 @@ const {
   getTeacherAuthState,
   preloadTeacherAuth,
   resetAuthentication,
+  setInitialPassword,
   verifyPassword
 } = teacherAuth;
 
-test('prüft ausschließlich das fest hinterlegte Zugangspasswort', async () => {
+test('richtet ein eigenes Passwort ein und prüft es nach einem Neustart', async () => {
   await preloadTeacherAuth();
-  const state = getTeacherAuthState();
-  assert.equal(state.ready, true);
-  assert.equal(state.passwordAvailable, true);
-  assert.equal(Object.hasOwn(state, 'passwordConfigured'), false);
-  assert.equal(typeof teacherAuth.setInitialPassword, 'undefined');
+  assert.equal(getTeacherAuthState().ready, true);
+  assert.equal(getTeacherAuthState().passwordConfigured, false);
+  const password = 'Passwort-Test Lüneburg';
+  assert.equal(await verifyPassword(password), false);
+  await assert.rejects(setInitialPassword('kurz'), { code: 'password-too-short' });
+  const [first, second] = await Promise.allSettled([
+    setInitialPassword(password),
+    setInitialPassword('Anderes-Passwort')
+  ]);
+  assert.deepEqual(first, { status: 'fulfilled', value: true });
+  assert.equal(second.status, 'rejected');
+  assert.equal(second.reason.code, 'already-configured');
 
-  assert.equal(await verifyPassword('Falsches-Passwort'), false);
-  assert.equal(await verifyPassword(''), false);
-  assert.equal(await verifyPassword(null), false);
+  const directory = await root.getDirectoryHandle('sportkamera-teacher-auth-v1');
+  const handle = await directory.getFileHandle('password.json');
+  const text = await (await handle.getFile()).text();
+  assert.equal(text.includes(password), false);
+  const record = JSON.parse(text);
+  assert.match(record.salt, /^[A-Za-z0-9_-]{22}$/);
+  assert.match(record.derivedKey, /^[A-Za-z0-9_-]{43}$/);
+  assert.equal(record.iterations, 600_000);
 
-  // Das feste Passwort steht nicht im Repository. Wird es beim Testlauf über die
-  // Umgebungsvariable gesetzt, wird zusätzlich der erfolgreiche Fall geprüft.
-  const expectedPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
-  if (expectedPassword) {
-    assert.equal(await verifyPassword(expectedPassword), true);
-  }
+  const reopened = await import('../teacher-auth.js?reopened');
+  await reopened.preloadTeacherAuth();
+  assert.equal(reopened.getTeacherAuthState().passwordConfigured, true);
+  assert.equal(await reopened.verifyPassword('Anderes-Passwort'), false);
+  assert.equal(await reopened.verifyPassword(password), true);
 
   await resetAuthentication();
+  assert.equal(directory.children.has('password.json'), false);
+  assert.equal(getTeacherAuthState().passwordConfigured, false);
 });
 
-test('legt kein Passwort lokal ab und entfernt Altbestände beim Zurücksetzen', async () => {
+test('ein Reset entfernt Altbestände und erlaubt ein neues eigenes Passwort', async () => {
   await preloadTeacherAuth();
   await verifyPassword('Falsches-Passwort');
   assert.equal(
@@ -139,4 +153,6 @@ test('legt kein Passwort lokal ab und entfernt Altbestände beim Zurücksetzen',
 
   await resetAuthentication();
   assert.equal(authDirectory.children.has('password.json'), false);
+  assert.equal(await setInitialPassword('Neues-Passwort-nach-Reset'), true);
+  await resetAuthentication();
 });

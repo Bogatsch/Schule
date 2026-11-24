@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
     <link rel="stylesheet" href="./styles.css?v=45">
-    <script type="module" src="./app.js?v=52"></script>
+    <script type="module" src="./app.js?v=53"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -424,6 +424,23 @@
                 </div>
               </div>
 
+              <div id="account-setup-step" class="account-step" hidden>
+                <h3>Eigenes Passwort festlegen</h3>
+                <p class="dialog-copy">Mit diesem Passwort meldest du dich künftig in diesem Browserprofil an.</p>
+                <div class="account-password-field">
+                  <label for="account-new-password">Neues Passwort</label>
+                  <input id="account-new-password" name="new-password" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+                  <small>Mindestens 6 Zeichen.</small>
+                </div>
+                <div class="account-password-field">
+                  <label for="account-confirm-password">Passwort wiederholen</label>
+                  <input id="account-confirm-password" name="confirm-password" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+                </div>
+                <div class="dialog-actions">
+                  <button id="account-setup-submit" class="primary-action" type="submit">Passwort festlegen und anmelden</button>
+                </div>
+              </div>
+
               <div id="account-password-step" class="account-step" hidden>
                 <section id="account-biometric-section" class="account-biometric-section" aria-label="Geräteauthentifizierung" hidden>
                   <button id="account-biometric-button" class="primary-action account-biometric-button" type="button">
@@ -495,7 +512,7 @@
             <section id="account-reset-panel" class="account-panel account-reset-panel" role="tabpanel" aria-labelledby="account-reset-tab">
               <span class="delete-confirmation-icon" aria-hidden="true">!</span>
               <h3>Lokalen Zugang zurücksetzen</h3>
-              <p class="dialog-copy"><strong>Achtung:</strong> Dabei werden das Passwort, die Gerätebestätigung und alle gespeicherten Fotos und Videos unwiderruflich gelöscht.</p>
+              <p class="dialog-copy">Dabei werden das Passwort, die Gerätebestätigung, die WebDAV-Einstellungen und alle lokal gespeicherten Fotos und Videos unwiderruflich gelöscht.</p>
               <p class="dialog-copy">Bereits zu WebDAV hochgeladene Kopien bleiben auf dem Server.</p>
               <div class="account-password-field">
                 <label for="account-reset-confirmation">Zum Bestätigen „Zurücksetzen“ eingeben</label>

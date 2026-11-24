@@ -84,17 +84,17 @@ Die App verwendet HTTP Basic Auth über HTTPS, `PROPFIND` mit `Depth: 0` zum Pr�
 
 Für Hauptapp und Schüler-Client auf GitHub Pages muss der WebDAV-Server `https://bogatsch.github.io` per CORS erlauben. Die `OPTIONS`-Anfrage zur Vorabprüfung muss ohne Authentifizierung beantwortet werden und `PROPFIND`, `PUT` sowie die Header `Authorization`, `Content-Type` und `Depth` zulassen. Auch die eigentlichen Antworten müssen `Access-Control-Allow-Origin` für die App enthalten. [Fetch-Standard zu CORS](https://fetch.spec.whatwg.org/#http-cors-protocol)
 
-## Anmeldung mit festem Passwort
+## Anmeldung mit eigenem Passwort
 
-Das Zahnrad oben rechts öffnet ein Pop-up mit den Bereichen **Anmelden** und **Zurücksetzen**. Nach der Anmeldung erscheint zusätzlich **WebDAV**. Die geschützte Galerie öffnet ein fest hinterlegtes Passwort, das für alle Geräte gleich ist und nicht in der App geändert oder neu vergeben werden kann. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang automatisch wieder gesperrt; über das Zahnrad kann er auch direkt abgemeldet werden.
+Beim Öffnen der Lehrerversion erscheint der Dialog **Anmeldung und Einstellungen**. Ist auf diesem Browserprofil noch kein eigenes Passwort vorhanden, wähle **Passwort festlegen** und gib ein Passwort mit mindestens sechs Zeichen zweimal ein. Alternativ steht **Zurücksetzen** zur Verfügung. Beim nächsten Öffnen verlangt **Anmelden** das eingerichtete Passwort.
 
-Beim Update von der Version mit selbst vergebenem Passwort bleiben bereits gespeicherte Medien erhalten. Ein zuvor lokal abgelegter Passwortdatensatz wird nicht mehr verwendet und beim nächsten Zurücksetzen entfernt; eine eingerichtete Gerätebestätigung bleibt gültig.
+Nach der Anmeldung stehen die Galerie und der Reiter **WebDAV** zur Verfügung. Beim Wechsel in den Hintergrund oder beim Schließen wird der Zugang wieder gesperrt. Das Zahnrad öffnet den Dialog jederzeit erneut. Beim Update bleiben lokal gespeicherte Aufnahmen und vorhandene eigene Passwörter erhalten.
 
 Wenn auf dem Gerät eingerichtet und vom Browser unterstützt, kann nach einer erfolgreichen Passwortanmeldung zusätzlich WebAuthn mit dem Plattform-Authentifikator aktiviert werden. iPadOS entscheidet dabei selbst zwischen Touch ID, Face ID und Gerätecode; eine Website kann nicht ausschließlich einen Fingerabdruck verlangen. Die Aktivierung erfolgt lokal und gilt nur für den jeweiligen Browser beziehungsweise die installierte Web-App.
 
-Das Passwort steht weder im Repository noch im ausgelieferten JavaScript im Klartext. Hinterlegt sind nur ein fester Zufalls-Salt und der daraus mit PBKDF2-SHA-256 über 600.000 Runden abgeleitete Prüfwert; die Eingabe wird beim Anmelden genauso abgeleitet und mit diesem Wert verglichen. Da ein solcher Prüfwert öffentlich einsehbar ist, schützt er nur gegen einfaches Auslesen, nicht gegen einen gezielten Rateangriff auf ein schwaches Passwort. Da die statische App und ihre lokalen Daten von technisch versierten Personen untersucht oder verändert werden können, bleibt die Anmeldung eine praktische Bedienhürde für ein beaufsichtigtes Gerät und keine belastbare serverseitige Zugriffskontrolle. Auch OPFS und IndexedDB sind nach Web-Origin, nicht nach dem Unterordner dieser App, getrennt. Für echten Schutz gegen gezielte Angriffe wären eine eigene Origin, ein Server, individuelle Konten und eine serverseitige Autorisierung erforderlich.
+Das Browserprofil speichert einen zufälligen Salt und den mit PBKDF2-SHA-256 über 600.000 Runden abgeleiteten Prüfwert. Die Anmeldung vergleicht den aus der Eingabe abgeleiteten Prüfwert. Die Anmeldung schützt den Zugang über die Oberfläche der statischen App. OPFS und IndexedDB richten sich nach der Web-Origin, die sich Websites unter derselben Domain teilen.
 
-Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich die lokale Referenz auf die Gerätebestätigung, verbliebene Passwortdatensätze älterer Versionen, die WebDAV-Konfiguration und sämtliche gespeicherten Fotos und Videos aus OPFS und IndexedDB. Das feste Zugangspasswort selbst bleibt davon unberührt. Dieser destruktive Rückfall ist bewusst auch ohne Anmeldung möglich. Der vom Betriebssystem verwaltete Passkey selbst kann gegebenenfalls zusätzlich in den iPadOS-Einstellungen entfernt werden.
+Unter **Zurücksetzen** muss zur Bestätigung exakt `Zurücksetzen` eingegeben werden. Danach löscht die App unwiderruflich das lokale Passwort, die Referenz auf die Gerätebestätigung, die WebDAV-Konfiguration und sämtliche lokal gespeicherten Fotos und Videos. Beim nächsten Öffnen des Dialogs lässt sich ein neues Passwort festlegen. Bereits zu WebDAV hochgeladene Dateien bleiben erhalten.
 
 ## Lokal testen
 
@@ -116,7 +116,7 @@ Automatisierte Prüfungen benötigen nur eine aktuelle Node.js-Version und keine
 npm test
 ```
 
-Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, den Leitbild-Index samt Tonspurprüfung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Anmeldung mit dem festen Passwort, den Komplett-Reset sowie die WebDAV-Auswahl und die optionale Wiederverwendung der Zugangsdaten. Wird `SPORTKAMERA_TEST_PASSWORD` gesetzt, prüfen die Tests zusätzlich, dass dieses Passwort akzeptiert wird und in keiner ausgelieferten Datei im Klartext steht.
+Die Tests prüfen JavaScript-Syntax, Formatauswahl, Zeitbegrenzung und -formatierung, die lokale H.264-MP4-Konvertierung, die ZIP-Erstellung für Mehrfachdownloads, relative Pfade, PWA-Metadaten, die feste Cache-Positivliste, zentrale Bereinigungsereignisse, OPFS- und IndexedDB-Speicherung, den Leitbild-Index samt Tonspurprüfung, die Reglerarithmetik und den Countdown der verzögerten Wiedergabe, die Einrichtung und Prüfung des eigenen Passworts, den Komplett-Reset sowie die WebDAV-Auswahl und die optionale Wiederverwendung der Zugangsdaten.
 
 ## GitHub Pages aktivieren
 
@@ -167,7 +167,7 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 6. Ein zusätzliches Video in einen Unterordner von `Videos/` legen, `npm run leitbilder` ausführen und prüfen, dass es unter **Leitbilder ansehen** und hinter **Leitbild daneben** auftaucht und abspielbar ist.
 7. **Verzögerte Wiedergabe** öffnen: Der Countdown startet bei 15 Sekunden, danach läuft das zeitversetzte Bild. Über das Zahnrad den Drehregler auf 1 und auf 60 Sekunden stellen und prüfen, dass jede Änderung den Countdown neu startet. Anschließend Kamera wechseln, in den Hintergrund wechseln und zurückkehren; die Ansicht darf kein altes Bild zeigen.
 8. **Verzögerte Wiedergabe** im Vollbild prüfen: Das Vollbild-Symbol tippen, danach auf das Bild tippen und sicherstellen, dass mittig **Beenden** erscheint, nach vier Sekunden verschwindet und das Vollbild wirklich beendet. Das zeitversetzte Bild muss dabei weiterlaufen.
-9. Über das Zahnrad mit dem festen Passwort anmelden und eine falsche Eingabe prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
+9. Beim ersten Öffnen ein eigenes Passwort festlegen. Die App neu laden und die Anmeldung mit falschem und richtigem Passwort prüfen. Abmelden und prüfen, dass die Galerie erst nach erneuter Anmeldung wieder erscheint. Dasselbe nach einem Wechsel in den Hintergrund prüfen.
 10. Falls verfügbar, Plattform-Authentifikator einrichten und Anmeldung mit Touch ID, Face ID oder Gerätecode sowie den Passwort-Rückfall testen.
 11. In der Vorschau und beim Leitbild mehrfach auf die Tasten neben dem Zeitstrahl tippen und prüfen, dass jedes Tippen 0,1 Sekunden weiterspringt und die Zeitanzeige mitläuft. Am Anfang und am Ende des Videos darf der Sprung nicht darüber hinauslaufen.
 12. Eine gespeicherte Aufnahme markieren und über das Download-Symbol einzeln herunterladen. Diesen Ablauf mindestens in Safari, Firefox und Chrome prüfen. Bei einer WebM-Aufnahme die Fortschrittsanzeige abwarten, anschließend **MP4 herunterladen** tippen und prüfen, dass eine abspielbare `.mp4`-Datei mit dem vergebenen Namen entsteht. Danach mehrere Medien markieren, dasselbe Download-Symbol tippen und Inhalt sowie Dateinamen des ZIP prüfen. Sicherstellen, dass in der Aufnahmeansicht kein Download-Button erscheint.
@@ -175,7 +175,7 @@ Eine echte iPad-Kamera, Safari-Berechtigungsdialoge und Plattform-Authentifikato
 14. Safari und die installierte PWA getrennt öffnen und prüfen, dass ihre Galerien erwartungsgemäß nicht geteilt werden.
 15. Nach einem vollständigen Online-Start die Netzwerkverbindung deaktivieren und den installierten App-Rahmen erneut öffnen.
 16. Im Web-Inspector kontrollieren, dass beim Aufnehmen und Speichern keine Requests mit Bild- oder Videodaten entstehen und Cache Storage nur statische App-Dateien enthält.
-17. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass Galerie und Geräteanmeldung entfernt sind und beim nächsten Anmelden wieder das feste Passwort verlangt wird.
+17. Unter **Zurücksetzen** zuerst eine falsche Eingabe testen. Danach exakt `Zurücksetzen` eingeben und prüfen, dass die lokalen Aufnahmen und Anmeldedaten entfernt sind und sich wieder ein eigenes Passwort festlegen lässt.
 18. Kamerazugriff in den Website-Einstellungen verweigern und die Fehlermeldung prüfen.
 
 Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `MediaRecorder`. Der reale Formatmix muss zusätzlich auf der eingesetzten Safari-/iPadOS-Version geprüft werden.
@@ -189,7 +189,7 @@ Die automatische Prüfung des Aufnahmeformats verwendet einen simulierten `Media
 - `video-converter.js` – lokale WebM-zu-H.264-MP4-Konvertierung für Galeriedownloads
 - `annotation.js` – lokale Annotation eines aktuellen Videoframes
 - `media-store.js` – explizite, persistente Medienspeicherung in OPFS oder IndexedDB
-- `teacher-auth.js` – PBKDF2-Prüfung des festen Passworts, Reset und optionale WebAuthn-Anmeldung
+- `teacher-auth.js` – lokale Passwortvergabe, PBKDF2-Prüfung, Reset und optionale WebAuthn-Anmeldung
 - `media-utils.js` – getestete Formatauswahl, Zeitformatierung und Reglerarithmetik der verzögerten Wiedergabe
 - `pages/leitbilder/` – Auswahl und Wiedergabe der Leitbild-Videos; `guide-tree.js` darin wird erzeugt
 - `Videos/` – Ordnerstruktur der lokalen Leitbild-Videos; sie bestimmt die Navigation

@@ -128,7 +128,7 @@ await new Promise((resolve, reject) => {
 });
 const appPort = webServer.address().port;
 const appUrl = `http://127.0.0.1:${appPort}/`;
-const testPassword = process.env.SPORTKAMERA_TEST_PASSWORD || '';
+const testPassword = 'Eigenes Passwort im Browsertest';
 
 const debugPortServer = createServer();
 await new Promise((resolve, reject) => {
@@ -384,11 +384,23 @@ async function navigate(url = appUrl) {
   await waitFor(`document.readyState === 'complete'`);
 }
 
-async function reload(ignoreCache = true) {
+async function reload({ keepLoginOpen = false } = {}) {
   const loaded = client.once('Page.loadEventFired');
-  await client.send('Page.reload', { ignoreCache });
+  await client.send('Page.reload', { ignoreCache: true });
   await loaded;
   await waitFor(`document.readyState === 'complete'`);
+  await waitFor(`document.querySelector('#account-dialog').open`);
+  if (!keepLoginOpen) await click('#account-close');
+}
+
+async function finishAccountLogin() {
+  await waitFor(`!document.querySelector('#account-dialog').open
+    || !document.querySelector('#account-enrollment-step').hidden`);
+  if (await evaluate(`document.querySelector('#account-dialog').open
+    && !document.querySelector('#account-enrollment-step').hidden`)) {
+    await click('#account-enrollment-skip');
+  }
+  await waitFor(`!document.querySelector('#gallery-entry').hidden`);
 }
 
 async function setViewport(width, height) {
@@ -419,6 +431,9 @@ let lifecycleAutomated = false;
 try {
   await setViewport(1024, 1366);
   await navigate();
+  await waitFor(`document.querySelector('#account-dialog').open
+    && !document.querySelector('#account-setup-step').hidden`);
+  await click('#account-close');
 
   const initial = await evaluate(`({
     title: document.title,
@@ -749,21 +764,31 @@ try {
   assert.equal(await evaluate(`document.querySelector('#photo-preview').getAttribute('src')`), null);
   results.push('Neuladen stellt keine frühere Aufnahme wieder her');
 
-  if (testPassword) {
+  {
     await waitFor(`!document.querySelector('#settings-button').disabled`);
     await click('#settings-button');
-    await waitFor(`document.querySelector('#account-dialog').open`);
+    await waitFor(`document.querySelector('#account-dialog').open
+      && !document.querySelector('#account-setup-step').hidden`);
+    await evaluate(`(() => {
+      document.querySelector('#account-new-password').value = ${JSON.stringify(testPassword)};
+      document.querySelector('#account-confirm-password').value = 'Abweichende Wiederholung';
+    })()`);
+    await click('#account-setup-submit');
+    await waitFor(`document.querySelector('#account-status').textContent.includes('stimmen nicht überein')`);
+    await evaluate(`document.querySelector('#account-confirm-password').value = ${JSON.stringify(testPassword)}`);
+    await click('#account-setup-submit');
+    await finishAccountLogin();
+
+    await reload({ keepLoginOpen: true });
+    assert.equal(await evaluate(`document.querySelector('#account-setup-step').hidden`), true);
+    await evaluate(`document.querySelector('#account-password').value = 'Falsches Passwort im Browsertest'`);
+    await click('#account-password-submit');
+    await waitFor(`document.querySelector('#account-status').textContent === 'Das Passwort ist nicht korrekt.'`);
     await evaluate(`(() => {
       document.querySelector('#account-password').value = ${JSON.stringify(testPassword)};
     })()`);
     await click('#account-password-submit');
-    await waitFor(`!document.querySelector('#account-dialog').open
-      || !document.querySelector('#account-enrollment-step').hidden`);
-    if (await evaluate(`document.querySelector('#account-dialog').open
-      && !document.querySelector('#account-enrollment-step').hidden`)) {
-      await click('#account-enrollment-skip');
-    }
-    await waitFor(`!document.querySelector('#gallery-entry').hidden`);
+    await finishAccountLogin();
     await click('#gallery-entry');
     await waitFor(`document.body.dataset.view === 'gallery'
       && document.querySelectorAll('.gallery-card').length >= 2`);
@@ -891,9 +916,9 @@ try {
       && document.querySelector('#gallery-entry').hidden`);
     await click('#settings-button');
     await waitFor(`document.querySelector('#account-dialog').open
-      && !document.querySelector('#account-password-step').hidden`);
+      && !document.querySelector('#account-setup-step').hidden`);
     await click('#account-close');
-    results.push('Festes Zugangspasswort, geschützte Galerie, Einzel- und ZIP-Download, Annotation, Mehrfachlöschung und Komplett-Reset');
+    results.push('Eigenes Passwort, Anmeldung nach Neuladen, geschützte Galerie, Einzel- und ZIP-Download, Annotation, Mehrfachlöschung und Komplett-Reset');
   }
 
   const workerState = await evaluate(`navigator.serviceWorker.ready.then((registration) => ({
