@@ -2014,8 +2014,7 @@ input.gallery-card-selection {
 }
 
 .account-panel,
-.account-step,
-.account-enrollment-step {
+.account-step {
   display: grid;
   gap: 0.8rem;
 }
@@ -2147,47 +2146,15 @@ input.gallery-card-selection {
   font-weight: 750;
 }
 
-.account-enrollment-step,
 .account-reset-panel,
 #account-authenticated-step {
   justify-items: center;
   text-align: center;
 }
 
-.account-enrollment-step .dialog-actions,
 .account-reset-panel .dialog-actions,
 #account-authenticated-step .dialog-actions {
   justify-content: center;
-}
-
-.enrollment-icon {
-  position: relative;
-  display: grid;
-  width: 62px;
-  height: 62px;
-  margin-bottom: 0.25rem;
-  background: var(--aqua);
-  border-radius: 19px;
-  place-items: center;
-}
-
-.enrollment-icon::before {
-  width: 24px;
-  height: 29px;
-  content: "";
-  border: 3px solid var(--teal);
-  border-radius: 13px 13px 9px 9px;
-  clip-path: polygon(50% 0, 100% 18%, 90% 76%, 50% 100%, 10% 76%, 0 18%);
-}
-
-.enrollment-icon::after {
-  position: absolute;
-  width: 12px;
-  height: 6px;
-  content: "";
-  border-bottom: 3px solid var(--coral);
-  border-left: 3px solid var(--coral);
-  transform: translateY(-1px) rotate(-45deg);
 }
 
 .gallery-delete-dialog-shell {

@@ -395,12 +395,7 @@ async function reload({ keepLoginOpen = false } = {}) {
 
 async function finishAccountLogin() {
   await waitFor(`!document.querySelector('#account-dialog').open
-    || !document.querySelector('#account-enrollment-step').hidden`);
-  if (await evaluate(`document.querySelector('#account-dialog').open
-    && !document.querySelector('#account-enrollment-step').hidden`)) {
-    await click('#account-enrollment-skip');
-  }
-  await waitFor(`!document.querySelector('#gallery-entry').hidden`);
+    && !document.querySelector('#gallery-entry').hidden`);
 }
 
 async function setViewport(width, height) {

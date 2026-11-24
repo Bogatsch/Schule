@@ -177,9 +177,8 @@ assert.match(
 );
 assert.match(html, /id="account-biometric-section"/, 'Bereich für die Gerätebestätigung fehlt');
 assert.match(html, /id="account-biometric-button"/, 'Taste für die Gerätebestätigung fehlt');
-assert.match(html, /id="account-enrollment-step"/, 'Einrichtungsschritt für die Gerätebestätigung fehlt');
-assert.match(html, /id="account-enrollment-button"/, 'Taste zum Einrichten der Gerätebestätigung fehlt');
-assert.match(html, /id="account-enrollment-skip"/, 'Überspringen der Gerätebestätigung fehlt');
+assert.doesNotMatch(html, /id="account-enrollment-(step|skip)"/, 'Nachfrage zur Gerätebestätigung ist noch vorhanden');
+assert.match(html, /id="account-authenticated-step"[\s\S]*?id="account-enrollment-button"[^>]*hidden/, 'Manuelle Einrichtung gehört in den angemeldeten Bereich');
 assert.match(html, /id="account-reset-confirmation"/, 'Bestätigungsfeld für den Komplett-Reset fehlt');
 assert.match(html, /id="account-reset-submit"[^>]*disabled/, 'Komplett-Reset muss zunächst deaktiviert sein');
 assert.match(html, /Zum Bestätigen „Zurücksetzen“ eingeben/, 'Reset verlangt nicht das Bestätigungswort');
@@ -214,8 +213,8 @@ assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(guidesHtml, /styles\.css\?v=41/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
-assert.match(html, /styles\.css\?v=45/, 'Versionskennung gegen veraltetes App-CSS fehlt');
-assert.match(html, /app\.js\?v=53/, 'Versionskennung gegen veraltete App-Logik fehlt');
+assert.match(html, /styles\.css\?v=46/, 'Versionskennung gegen veraltetes App-CSS fehlt');
+assert.match(html, /app\.js\?v=54/, 'Versionskennung gegen veraltete App-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -464,8 +463,8 @@ for (const [quelle, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Sei
     );
   }
 }
-assert.match(worker, /\.\/app\.js\?v=53/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=45/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/app\.js\?v=54/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=46/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-upload\.js\?v=8/, 'WebDAV-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-protocol\.js\?v=1/, 'WebDAV-Protokoll fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-qr\.js\?v=3/, 'QR-Logik fehlt in der statischen App-Shell');

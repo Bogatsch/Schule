@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=45">
-    <script type="module" src="./app.js?v=53"></script>
+    <link rel="stylesheet" href="./styles.css?v=46">
+    <script type="module" src="./app.js?v=54"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -420,6 +420,7 @@
                 <h3>Du bist angemeldet</h3>
                 <p class="dialog-copy">Die Galerie ist freigeschaltet, bis die App verlassen oder in den Hintergrund gelegt wird.</p>
                 <div class="dialog-actions">
+                  <button id="account-enrollment-button" class="secondary-action" type="button" hidden>Gerätebestätigung einrichten</button>
                   <button id="account-logout" class="secondary-action" type="button">Abmelden</button>
                 </div>
               </div>
@@ -460,16 +461,6 @@
                 </div>
               </div>
 
-              <section id="account-enrollment-step" class="account-enrollment-step" aria-labelledby="account-enrollment-title" hidden>
-                <span class="enrollment-icon" aria-hidden="true"></span>
-                <p class="eyebrow">Optional</p>
-                <h3 id="account-enrollment-title">Schneller mit diesem Gerät anmelden</h3>
-                <p class="dialog-copy">Richte die Gerätebestätigung für spätere Anmeldungen ein.</p>
-                <div class="dialog-actions">
-                  <button id="account-enrollment-button" class="primary-action" type="button">Gerätebestätigung einrichten</button>
-                  <button id="account-enrollment-skip" class="secondary-action" type="button">Jetzt nicht</button>
-                </div>
-              </section>
             </section>
           </form>
 

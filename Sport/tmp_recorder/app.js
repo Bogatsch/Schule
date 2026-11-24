@@ -39,7 +39,6 @@ import {
 import {
   authenticateWithPlatform,
   enrollPlatformCredential,
-  forgetPlatformCredential,
   getTeacherAuthState,
   preloadTeacherAuth,
   resetAuthentication,
@@ -198,9 +197,7 @@ const elements = {
   accountBiometricSection: document.querySelector('#account-biometric-section'),
   accountBiometricDivider: document.querySelector('#account-biometric-divider'),
   accountBiometricButton: document.querySelector('#account-biometric-button'),
-  accountEnrollmentStep: document.querySelector('#account-enrollment-step'),
   accountEnrollmentButton: document.querySelector('#account-enrollment-button'),
-  accountEnrollmentSkip: document.querySelector('#account-enrollment-skip'),
   accountLogout: document.querySelector('#account-logout'),
   accountResetForm: document.querySelector('#account-reset-form'),
   accountResetPanel: document.querySelector('#account-reset-panel'),
@@ -310,10 +307,8 @@ let currentSavedMediaId = null;
 let videoNameSaving = false;
 let videoNameRestoreFocus = true;
 let teacherMode = false;
-let teacherAuthVerified = false;
 let teacherAuthReady = false;
 let teacherAuthOperationId = 0;
-let teacherPlatformNeedsRepair = false;
 let accountResetInProgress = false;
 let galleryItems = [];
 let gallerySelectedIds = new Set();
@@ -1856,7 +1851,8 @@ function renderAccountLoginSteps() {
   elements.accountAuthenticatedStep.hidden = !teacherMode;
   elements.accountSetupStep.hidden = teacherMode || state.passwordConfigured;
   elements.accountPasswordStep.hidden = teacherMode || !state.passwordConfigured;
-  elements.accountEnrollmentStep.hidden = true;
+  elements.accountEnrollmentButton.hidden = !teacherMode || !state.platformAvailable
+    || !state.storageAvailable || state.platformEnrolled;
   const showPlatformLogin = !teacherMode && state.ready && state.platformAvailable && state.platformEnrolled;
   elements.accountBiometricSection.hidden = !showPlatformLogin;
   elements.accountBiometricDivider.hidden = !showPlatformLogin;
@@ -1866,7 +1862,8 @@ function resetAccountLoginFields() {
   elements.accountLoginForm.reset();
   for (const control of [
     elements.accountNewPassword, elements.accountConfirmPassword, elements.accountSetupSubmit,
-    elements.accountPassword, elements.accountPasswordSubmit, elements.accountBiometricButton
+    elements.accountPassword, elements.accountPasswordSubmit, elements.accountBiometricButton,
+    elements.accountEnrollmentButton
   ]) {
     control.disabled = false;
   }
@@ -1877,8 +1874,6 @@ function selectAccountPanel(panel, { focus = true } = {}) {
     return;
   }
   teacherAuthOperationId += 1;
-  teacherAuthVerified = false;
-  teacherPlatformNeedsRepair = false;
   resetAccountLoginFields();
   renderAccountLoginSteps();
   setAccountPanel(panel, { focus });
@@ -1886,15 +1881,11 @@ function selectAccountPanel(panel, { focus = true } = {}) {
 
 function resetAccountDialog() {
   accountResetInProgress = false;
-  teacherAuthVerified = false;
-  teacherPlatformNeedsRepair = false;
   resetAccountLoginFields();
   elements.accountResetForm.reset();
   elements.accountStatus.textContent = '';
   elements.accountStatus.dataset.status = '';
   renderAccountLoginSteps();
-  elements.accountEnrollmentButton.disabled = false;
-  elements.accountEnrollmentButton.textContent = 'Gerätebestätigung einrichten';
   elements.accountResetConfirmation.disabled = false;
   elements.accountResetSubmit.disabled = true;
   elements.accountLoginTab.disabled = false;
@@ -1915,7 +1906,6 @@ function openAccountDialog(panel = 'login') {
 }
 
 function activateProtectedAccess() {
-  teacherAuthVerified = false;
   teacherMode = true;
   cleanupMedia({ nextView: 'start' });
   updateProtectedAccessUI();
@@ -1969,7 +1959,6 @@ function authenticateWithDevice() {
     if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
       return;
     }
-    teacherPlatformNeedsRepair = !['cancelled', 'platform-unavailable', 'not-ready'].includes(error?.code);
     elements.accountBiometricButton.disabled = false;
     elements.accountStatus.textContent = authenticationErrorMessage(error);
     elements.accountPassword.focus({ preventScroll: true });
@@ -2020,67 +2009,31 @@ async function submitAccountLogin() {
     return;
   }
 
-  const state = getTeacherAuthState();
-  if (
-    state.platformAvailable
-    && state.storageAvailable
-    && (!state.platformEnrolled || teacherPlatformNeedsRepair)
-  ) {
-    if (teacherPlatformNeedsRepair && state.platformEnrolled) {
-      try {
-        await forgetPlatformCredential({ preserveEnrollmentAuthorization: true });
-      } catch {
-        completeAuthentication(authOperation);
-        return;
-      }
-      if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
-        return;
-      }
-      elements.accountEnrollmentButton.textContent = 'Gerätebestätigung neu einrichten';
-    }
-    teacherAuthVerified = true;
-    elements.accountSetupStep.hidden = true;
-    elements.accountPasswordStep.hidden = true;
-    elements.accountEnrollmentStep.hidden = false;
-    elements.accountStatus.textContent = '';
-    elements.accountStatus.dataset.status = '';
-    elements.accountEnrollmentButton.focus({ preventScroll: true });
-    return;
-  }
   completeAuthentication(authOperation);
 }
 
-function enrollAccountPlatformCredential() {
-  if (!teacherAuthVerified) {
-    elements.accountStatus.textContent = 'Bitte melde dich erneut mit dem Passwort an.';
-    return;
-  }
-  if (elements.accountEnrollmentButton.disabled) {
-    return;
-  }
+async function enrollAccountPlatformCredential() {
+  const button = elements.accountEnrollmentButton;
+  if (!teacherMode || button.hidden || button.disabled) return;
   const authOperation = teacherAuthOperationId;
-  elements.accountEnrollmentButton.disabled = true;
+  button.disabled = true;
+  elements.accountStatus.dataset.status = '';
   elements.accountStatus.textContent = 'Gerätebestätigung wird eingerichtet …';
-  let enrollment;
   try {
-    enrollment = enrollPlatformCredential();
+    await enrollPlatformCredential();
+    if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) return;
+    renderAccountLoginSteps();
+    elements.accountStatus.textContent = 'Die Gerätebestätigung ist eingerichtet.';
+    elements.accountLogout.focus({ preventScroll: true });
   } catch (error) {
-    elements.accountEnrollmentButton.disabled = false;
-    elements.accountStatus.textContent = authenticationErrorMessage(error);
-    return;
+    if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) return;
+    button.disabled = false;
+    elements.accountStatus.dataset.status = 'error';
+    elements.accountStatus.textContent = error?.code === 'authorization-required'
+      ? 'Melde dich erneut mit dem Passwort an, um die Gerätebestätigung einzurichten.'
+      : error?.message ?? 'Die Gerätebestätigung konnte nicht eingerichtet werden.';
+    button.focus({ preventScroll: true });
   }
-  enrollment.then(() => {
-    completeAuthentication(authOperation);
-  }).catch((error) => {
-    if (authOperation !== teacherAuthOperationId || !elements.accountDialog.open) {
-      return;
-    }
-    elements.accountEnrollmentButton.disabled = false;
-    elements.accountStatus.textContent = error?.code === 'cancelled'
-      ? 'Die Einrichtung wurde abgebrochen. Du kannst sie überspringen.'
-      : 'Die Gerätebestätigung konnte nicht eingerichtet werden. Du kannst sie überspringen.';
-    elements.accountEnrollmentSkip.focus({ preventScroll: true });
-  });
 }
 
 async function resetLocalAccess() {
@@ -2954,7 +2907,6 @@ function exitTeacherMode({ restoreFocus = true } = {}) {
   webDavQr = null;
   clearWebDavQrJob();
   renderWebDav(webDav.getState());
-  teacherAuthVerified = false;
   galleryZipDownloadRequestId += 1;
   galleryZipDownloadInProgress = false;
   gallerySelectedIds.clear();
@@ -3225,11 +3177,6 @@ elements.accountLoginForm.addEventListener('submit', (event) => {
 });
 elements.accountBiometricButton.addEventListener('click', authenticateWithDevice);
 elements.accountEnrollmentButton.addEventListener('click', enrollAccountPlatformCredential);
-elements.accountEnrollmentSkip.addEventListener('click', () => {
-  if (teacherAuthVerified) {
-    completeAuthentication();
-  }
-});
 elements.accountLogout.addEventListener('click', () => exitTeacherMode());
 
 elements.accountWebDavForm.addEventListener('submit', (event) => {
@@ -3290,7 +3237,6 @@ elements.accountClose.addEventListener('click', () => {
 });
 elements.accountDialog.addEventListener('close', () => {
   teacherAuthOperationId += 1;
-  teacherAuthVerified = false;
   webDav.cancelConnection();
   elements.accountWebDavForm.reset();
   clearWebDavQrJob();
@@ -3615,7 +3561,6 @@ accountSyncChannel?.addEventListener('message', (event) => {
 
 window.addEventListener('pagehide', () => {
   teacherAuthOperationId += 1;
-  teacherAuthVerified = false;
   closeModal(elements.accountDialog);
   cleanupMedia({ nextView: 'start' });
   if (teacherMode) {
@@ -3624,7 +3569,6 @@ window.addEventListener('pagehide', () => {
 });
 window.addEventListener('beforeunload', () => {
   teacherAuthOperationId += 1;
-  teacherAuthVerified = false;
   closeModal(elements.accountDialog);
   cleanupMedia({ nextView: 'start' });
   if (teacherMode) {
@@ -3634,7 +3578,6 @@ window.addEventListener('beforeunload', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     teacherAuthOperationId += 1;
-    teacherAuthVerified = false;
     cleanupMedia({ nextView: 'start' });
     if (teacherMode) {
       exitTeacherMode({ restoreFocus: false });
