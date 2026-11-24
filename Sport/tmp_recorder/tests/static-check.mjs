@@ -19,6 +19,7 @@ const requiredFiles = [
   'webdav-upload.js',
   'webdav-protocol.js',
   'webdav-qr.js',
+  'page-freeze.js',
   'client-pairing.js',
   'client-hosting.js',
   'vendor/qrcode-generator/qrcode-2.0.4.js',
@@ -150,6 +151,8 @@ assert.match(html, /id="webdav-password"[^>]*type="password"/, 'Verdeckte WebDAV
 assert.match(html, /id="webdav-remember"[^>]*type="checkbox"/, 'Speicherung des WebDAV-Passworts benötigt eine ausdrückliche Auswahl');
 assert.match(html, /<canvas id="webdav-qr"/, 'QR-Code für die Videoabgabe fehlt');
 assert.match(html, /id="webdav-pin"/, 'Zahlencode unter dem WebDAV-QR-Code fehlt');
+assert.match(html, /id="webdav-freeze"[^>]*type="button"[^>]*hidden>Seite einfrieren</, 'WebDAV-Reiter braucht eine Aktion zum Einfrieren');
+assert.match(html, /id="page-freeze-password"[^>]*type="password"/, 'Die Sperransicht braucht die Passworteingabe');
 assert.doesNotMatch(html, /id="webdav-qr-(url|username|password)"|Adresse des Schüler-Clients|Upload-Dienstes/, 'Der QR-Code nutzt den verbundenen Zugang');
 assert.doesNotMatch(html, /webdav-selected-target|WebDAV für die Galerie/, 'Die verbundene Ansicht zeigt veraltete Zielinformationen');
 assert.match(html, /id="account-reset-tab"[^>]*>Zurücksetzen</, 'Zurücksetzen-Option im Zahnrad-Pop-up fehlt');
@@ -213,8 +216,8 @@ assert.match(html, /data-annotation-tool="pen"/, 'Freihandstift fehlt');
 assert.match(html, /data-annotation-tool="eraser"/, 'Radiergummi fehlt');
 assert.match(html, /data-annotation-color="#ef4f3f"/, 'Farbauswahl für Annotationen fehlt');
 assert.match(guidesHtml, /styles\.css\?v=41/, 'Leitbilder-Seite lädt ein veraltetes Stylesheet');
-assert.match(html, /styles\.css\?v=46/, 'Versionskennung gegen veraltetes App-CSS fehlt');
-assert.match(html, /app\.js\?v=54/, 'Versionskennung gegen veraltete App-Logik fehlt');
+assert.match(html, /styles\.css\?v=47/, 'Versionskennung gegen veraltetes App-CSS fehlt');
+assert.match(html, /app\.js\?v=55/, 'Versionskennung gegen veraltete App-Logik fehlt');
 assert.doesNotMatch(html, /speed-chevron|⌃/, 'Geschwindigkeitsknopf enthält noch ein Pfeilsymbol');
 assert.doesNotMatch(html, /<button id="(?:play|comparison-play)-button"[^>]*>[\s\S]*?<span>(?:Start|Pause)<\/span>/, 'Player zeigt noch Start-/Pause-Text');
 assert.match(app, /toggleComparisonPlayback/, 'unabhängige Wiedergabesteuerung des Leitbilds fehlt');
@@ -463,8 +466,9 @@ for (const [quelle, name] of [[html, 'index.html'], [guidesHtml, 'Leitbilder-Sei
     );
   }
 }
-assert.match(worker, /\.\/app\.js\?v=54/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
-assert.match(worker, /\.\/styles\.css\?v=46/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/app\.js\?v=55/, 'aktuelle App-Logik fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/styles\.css\?v=47/, 'aktuelles Stylesheet fehlt in der statischen App-Shell');
+assert.match(worker, /\.\/page-freeze\.js\?v=1/, 'Sperransicht fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-upload\.js\?v=8/, 'WebDAV-Logik fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-protocol\.js\?v=1/, 'WebDAV-Protokoll fehlt in der statischen App-Shell');
 assert.match(worker, /\.\/webdav-qr\.js\?v=3/, 'QR-Logik fehlt in der statischen App-Shell');

@@ -22,6 +22,7 @@ import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
 import { createWebDavUpload } from './webdav-upload.js?v=8';
 import { drawSubmissionQr } from './webdav-qr.js?v=3';
+import { createPageFreeze } from './page-freeze.js?v=1';
 import { createClientPairing } from './client-pairing.js?v=4';
 import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=e354de49';
 import {
@@ -218,6 +219,7 @@ const elements = {
   webDavConnect: document.querySelector('#webdav-connect'),
   webDavForgetPassword: document.querySelector('#webdav-forget-password'),
   webDavForget: document.querySelector('#webdav-forget'),
+  webDavFreeze: document.querySelector('#webdav-freeze'),
   webDavStatus: document.querySelector('#webdav-status'),
   galleryViewerDialog: document.querySelector('#gallery-viewer-dialog'),
   galleryViewerClose: document.querySelector('#gallery-viewer-close'),
@@ -342,6 +344,12 @@ const webDav = createWebDavUpload({
   writeSettings: writeWebDavSettings,
   onChange: renderWebDav,
   onSettingsChange: () => accountSyncChannel?.postMessage({ type: 'webdav-settings' })
+});
+const pageFreeze = createPageFreeze({
+  appShell: document.querySelector('#app-shell'),
+  view: document.querySelector('#page-freeze'),
+  verifyPassword,
+  onUnlock: restoreAfterPageFreeze
 });
 
 let accountSyncChannel = null;
@@ -1740,6 +1748,7 @@ function updateProtectedAccessUI() {
 }
 
 function renderWebDav({ target, connectionId, ready, remembered, connecting, uploading, status, error }) {
+  pageFreeze.updateConnection(connectionId, ready);
   if (!ready || webDavQr?.connectionId !== connectionId) webDavQr = null;
   if (!ready || (webDavQrJob && webDavQrJob.connectionId !== connectionId)) clearWebDavQrJob();
   if (ready && !connecting && !uploading && !webDavQr && !webDavQrJob && !webDavQrError
@@ -1753,6 +1762,7 @@ function renderWebDav({ target, connectionId, ready, remembered, connecting, upl
   elements.webDavManagementActions.hidden = !target;
   elements.webDavForgetPassword.hidden = !ready && !remembered;
   elements.webDavForget.hidden = !target;
+  elements.webDavFreeze.hidden = !webDavQr;
   elements.webDavQrDisplay.hidden = !webDavQr;
   elements.webDavPin.textContent = webDavQr?.pin ?? '';
   elements.webDavUrl.disabled = busy || Boolean(target);
@@ -1762,6 +1772,7 @@ function renderWebDav({ target, connectionId, ready, remembered, connecting, upl
   elements.webDavConnect.disabled = busy || ready;
   elements.webDavForget.disabled = busy;
   elements.webDavForgetPassword.disabled = busy;
+  elements.webDavFreeze.disabled = busy;
   if (!webDavQr && elements.webDavQrCanvas.width) {
     elements.webDavQrCanvas.width = 0;
     elements.webDavQrCanvas.height = 0;
@@ -1787,7 +1798,7 @@ async function generateWebDavQr(connectionId) {
     const { link, pin } = await createClientPairing(access);
     if (webDavQrJob !== job) return;
     drawSubmissionQr(elements.webDavQrCanvas, link);
-    webDavQr = { connectionId, pin };
+    webDavQr = { connectionId, link, pin };
   } catch (error) {
     if (webDavQrJob === job) webDavQrError = error.message;
   } finally {
@@ -1796,6 +1807,27 @@ async function generateWebDavQr(connectionId) {
       renderWebDav(webDav.getState());
     }
   }
+}
+
+function freezeWebDavPage() {
+  if (!teacherMode || !elements.accountDialog.open || elements.accountWebDavForm.hidden
+    || !webDavQr || elements.webDavFreeze.disabled) return;
+  const { passwordAvailable, passwordConfigured } = getTeacherAuthState();
+  if (!passwordAvailable || !passwordConfigured) return;
+  const submission = webDavQr;
+  exitTeacherMode({ restoreFocus: false });
+  pageFreeze.setPasswordAvailable(true);
+  pageFreeze.lock(submission);
+}
+
+function restoreAfterPageFreeze(submission) {
+  const { ready, connectionId } = webDav.getState();
+  if (submission && ready && submission.connectionId === connectionId) {
+    drawSubmissionQr(elements.webDavQrCanvas, submission.link);
+    webDavQr = submission;
+  }
+  activateProtectedAccess({ focusGallery: false });
+  openAccountDialog('webdav');
 }
 
 function focusWebDavPanel() {
@@ -1895,6 +1927,7 @@ function resetAccountDialog() {
 }
 
 function openAccountDialog(panel = 'login') {
+  if (pageFreeze.active) return;
   if (!teacherAuthReady) {
     elements.environmentStatus.textContent = 'Die Anmeldung wird noch vorbereitet. Bitte versuche es gleich erneut.';
     return;
@@ -1905,11 +1938,11 @@ function openAccountDialog(panel = 'login') {
   setAccountPanel(panel, { focus: true });
 }
 
-function activateProtectedAccess() {
+function activateProtectedAccess({ focusGallery = true } = {}) {
   teacherMode = true;
   cleanupMedia({ nextView: 'start' });
   updateProtectedAccessUI();
-  window.setTimeout(() => elements.galleryEntry.focus({ preventScroll: true }), 0);
+  if (focusGallery) window.setTimeout(() => elements.galleryEntry.focus({ preventScroll: true }), 0);
 }
 
 function completeAuthentication(authOperation = teacherAuthOperationId) {
@@ -3219,6 +3252,7 @@ async function forgetWebDav(passwordOnly) {
 }
 elements.webDavForgetPassword.addEventListener('click', () => void forgetWebDav(true));
 elements.webDavForget.addEventListener('click', () => void forgetWebDav(false));
+elements.webDavFreeze.addEventListener('click', freezeWebDavPage);
 elements.accountResetConfirmation.addEventListener('input', () => {
   elements.accountResetSubmit.disabled = elements.accountResetConfirmation.value !== 'Zurücksetzen';
   elements.accountStatus.textContent = '';
@@ -3561,12 +3595,14 @@ accountSyncChannel?.addEventListener('message', (event) => {
 
 window.addEventListener('pagehide', () => {
   teacherAuthOperationId += 1;
+  pageFreeze.suspend();
   closeModal(elements.accountDialog);
   cleanupMedia({ nextView: 'start' });
   if (teacherMode) {
     exitTeacherMode({ restoreFocus: false });
   }
 });
+window.addEventListener('pageshow', () => void pageFreeze.resume());
 window.addEventListener('beforeunload', () => {
   teacherAuthOperationId += 1;
   closeModal(elements.accountDialog);
@@ -3578,16 +3614,20 @@ window.addEventListener('beforeunload', () => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     teacherAuthOperationId += 1;
+    pageFreeze.suspend();
     cleanupMedia({ nextView: 'start' });
     if (teacherMode) {
       exitTeacherMode({ restoreFocus: false });
     } else {
       closeModal(elements.accountDialog);
     }
+  } else {
+    void pageFreeze.resume();
   }
 });
 
 function initialize() {
+  pageFreeze.restore();
   cleanupMedia({ nextView: 'start' });
   teacherMode = false;
   teacherAuthReady = false;
@@ -3595,15 +3635,17 @@ function initialize() {
   updateProtectedAccessUI();
   renderWebDav(webDav.getState());
   void webDav.refresh();
-  preloadTeacherAuth().then(() => {
+  preloadTeacherAuth().then(({ passwordAvailable, passwordConfigured }) => {
     teacherAuthReady = true;
     elements.settingsButton.disabled = false;
+    pageFreeze.setPasswordAvailable(passwordAvailable && passwordConfigured);
     if (document.visibilityState === 'visible' && document.body.dataset.view === 'start') {
       openAccountDialog();
     }
   }).catch(() => {
     teacherAuthReady = true;
     elements.settingsButton.disabled = false;
+    pageFreeze.setPasswordAvailable(false);
   });
   const supportMessage = browserSupportMessage('photo');
   if (supportMessage) {

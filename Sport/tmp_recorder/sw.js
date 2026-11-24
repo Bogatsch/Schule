@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v63';
+const CACHE_VERSION = 'v64';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
@@ -14,6 +14,7 @@ const APP_SHELL = Object.freeze([
   './styles.css?v=44',
   './styles.css?v=45',
   './styles.css?v=46',
+  './styles.css?v=47',
   './annotation.js',
   './annotation.js?v=27',
   './annotation.js?v=29',
@@ -50,6 +51,8 @@ const APP_SHELL = Object.freeze([
   './app.js?v=52',
   './app.js?v=53',
   './app.js?v=54',
+  './app.js?v=55',
+  './page-freeze.js?v=1',
   './webdav-upload.js?v=8',
   './webdav-protocol.js?v=1',
   './webdav-qr.js?v=3',

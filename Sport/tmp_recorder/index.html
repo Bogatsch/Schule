@@ -15,13 +15,12 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=46">
-    <script type="module" src="./app.js?v=54"></script>
+    <link rel="stylesheet" href="./styles.css?v=47">
+    <script type="module" src="./app.js?v=55"></script>
   </head>
   <body data-view="start">
-    <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
-
-    <div class="app-shell">
+    <div id="app-shell" class="app-shell" hidden>
+      <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
       <header class="topbar" aria-label="App-Kopfzeile">
         <div class="brand" aria-label="Sportkamera">
           <span class="brand-mark" aria-hidden="true"><span></span></span>
@@ -494,6 +493,7 @@
               <div id="webdav-management-actions" class="webdav-management-actions" hidden>
                 <button id="webdav-forget-password" class="secondary-action" type="button" hidden>Passwort entfernen</button>
                 <button id="webdav-forget" class="secondary-action" type="button" hidden>Ziel entfernen</button>
+                <button id="webdav-freeze" class="secondary-action" type="button" hidden>Seite einfrieren</button>
               </div>
               <p id="webdav-status" class="dialog-status" role="status" hidden></p>
             </section>
@@ -647,6 +647,25 @@
       </dialog>
 
     </div>
+
+    <section id="page-freeze" class="page-freeze" role="main" aria-labelledby="page-freeze-title" hidden>
+      <div class="page-freeze-content">
+        <h1 id="page-freeze-title" tabindex="-1">Seite eingefroren</h1>
+        <figure id="page-freeze-qr-display" class="page-freeze-qr" hidden>
+          <canvas id="page-freeze-qr" role="img" aria-label="QR-Code zur Videoabgabe"></canvas>
+          <figcaption class="webdav-pin">Zahlencode <strong id="page-freeze-pin"></strong></figcaption>
+        </figure>
+        <p id="page-freeze-missing-qr">Entsperre die Seite, um den QR-Code wieder anzuzeigen.</p>
+      </div>
+      <form id="page-freeze-form" class="page-freeze-form">
+        <div class="account-password-field">
+          <label for="page-freeze-password">Lehrkraft-Passwort</label>
+          <input id="page-freeze-password" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required disabled>
+        </div>
+        <button id="page-freeze-submit" class="primary-action" type="submit" disabled>Entsperren</button>
+        <p id="page-freeze-status" class="dialog-status" role="status" aria-live="polite" hidden></p>
+      </form>
+    </section>
 
     <canvas id="capture-canvas" aria-hidden="true" hidden></canvas>
     <noscript>Diese Anwendung benötigt JavaScript, um auf die Kamera zuzugreifen.</noscript>

@@ -1962,10 +1962,77 @@ input.gallery-card-selection {
 }
 
 .webdav-management-actions .secondary-action {
+  min-width: 0;
   min-height: 48px;
   padding-inline: 0.6rem;
   justify-content: center;
   text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.page-freeze {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  gap: 1rem;
+  padding: max(0.7rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+}
+
+.page-freeze-content {
+  align-self: center;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.page-freeze h1 {
+  margin: 0 0 0.55rem;
+  font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+  color: var(--teal);
+}
+
+.page-freeze-qr {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+}
+
+.page-freeze-qr canvas {
+  display: block;
+  width: min(82vw, 36rem);
+  width: clamp(8rem, min(82vw, calc(100dvh - 15rem)), 36rem);
+  max-width: 100%;
+  height: auto;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  image-rendering: pixelated;
+}
+
+.page-freeze-qr strong {
+  font-size: clamp(1.7rem, 4vw, 2.35rem);
+}
+
+.page-freeze-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+  width: min(100%, 32rem);
+}
+
+.page-freeze-form button {
+  min-height: 52px;
+}
+
+.page-freeze-form .dialog-status {
+  grid-column: 1 / -1;
 }
 
 .webdav-checkbox {

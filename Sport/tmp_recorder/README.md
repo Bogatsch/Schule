@@ -76,6 +76,8 @@ Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann e
 
 Sobald WebDAV verbunden ist, zeigt der WebDAV-Reiter einen QR-Code und darunter einen vierstelligen Zahlencode. Die App verwendet den bereits verbundenen Zugang. Im Schüler-Client den QR-Code scannen, den Zahlencode eingeben und **Verbinden** wählen. Nach der Prüfung lädt der Client jedes abgegebene Video direkt in den WebDAV-Ordner.
 
+Mit **Seite einfrieren** zeigt die Hauptapp den QR-Code und Zahlencode groß und sperrt die übrige Oberfläche. Das Lehrkraft-Passwort öffnet wieder den WebDAV-Reiter. Beim Neuladen bleibt der Tab gesperrt, bis das Passwort eingegeben wurde. Der QR-Code und Zahlencode werden beim Entsperren wiederhergestellt oder neu erzeugt und liegen nur im Arbeitsspeicher. Auf unterstützten Geräten bittet die App das System, den Bildschirm während der Sperre eingeschaltet zu lassen. [Screen Wake Lock API](https://www.w3.org/TR/screen-wake-lock/)
+
 Der QR-Code enthält den mit der PIN verschlüsselten WebDAV-Zugang. Der Client erhält die Rechte des verbundenen Kontos. Vierstellige PINs lassen sich bei einem kopierten QR-Code durch Ausprobieren ermitteln. Verbinde daher möglichst ein WebDAV-Konto mit auf den Abgabeordner begrenzten Rechten. Kopierte QR-Codes bleiben verwendbar, solange der Server die Zugangsdaten akzeptiert. [Anleitung zum Schüler-Client](../tmp_recorder_client/README.md)
 
 ### Voraussetzungen am Server
