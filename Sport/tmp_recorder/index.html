@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
     <link rel="stylesheet" href="./styles.css?v=44">
-    <script type="module" src="./app.js?v=50"></script>
+    <script type="module" src="./app.js?v=51"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -480,13 +480,22 @@
                 <canvas id="webdav-qr" role="img" aria-label="QR-Code zur Videoabgabe"></canvas>
               </button>
               <div id="webdav-qr-editor" class="account-step" hidden>
+                <p>Der QR-Code enthält den Abgabezugang. Verwende ein separates WebDAV-Konto mit Upload-Rechten für den Zielordner.</p>
                 <div class="account-password-field">
-                  <label for="webdav-qr-key">Freigabeschlüssel des Upload-Dienstes</label>
-                  <input id="webdav-qr-key" type="password" maxlength="512" autocomplete="off" required disabled>
+                  <label for="webdav-qr-url">HTTPS-Adresse des WebDAV-Ordners für die Abgabe</label>
+                  <input id="webdav-qr-url" type="url" autocomplete="off" required disabled>
+                </div>
+                <div class="account-password-field">
+                  <label for="webdav-qr-username">WebDAV-Benutzername für die Abgabe</label>
+                  <input id="webdav-qr-username" type="text" autocomplete="off" autocapitalize="none" required disabled>
+                </div>
+                <div class="account-password-field">
+                  <label for="webdav-qr-password">WebDAV-Passwort für die Abgabe</label>
+                  <input id="webdav-qr-password" type="password" autocomplete="off" required disabled>
                 </div>
                 <div class="dialog-actions">
                   <button id="webdav-qr-save" class="primary-action" type="submit">QR-Code erzeugen</button>
-                  <button id="webdav-qr-close" class="secondary-action" type="button" hidden>Abgabe schließen</button>
+                  <button id="webdav-qr-close" class="secondary-action" type="button" hidden>QR-Code ausblenden</button>
                   <button id="webdav-qr-cancel" class="secondary-action" type="button" hidden>Abbrechen</button>
                 </div>
               </div>

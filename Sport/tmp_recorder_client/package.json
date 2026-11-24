@@ -5,8 +5,7 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
-    "start": "node server.mjs",
-    "check": "node --check server.mjs && node --check pairing.js && node --check client.js && node --check teacher.js",
-    "test": "npm run check && node --test server.test.mjs"
+    "check": "node --check client.js && node --check ../tmp_recorder/client-pairing.js && node --check ../tmp_recorder/webdav-protocol.js",
+    "test": "npm run check && node --test client.test.mjs"
   }
 }

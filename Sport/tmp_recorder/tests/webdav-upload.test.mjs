@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createWebDavUpload } from '../webdav-upload.js';
-import { clientPairingLink, closeClientPairing, createClientPairing } from '../client-pairing.js';
-import { STUDENT_CLIENT_URL } from '../client-hosting.js';
 
 const login = {
   url: 'https://dav.example.org/remote/Sport%20Kamera',
@@ -170,63 +168,4 @@ test('bricht auch beim Laden der Einstellungen ab, wenn die Galerie geschlossen 
   resume();
   assert.equal((await pending).cancelled, true);
   assert.equal(uploads().length, 0);
-});
-
-test('behält die Client-Freigabe getrennt von den WebDAV-Zugangsdaten und entfernt sie mit dem Ziel', async (t) => {
-  const { newSession, save, uploads, settings } = setup(t);
-  const upload = newSession();
-  const targetUrl = `${login.url}/`;
-  const pairing = { service: 'https://client.example.org', client: STUDENT_CLIENT_URL, code: 'a'.repeat(43), expires: Date.now() + 60_000 };
-  await assert.rejects(upload.setClientPairing(pairing, targetUrl), /WebDAV-Verbindung/);
-  assert.equal(await upload.connect({ ...login, remember: true }), true);
-  const targetId = settings().id;
-  await assert.rejects(upload.setClientPairing(pairing, 'https://example.org/other/'), /WebDAV-Verbindung/);
-  await upload.setClientPairing(pairing, targetUrl);
-  assert.deepEqual(upload.getState().clientPairing, pairing);
-  assert.equal(settings().id, targetId);
-  assert.equal(settings().url, targetUrl);
-
-  const reopened = newSession();
-  await reopened.refresh();
-  assert.deepEqual(reopened.getState().clientPairing, pairing);
-  save('video');
-  assert.equal((await reopened.uploadSelected(['video'])).sent, 1);
-  assert.equal(uploads()[0].headers.Authorization, authorization);
-  await reopened.forget({ passwordOnly: true });
-  assert.deepEqual(reopened.getState().clientPairing, pairing);
-  assert.equal(await reopened.connect({ password: login.password }), true);
-  assert.deepEqual(reopened.getState().clientPairing, pairing);
-  await reopened.forget();
-  assert.equal(reopened.getState().clientPairing, null);
-});
-
-test('fordert beim Upload-Dienst einen passenden Client-Code an und sendet nur den Zielordner-Prüfwert', async (t) => {
-  const service = 'https://client.example.org';
-  const previous = { service, client: STUDENT_CLIENT_URL, code: 'a'.repeat(43), expires: Date.now() + 60_000 };
-  const code = 'b'.repeat(43);
-  const link = `${STUDENT_CLIENT_URL}#abgabe=${code}`;
-  const requests = [];
-  t.mock.method(globalThis, 'fetch', async (url, options) => {
-    requests.push({ url: String(url), ...options });
-    if (options.method === 'DELETE') return new Response(null, { status: 204 });
-    return Response.json({ pairing: code, link, expires: Date.now() + 60_000 }, { status: 201 });
-  });
-  const args = { service, key: 'freigabeschluessel', targetUrl: `${login.url}/`, previous };
-  for (const invalid of ['http://client.example.org', `${service}/falscher-pfad`, `${service}/#abgabe=${code}`]) {
-    await assert.rejects(createClientPairing({ ...args, service: invalid }), /HTTPS-Adresse/);
-  }
-  assert.equal(requests.length, 0);
-  const pairing = await createClientPairing(args);
-  assert.equal(clientPairingLink(pairing), link);
-  assert.equal(clientPairingLink(pairing, 'https://anderer-dienst.example.org'), null);
-  assert.equal(clientPairingLink({ ...pairing, client: undefined }), null);
-  assert.equal(clientPairingLink({ ...pairing, expires: 1 }), null);
-  assert.equal(requests[0].url, `${service}/api/pairings`);
-  assert.equal(requests[0].headers.Authorization, 'Bearer freigabeschluessel');
-  const payload = JSON.parse(requests[0].body);
-  assert.deepEqual(Object.keys(payload), ['folderHash', 'replace']);
-  assert.match(payload.folderHash, /^[0-9a-f]{64}$/);
-  assert.equal(payload.replace, previous.code);
-  await closeClientPairing(pairing, args.key);
-  assert.equal(requests[1].url, `${service}/api/pairings/${code}`);
 });

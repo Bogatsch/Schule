@@ -74,15 +74,17 @@ Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann e
 
 ### QR-Code zur Videoabgabe
 
-Im verbundenen WebDAV-Reiter den **Freigabeschlüssel des Upload-Dienstes** eingeben. Mit **QR-Code erzeugen** erstellt der Dienst eine zeitlich begrenzte Upload-Freigabe für denselben WebDAV-Ordner. Der QR-Code verwendet die feste GitHub-Pages-Adresse des Schüler-Clients. Der Client scannt den Code und erhält damit seine eigene Upload-Sitzung. Mit einem Tipp auf den QR-Code lässt sich die Abgabe erneuern oder schließen. Gib den Freigabeschlüssel bei jeder Änderung erneut ein.
+Im verbundenen WebDAV-Reiter den Benutzernamen und das Passwort eines separaten Abgabekontos eingeben und **QR-Code erzeugen** wählen. Die Ordneradresse ist vorausgefüllt. Falls der Server denselben Ordner für das Abgabekonto unter einer anderen Adresse bereitstellt, trage diese dort ein.
 
-Client und Hauptapp lesen die öffentliche HTTPS-Adresse des Upload-Dienstes einmalig aus `client-hosting.js`. Seine `WEBDAV_URL` entspricht dem Ordner der Hauptapp. [Einrichtung des Upload-Dienstes](../tmp_recorder_client/README.md)
+Der QR-Code enthält die Adresse und die lesbaren Zugangsdaten des Abgabekontos. Gib diesem Konto nur die nötigen Rechte für den Abgabeordner. Der Schüler-Client prüft den Zugang beim Scan und lädt beim Speichern direkt per WebDAV hoch.
+
+Die Hauptapp hält den QR-Code bis zur Abmeldung im Arbeitsspeicher. Tippe auf den QR-Code, um ihn zu ändern oder auszublenden. Kopierte Codes bleiben gültig, solange der Server die Zugangsdaten akzeptiert. Den Zugang kannst du am WebDAV-Server sperren oder das Abgabepasswort ändern. [Anleitung zum Schüler-Client](../tmp_recorder_client/README.md)
 
 ### Voraussetzungen am Server
 
 Die App verwendet HTTP Basic Auth über HTTPS, `PROPFIND` mit `Depth: 0` zum Prüfen des Zielordners und `PUT` zum Schreiben. Verwende die endgültige Ordneradresse ohne Weiterleitung und ein Zertifikat, dem die Geräte vertrauen. Der Server oder dessen Reverse Proxy muss ausreichend große Uploads zulassen. Bei drei Minuten und 8 Mbit/s kann ein Video rund 180 MB groß sein. [WebDAV-Standard](https://www.rfc-editor.org/rfc/rfc4918.html#section-9.7)
 
-Bei unterschiedlichen Origins muss der Server die Origin der App per CORS erlauben. Für eine Bereitstellung unter `https://BENUTZERNAME.github.io/REPO/Sport/tmp_recorder/` ist das `https://BENUTZERNAME.github.io`. Die `OPTIONS`-Anfrage zur Vorabprüfung muss ohne Authentifizierung beantwortet werden und `PROPFIND`, `PUT` sowie die Header `Authorization`, `Content-Type` und `Depth` zulassen. Auch die eigentlichen Antworten müssen `Access-Control-Allow-Origin` für die App enthalten. Kann der Anbieter das nicht konfigurieren, kann ein eigener Reverse Proxy diese Aufgabe übernehmen. [Fetch-Standard zu CORS](https://fetch.spec.whatwg.org/#http-cors-protocol)
+Für Hauptapp und Schüler-Client auf GitHub Pages muss der WebDAV-Server `https://bogatsch.github.io` per CORS erlauben. Die `OPTIONS`-Anfrage zur Vorabprüfung muss ohne Authentifizierung beantwortet werden und `PROPFIND`, `PUT` sowie die Header `Authorization`, `Content-Type` und `Depth` zulassen. Auch die eigentlichen Antworten müssen `Access-Control-Allow-Origin` für die App enthalten. [Fetch-Standard zu CORS](https://fetch.spec.whatwg.org/#http-cors-protocol)
 
 ## Anmeldung mit festem Passwort
 

@@ -1,38 +1,14 @@
-import { normalizeClientPairing } from './client-pairing.js?v=2';
+import { authorizationHeader, folderUrl, webDavRequest } from './webdav-protocol.js?v=1';
 
 const LEGACY_TARGET_KEY = 'sportkamera-webdav-target-v1';
 const LEGACY_RECEIPT_PREFIX = 'sportkamera-webdav-uploaded-v1:';
 const ENTER_PASSWORD = 'Verbinde das WebDAV-Ziel mit deinem App-Passwort.';
 
-function folderUrl(value) {
-  let url;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error('Gib die vollständige HTTPS-Adresse des WebDAV-Ordners ein.');
-  }
-  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
-    throw new Error('Verwende eine HTTPS-Adresse ohne Zugangsdaten oder Zusätze hinter dem Ordnerpfad.');
-  }
-  if (!url.pathname.endsWith('/')) {
-    url.pathname += '/';
-  }
-  return url.href;
-}
-
 function validateSettings(value) {
   try {
     if (typeof value?.id === 'string' && typeof value.username === 'string'
       && value.username && !value.username.includes(':') && folderUrl(value.url) === value.url) {
-      let clientPairing = null;
-      if (value.clientPairing) {
-        try {
-          clientPairing = normalizeClientPairing(value.clientPairing);
-        } catch {
-          // Eine ungültige Kopplung verändert die WebDAV-Verbindung nicht.
-        }
-      }
-      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null, clientPairing };
+      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null };
     }
   } catch {
     // Ungültige Ziele werden beim Laden ignoriert.
@@ -61,11 +37,6 @@ function clearLegacySettings() {
   } catch {
     // IndexedDB bleibt die maßgebliche Quelle, falls Web Storage gesperrt ist.
   }
-}
-
-function authorizationHeader(username, password) {
-  const bytes = new TextEncoder().encode(`${username}:${password}`);
-  return `Basic ${btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''))}`;
 }
 
 function credentialContext(target) {
@@ -101,45 +72,6 @@ function videoUrl(target, metadata) {
   return new URL(encodeURIComponent(name), target.url);
 }
 
-async function webDavRequest(url, authorization, signal, options) {
-  let response;
-  try {
-    response = await fetch(url, {
-      ...options,
-      headers: { ...options.headers, Authorization: authorization },
-      signal,
-      mode: 'cors',
-      credentials: 'omit',
-      redirect: 'error',
-      referrerPolicy: 'no-referrer'
-    });
-  } catch (cause) {
-    throw new Error('WebDAV ist nicht erreichbar. Prüfe die Ordneradresse, Netzwerkverbindung und CORS-Freigabe.', { cause });
-  }
-  const { status } = response;
-  void response.body?.cancel().catch(() => {});
-  const checking = options.method === 'PROPFIND';
-  if (checking ? status === 207 : response.ok) {
-    return;
-  }
-
-  let message = `WebDAV hat die Anfrage abgelehnt (HTTP ${status}).`;
-  if (status === 401 || status === 403) {
-    message = 'WebDAV-Zugriff verweigert. Prüfe die Zugangsdaten und Ordnerberechtigungen.';
-  } else if (status === 404 || status === 409) {
-    message = 'Der WebDAV-Ordner wurde nicht gefunden. Prüfe die Ordneradresse.';
-  } else if (status === 413) {
-    message = 'Das Video überschreitet die erlaubte Uploadgröße des WebDAV-Servers.';
-  } else if (status === 507) {
-    message = 'Der WebDAV-Server meldet zu wenig Speicherplatz.';
-  } else if (checking && response.ok) {
-    message = 'Die Adresse hat nicht als WebDAV-Ordner geantwortet. Prüfe die Ordneradresse.';
-  }
-  const error = new Error(message);
-  error.status = status;
-  throw error;
-}
-
 export function createWebDavUpload({ getMedia, readSettings, writeSettings, onChange, onSettingsChange }) {
   let target = readLegacyTarget();
   let authorization = null;
@@ -153,7 +85,6 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function getState() {
     return {
       target: target && { url: target.url, username: target.username },
-      clientPairing: target?.clientPairing ?? null,
       ready: Boolean(authorization || (target?.credential && !credentialRejected)),
       remembered: Boolean(target?.credential),
       connecting: probe !== null,
@@ -190,14 +121,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       const writing = pendingWrite;
       await writing.catch(() => {});
       const saved = await savedTarget();
-      if (writing !== pendingWrite) return;
-      if (saved?.id === target?.id) {
-        if (JSON.stringify(saved?.clientPairing) !== JSON.stringify(target?.clientPairing)) {
-          target = saved;
-          notify();
-        }
-        return;
-      }
+      if (writing !== pendingWrite || saved?.id === target?.id) return;
       cancelConnection();
       if (cancelTransfer) cancelUpload();
       target = saved;
@@ -212,20 +136,6 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function persist(settings, options) {
     pendingWrite = pendingWrite.catch(() => {}).then(() => writeSettings(settings, options));
     return pendingWrite;
-  }
-
-  async function setClientPairing(value, targetUrl) {
-    if (!getState().ready || probe || upload || target.url !== targetUrl) {
-      throw new Error('Die WebDAV-Verbindung wurde geändert. Öffne die QR-Einstellungen erneut.');
-    }
-    const next = { ...target, clientPairing: normalizeClientPairing(value) };
-    try {
-      await persist(next, { expectedId: next.id });
-    } catch (cause) {
-      throw new Error('Der QR-Code konnte nicht gespeichert werden.', { cause });
-    }
-    await refresh();
-    onSettingsChange();
   }
 
   function cancelConnection() {
@@ -244,7 +154,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     cancelUpload();
     const previous = target;
     const next = passwordOnly && previous
-      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username, clientPairing: previous.clientPairing }
+      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username }
       : null;
     await persist(next, next ? { expectedId: previous.id } : undefined);
     clearLegacySettings();
@@ -272,8 +182,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       const next = {
         id: crypto.randomUUID(),
         url: current?.url ?? folderUrl(url),
-        username: current?.username ?? username?.trim(),
-        clientPairing: current?.clientPairing ?? null
+        username: current?.username ?? username?.trim()
       };
       if (!next.username || next.username.includes(':') || !password) {
         throw new Error('Gib einen Benutzernamen ohne Doppelpunkt und ein WebDAV-Passwort ein.');
@@ -391,5 +300,5 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     return result;
   }
 
-  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget, setClientPairing };
+  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget };
 }

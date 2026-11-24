@@ -95,23 +95,3 @@ test('ungültige Leitbild-Bereiche werden mit 416 abgewiesen', async () => {
 test('Service Worker registriert Install-, Aktivierungs- und Fetch-Handler', () => {
   assert.deepEqual([...listeners.keys()].sort(), ['activate', 'fetch', 'install']);
 });
-
-test('lädt eine geänderte Upload-Dienstadresse online und verwendet offline die App-Shell', async () => {
-  const request = new Request('https://example.test/Sport/tmp_recorder/client-hosting.js?v=1');
-  const receive = () => new Promise((resolve) => listeners.get('fetch')({ request, respondWith: resolve }));
-  const online = context.fetch;
-  try {
-    context.fetch = async (actual, options) => {
-      assert.equal(actual, request);
-      assert.equal(options.cache, 'no-cache');
-      return new Response('neue Adresse');
-    };
-    assert.equal(await (await receive()).text(), 'neue Adresse');
-    context.fetch = async () => { throw new Error('offline'); };
-    context.caches.match = async () => new Response('App-Shell');
-    assert.equal(await (await receive()).text(), 'App-Shell');
-  } finally {
-    context.fetch = online;
-    delete context.caches.match;
-  }
-});

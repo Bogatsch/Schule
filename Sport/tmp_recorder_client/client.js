@@ -1,5 +1,4 @@
-import { readPairingLink } from './pairing.js';
-import { STUDENT_CLIENT_URL, UPLOAD_SERVICE_URL } from '../tmp_recorder/client-hosting.js?v=1';
+import { checkSubmissionAccess, readClientPairing, uploadSubmission } from '../tmp_recorder/client-pairing.js?v=3';
 import {
   CAMERA_TARGET_FRAME_RATE, MAX_RECORDING_MS, formatPlaybackTime, formatRecordingTime,
   nextStepTime, selectSupportedVideoMimeType, videoBitrateForFrameRate
@@ -12,10 +11,7 @@ const liveVideo = get('live-camera');
 const preview = get('preview');
 const scanCanvas = document.createElement('canvas');
 const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
-const clientPage = new URL('./', location.href);
-const standalone = clientPage.pathname === '/' && clientPage.href !== STUDENT_CLIENT_URL;
-const uploadService = standalone ? clientPage.origin : UPLOAD_SERVICE_URL;
-const pairingPage = standalone ? clientPage : STUDENT_CLIENT_URL;
+const pairingPage = new URL('./', location.href);
 
 let epoch = 0;
 let session = null;
@@ -93,26 +89,8 @@ function releaseRecording() {
   get('capture').textContent = 'Aufnahme starten';
 }
 
-function authorization(value) {
-  return { Authorization: `Bearer ${value}` };
-}
-
-function uploadRequest(path, options) {
-  if (!uploadService) throw new Error('Der Upload-Dienst für diese Videoabgabe ist noch nicht eingerichtet.');
-  return fetch(new URL(path, uploadService), {
-    ...options, mode: 'cors', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer'
-  });
-}
-
-function closeSession(value) {
-  if (value) {
-    void uploadRequest('/api/session', { method: 'DELETE', headers: authorization(value), keepalive: true }).catch(() => {});
-  }
-}
-
 function logout(message = 'Abgemeldet.', error = false) {
   epoch += 1;
-  const previous = session;
   session = null;
   pending?.abort();
   pending = null;
@@ -122,7 +100,6 @@ function logout(message = 'Abgemeldet.', error = false) {
   get('scan-start').hidden = false;
   view('scan');
   status(message, error);
-  closeSession(previous);
 }
 
 function cameraMessage(error) {
@@ -159,12 +136,12 @@ function lookForCode(generation) {
     const frame = scanContext.getImageData(0, 0, width, height);
     const code = window.jsQR(frame.data, width, height, { inversionAttempts: 'dontInvert' });
     if (code) {
-      const pairing = readPairingLink(code.data, pairingPage);
-      if (pairing) {
-        void connect(pairing);
+      const access = readClientPairing(code.data, pairingPage);
+      if (access) {
+        void connect(access);
         return;
       }
-      status('Dieser QR-Code gehört zu einer anderen Seite. Scanne den Code der Videoabgabe.', true);
+      status('Dieser QR-Code enthält keinen gültigen WebDAV-Abgabezugang.', true);
     }
   }
   scanTimer = setTimeout(() => lookForCode(generation), 180);
@@ -194,7 +171,7 @@ async function startScan() {
   }
 }
 
-async function connect(pairing) {
+async function connect(access) {
   const generation = ++epoch;
   releaseCamera();
   const controller = new AbortController();
@@ -203,17 +180,9 @@ async function connect(pairing) {
   view('scan');
   status('Videoabgabe wird verbunden …');
   try {
-    const response = await uploadRequest('/api/session', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pairing }),
-      signal: controller.signal
-    });
-    const result = await response.json();
-    if (generation !== epoch) {
-      closeSession(result.token);
-      return;
-    }
-    if (!response.ok || !result.token) throw new Error(result.message || 'Die Abgabe konnte nicht verbunden werden.');
-    session = result.token;
+    await checkSubmissionAccess(access, controller);
+    if (generation !== epoch) return;
+    session = access;
     pending = null;
     void startVideoCamera();
   } catch (error) {
@@ -221,7 +190,7 @@ async function connect(pairing) {
     pending = null;
     view('scan');
     get('scan-start').hidden = false;
-    status(error instanceof TypeError ? 'Die Verbindung konnte nicht hergestellt werden. Prüfe das WLAN.' : error.message, true);
+    status(error.message, true);
   }
 }
 
@@ -358,23 +327,14 @@ async function saveVideo(event) {
   preview.pause();
   status('Video wird hochgeladen …');
   try {
-    const response = await uploadRequest(`/api/video/${recording.id}`, {
-      method: 'PUT', body: recording.file, signal: controller.signal,
-      headers: { ...authorization(session), 'Content-Type': recording.file.type, 'X-Video-Name': encodeURIComponent(title) }
-    });
-    const result = await response.json();
+    await uploadSubmission(session, { title, id: recording.id, file: recording.file }, controller.signal);
     if (generation !== epoch) return;
-    if (response.status === 401) {
-      logout(result.message || 'Die Freigabe ist abgelaufen.', true);
-      return;
-    }
-    if (!response.ok) throw new Error(result.message || 'Die Abgabe ist fehlgeschlagen.');
     releaseRecording();
     view('done');
     status('');
   } catch (error) {
     if (generation === epoch) {
-      status(error instanceof TypeError ? 'Die Verbindung wurde unterbrochen. Versuche den Upload erneut.' : error.message, true);
+      status(error.message, true);
     }
   } finally {
     if (generation === epoch) {
@@ -416,7 +376,14 @@ for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', '
 }
 window.addEventListener('pagehide', () => logout(''));
 
-const incoming = readPairingLink(location.href, pairingPage);
-if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-if (incoming) void connect(incoming);
-else void startScan();
+function connectFromLink() {
+  if (!location.hash) return false;
+  const incoming = readClientPairing(location.href, pairingPage);
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!incoming || session || pending) return false;
+  void connect(incoming);
+  return true;
+}
+
+window.addEventListener('hashchange', connectFromLink);
+if (!connectFromLink()) void startScan();

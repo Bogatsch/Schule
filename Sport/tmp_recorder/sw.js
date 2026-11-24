@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'sportkamera-shell-';
 const GUIDE_CACHE_PREFIX = 'sportkamera-guides-';
-const CACHE_VERSION = 'v59';
+const CACHE_VERSION = 'v60';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 const GUIDE_CACHE_NAME = `${GUIDE_CACHE_PREFIX}store`;
 
@@ -43,10 +43,12 @@ const APP_SHELL = Object.freeze([
   './app.js?v=48',
   './app.js?v=49',
   './app.js?v=50',
-  './webdav-upload.js?v=6',
+  './app.js?v=51',
+  './webdav-upload.js?v=7',
+  './webdav-protocol.js?v=1',
   './webdav-qr.js?v=3',
-  './client-pairing.js?v=2',
-  './client-hosting.js?v=1',
+  './client-pairing.js?v=3',
+  './client-hosting.js?v=2',
   './vendor/qrcode-generator/qrcode-2.0.4.js',
   './manifest.webmanifest',
   './pages/leitbilder/index.html',
@@ -72,7 +74,6 @@ const GUIDE_VIDEOS = Object.freeze([
 const ALLOWED_URLS = new Set(APP_SHELL.map((path) => new URL(path, self.location.href).href));
 const GUIDE_VIDEO_URLS = new Set(GUIDE_VIDEOS.map((path) => new URL(path, self.location.href).href));
 const OFFLINE_DOCUMENT = new URL('./index.html', self.location.href).href;
-const CLIENT_HOSTING = new URL('./client-hosting.js?v=1', self.location.href).href;
 
 function rangeNotSatisfiable(size) {
   return new Response(null, {
@@ -228,11 +229,6 @@ self.addEventListener('fetch', (event) => {
   if (GUIDE_VIDEO_URLS.has(requestUrl.href)) {
     event.respondWith(serveGuideVideo(request, requestUrl.href));
     event.waitUntil(cacheGuideVideo(requestUrl.href));
-    return;
-  }
-
-  if (requestUrl.href === CLIENT_HOSTING) {
-    event.respondWith(fetch(request, { cache: 'no-cache' }).catch(() => caches.match(request)));
     return;
   }
 
