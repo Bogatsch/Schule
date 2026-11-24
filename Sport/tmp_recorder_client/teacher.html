@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#073b4c">
+  <title>Abgabe freigeben | Sportkamera</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/teacher.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><h1>Sportkamera <small>Lehrkraft</small></h1></div></header>
+  <main class="teacher">
+    <h2>Videoabgabe freigeben</h2>
+    <form id="pairing-form">
+      <label for="admin-key">Freigabeschlüssel</label>
+      <input id="admin-key" type="password" autocomplete="off" required>
+      <button id="create-pairing" type="submit">QR-Code erstellen</button>
+    </form>
+    <section id="active-pairing" aria-label="Aktive Videoabgabe" hidden>
+      <canvas id="qr" role="img" aria-label="QR-Code für den Schüler-Client"></canvas>
+      <p id="expires"></p>
+      <div class="actions">
+        <button id="copy-link" class="secondary" type="button">Abgabelink kopieren</button>
+        <button id="end-pairing" class="secondary" type="button">Abgabe schließen</button>
+      </div>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>

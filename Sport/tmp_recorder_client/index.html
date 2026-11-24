@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#073b4c">
+  <title>Videoabgabe | Sportkamera</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/vendor/jsqr/jsQR-1.4.0.js"></script>
+  <script type="module" src="/client.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><h1>Sportkamera <small>Videoabgabe</small></h1></div>
+    <button id="logout" class="secondary" type="button" hidden>Abmelden</button>
+  </header>
+  <main id="app">
+    <section id="scan-view" aria-labelledby="scan-heading">
+      <h2 id="scan-heading">Abgabe-QR-Code scannen</h2>
+      <div class="stage scan-stage" id="scan-stage" hidden>
+        <video id="scan-camera" playsinline muted aria-label="Kamera für den QR-Scan"></video>
+        <div class="scan-frame" aria-hidden="true"></div>
+      </div>
+      <button id="scan-start" type="button" hidden>Kamera zum Scannen starten</button>
+    </section>
+
+    <section id="record-view" aria-labelledby="record-heading" hidden>
+      <div class="view-heading">
+        <h2 id="record-heading">Video aufnehmen</h2>
+        <button id="switch-camera" class="secondary" type="button">Kamera wechseln</button>
+      </div>
+      <div class="stage video-stage">
+        <video id="live-camera" playsinline muted aria-label="Livebild der Kamera"></video>
+        <video id="preview" playsinline muted preload="metadata" disablepictureinpicture aria-label="Vorschau der Aufnahme" hidden></video>
+        <output id="record-time" class="record-time" aria-label="Aufnahmedauer" hidden>00:00.0</output>
+      </div>
+      <div id="capture-actions" class="actions">
+        <button id="capture" type="button" disabled>Aufnahme starten</button>
+        <button id="camera-retry" class="secondary" type="button" hidden>Kamera erneut öffnen</button>
+      </div>
+      <div id="preview-actions" hidden>
+        <div class="playback" aria-label="Videowiedergabe">
+          <button id="play" class="secondary" type="button">Abspielen</button>
+          <button id="back-step" class="secondary step" type="button" aria-label="0,1 Sekunden zurück">−0,1 s</button>
+          <input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Wiedergabeposition">
+          <button id="forward-step" class="secondary step" type="button" aria-label="0,1 Sekunden vor">+0,1 s</button>
+          <output id="playback-time" for="timeline">0:00 / 0:00</output>
+          <select id="speed" aria-label="Wiedergabegeschwindigkeit">
+            <option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option>
+          </select>
+        </div>
+        <form id="video-form">
+          <label for="video-name">Videoname</label>
+          <input id="video-name" type="text" maxlength="80" autocomplete="off" required>
+          <div class="actions">
+            <button id="save" type="submit">Speichern &amp; abgeben</button>
+            <button id="retake" class="secondary" type="button">Neu aufnehmen</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="done-view" aria-labelledby="done-heading" hidden>
+      <h2 id="done-heading">Video abgegeben</h2>
+      <button id="new-video" type="button">Weiteres Video aufnehmen</button>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>
