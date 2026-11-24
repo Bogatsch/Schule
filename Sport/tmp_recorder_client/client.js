@@ -5,12 +5,18 @@ import {
 } from '../tmp_recorder/media-utils.js?v=39';
 
 const get = (id) => document.getElementById(id);
-const views = { scan: get('scan-view'), pin: get('pin-view'), record: get('record-view'), done: get('done-view') };
+const views = {
+  scan: get('scan-view'), pin: get('pin-view'), name: get('name-view'), home: get('home-view'),
+  gallery: get('gallery-view'), record: get('record-view'), preview: get('preview-view')
+};
 const scanVideo = get('scan-camera');
 const liveVideo = get('live-camera');
 const preview = get('preview');
 const pinInput = get('pin-input');
 const pinSubmit = get('pin-submit');
+const nameInput = get('student-name');
+const gallery = get('gallery-list');
+const uploadButton = get('upload-video');
 const scanCanvas = document.createElement('canvas');
 const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
 const pairingPage = new URL('./', location.href);
@@ -19,6 +25,8 @@ let epoch = 0;
 let session = null;
 let pairing = null;
 let pending = null;
+let studentNames = '';
+const savedVideos = [];
 let stream = null;
 let scanTimer = null;
 let recorder = null;
@@ -27,7 +35,7 @@ let recordingLimit = null;
 let startedAt = 0;
 let duration = 0;
 let chunks = [];
-let recording = null;
+let previewVideo = null;
 let previewUrl = null;
 let facing = 'environment';
 
@@ -40,6 +48,13 @@ function view(name) {
   for (const [id, element] of Object.entries(views)) element.hidden = id !== name;
   get('logout').hidden = !session && !pairing;
   get('logout').textContent = session ? 'Abmelden' : 'Abbrechen';
+}
+
+function showStudentNames(names) {
+  studentNames = names;
+  get('student-label').textContent = names;
+  get('student-label').hidden = !names;
+  get('brand').hidden = Boolean(names);
 }
 
 function releaseCamera() {
@@ -63,7 +78,7 @@ function clearRecordingTimers() {
   recordingLimit = null;
 }
 
-function releaseRecording() {
+function resetRecorder() {
   clearRecordingTimers();
   if (recorder) {
     recorder.ondataavailable = recorder.onstop = recorder.onerror = null;
@@ -71,29 +86,29 @@ function releaseRecording() {
     recorder = null;
   }
   chunks = [];
-  recording = null;
   duration = 0;
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
-  previewUrl = null;
-  preview.pause();
-  preview.removeAttribute('src');
-  preview.load();
-  get('video-form').reset();
-  get('video-name').disabled = false;
-  get('save').disabled = false;
-  get('retake').disabled = false;
-  get('play').textContent = 'Abspielen';
-  get('timeline').value = '0';
-  get('playback-time').textContent = '0:00 / 0:00';
-  get('speed').value = '1';
-  get('preview-actions').hidden = true;
   get('record-time').hidden = true;
   get('record-time').textContent = '00:00.0';
   get('capture').classList.remove('recording');
   get('capture').textContent = 'Aufnahme starten';
 }
 
-function logout(message = 'Abgemeldet.', error = false) {
+function closePreview() {
+  if (!previewUrl) return;
+  previewVideo = null;
+  preview.pause();
+  preview.removeAttribute('src');
+  preview.load();
+  URL.revokeObjectURL(previewUrl);
+  previewUrl = null;
+  get('play').textContent = 'Abspielen';
+  get('timeline').value = '0';
+  get('playback-time').textContent = '0:00 / 0:00';
+  get('speed').value = '1';
+  get('preview-back').disabled = false;
+}
+
+function logout(message = 'Abgemeldet.') {
   epoch += 1;
   session = null;
   pairing = null;
@@ -102,12 +117,17 @@ function logout(message = 'Abgemeldet.', error = false) {
   pinInput.value = '';
   pinInput.disabled = false;
   pinSubmit.disabled = false;
+  nameInput.value = '';
+  showStudentNames('');
+  savedVideos.length = 0;
+  gallery.replaceChildren();
   facing = 'environment';
-  releaseRecording();
+  resetRecorder();
+  closePreview();
   releaseCamera();
   get('scan-start').hidden = false;
   view('scan');
-  status(message, error);
+  status(message);
 }
 
 function cameraMessage(error) {
@@ -218,26 +238,51 @@ async function connect(event) {
       pending = null;
       pinInput.disabled = false;
       pinSubmit.disabled = false;
-      if (session) void startVideoCamera();
-      else pinInput.focus({ preventScroll: true });
+      if (session) {
+        view('name');
+        status('');
+        nameInput.focus({ preventScroll: true });
+      } else {
+        pinInput.focus({ preventScroll: true });
+      }
     }
   }
 }
 
-async function startVideoCamera() {
+function showHome(message = '', focusTarget = 'open-camera') {
+  epoch += 1;
+  resetRecorder();
+  closePreview();
+  releaseCamera();
+  view('home');
+  status(message);
+  get(focusTarget).focus({ preventScroll: true });
+}
+
+function acceptNames(event) {
+  event.preventDefault();
   if (!session) return;
+  const names = nameInput.value.trim().replace(/\s+/g, ' ');
+  if (!names) {
+    status('Gib mindestens einen Namen ein.', true);
+    nameInput.focus({ preventScroll: true });
+    return;
+  }
+  showStudentNames(names);
+  nameInput.value = '';
+  showHome();
+}
+
+async function startVideoCamera() {
+  if (!session || !studentNames) return;
   const generation = ++epoch;
-  releaseRecording();
+  resetRecorder();
+  closePreview();
   releaseCamera();
   view('record');
-  get('record-heading').textContent = 'Video aufnehmen';
-  get('capture-actions').hidden = false;
   get('capture').disabled = true;
-  get('switch-camera').hidden = false;
   get('switch-camera').disabled = true;
   get('camera-retry').hidden = true;
-  liveVideo.hidden = false;
-  preview.hidden = true;
   status('Kamera wird geöffnet …');
   try {
     if (!selectSupportedVideoMimeType(window.MediaRecorder)) throw new Error('Dieser Browser kann kein WebM- oder MP4-Video aufnehmen.');
@@ -265,21 +310,59 @@ function stopRecording() {
   recorder.stop();
 }
 
-function showRecording(file) {
-  recording = { file, id: crypto.randomUUID(), name: null };
-  previewUrl = URL.createObjectURL(file);
+function openPreview(video) {
+  closePreview();
+  const saved = savedVideos.includes(video);
+  previewVideo = video;
+  previewUrl = URL.createObjectURL(video.file);
   preview.src = previewUrl;
   preview.playbackRate = 1;
-  preview.hidden = false;
   preview.load();
-  liveVideo.hidden = true;
-  get('record-heading').textContent = 'Video ansehen und abgeben';
-  get('capture-actions').hidden = true;
-  get('record-time').hidden = true;
-  get('switch-camera').hidden = true;
-  get('preview-actions').hidden = false;
-  get('video-name').value = `Sportvideo ${new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}`;
+  get('save').hidden = saved;
+  get('retake').hidden = saved;
+  uploadButton.hidden = !saved;
+  uploadButton.disabled = video.uploaded;
+  uploadButton.textContent = video.uploaded ? 'Hochgeladen' : 'Hochladen';
+  view('preview');
+  updatePlayback();
   status('');
+  get('preview-heading').focus({ preventScroll: true });
+}
+
+function showGallery() {
+  const previousVideo = previewVideo;
+  closePreview();
+  gallery.replaceChildren();
+  let focusTarget = get('gallery-back');
+  for (const video of [...savedVideos].reverse()) {
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'secondary gallery-item';
+    const date = new Date(video.recordedAt);
+    const time = document.createElement('time');
+    time.dateTime = date.toISOString();
+    time.textContent = date.toLocaleTimeString('de-DE');
+    const length = document.createElement('span');
+    length.className = 'duration';
+    length.textContent = formatPlaybackTime(video.duration);
+    button.append(time, length);
+    if (video.uploaded) {
+      const submitted = document.createElement('span');
+      submitted.className = 'submitted';
+      submitted.textContent = 'Hochgeladen';
+      button.append(submitted);
+    }
+    button.addEventListener('click', () => openPreview(video));
+    item.append(button);
+    gallery.append(item);
+    if (video === previousVideo) focusTarget = button;
+  }
+  gallery.hidden = savedVideos.length === 0;
+  get('gallery-empty').hidden = !gallery.hidden;
+  view('gallery');
+  status('');
+  focusTarget.focus({ preventScroll: true });
 }
 
 function startRecording() {
@@ -293,20 +376,24 @@ function startRecording() {
     active.ondataavailable = ({ data }) => { if (data.size && generation === epoch) chunks.push(data); };
     active.onstop = () => {
       if (generation !== epoch) return;
+      clearRecordingTimers();
       const file = new Blob(chunks, { type: active.mimeType || type });
+      const videoDuration = duration || Math.min(MAX_RECORDING_MS, performance.now() - startedAt) / 1000;
       chunks = [];
       recorder = null;
       releaseCamera();
-      if (file.size) showRecording(file);
-      else {
+      if (file.size) {
+        openPreview({ file, duration: videoDuration, id: crypto.randomUUID(), recordedAt: Date.now(), uploaded: false });
+      } else {
+        resetRecorder();
+        get('capture').disabled = true;
         get('camera-retry').hidden = false;
-        get('record-time').hidden = true;
         status('Es wurde kein Video aufgezeichnet. Versuche es erneut.', true);
       }
     };
     active.onerror = () => {
       if (generation !== epoch) return;
-      releaseRecording();
+      resetRecorder();
       releaseCamera();
       get('capture').disabled = true;
       get('camera-retry').hidden = false;
@@ -327,7 +414,7 @@ function startRecording() {
 }
 
 function playbackDuration() {
-  return Number.isFinite(preview.duration) ? preview.duration : duration;
+  return Number.isFinite(preview.duration) ? preview.duration : (previewVideo?.duration ?? 0);
 }
 
 function updatePlayback() {
@@ -337,31 +424,28 @@ function updatePlayback() {
   get('play').textContent = preview.paused ? 'Abspielen' : 'Pause';
 }
 
-async function saveVideo(event) {
-  event.preventDefault();
-  if (!session || !recording || pending) return;
-  const name = get('video-name');
-  const title = (recording.name ?? name.value).trim();
-  if (!title) {
-    status('Gib dem Video einen Namen.', true);
-    name.focus();
-    return;
-  }
-  recording.name = title;
+function saveVideo() {
+  if (!previewVideo || savedVideos.includes(previewVideo)) return;
+  savedVideos.push(previewVideo);
+  showHome('Video in der Galerie gespeichert.');
+}
+
+async function submitVideo() {
+  const video = previewVideo;
+  if (!session || !studentNames || !video || video.uploaded || !savedVideos.includes(video) || pending) return;
   const generation = epoch;
   const controller = new AbortController();
   pending = controller;
-  name.disabled = true;
-  get('save').disabled = true;
-  get('retake').disabled = true;
+  uploadButton.disabled = true;
+  get('preview-back').disabled = true;
   preview.pause();
   status('Video wird hochgeladen …');
   try {
-    await uploadSubmission(session, { title, id: recording.id, file: recording.file }, controller.signal);
+    await uploadSubmission(session, { title: studentNames, id: video.id, file: video.file }, controller.signal);
     if (generation !== epoch) return;
-    releaseRecording();
-    view('done');
-    status('');
+    video.uploaded = true;
+    uploadButton.textContent = 'Hochgeladen';
+    status('Video erfolgreich abgegeben.');
   } catch (error) {
     if (generation === epoch) {
       status(error.message, true);
@@ -369,8 +453,8 @@ async function saveVideo(event) {
   } finally {
     if (generation === epoch) {
       pending = null;
-      get('save').disabled = false;
-      get('retake').disabled = false;
+      uploadButton.disabled = video.uploaded;
+      get('preview-back').disabled = false;
     }
   }
 }
@@ -378,6 +462,15 @@ async function saveVideo(event) {
 get('scan-start').addEventListener('click', startScan);
 get('logout').addEventListener('click', () => logout(session ? 'Abgemeldet.' : ''));
 get('pin-form').addEventListener('submit', connect);
+get('name-form').addEventListener('submit', acceptNames);
+get('open-gallery').addEventListener('click', showGallery);
+get('open-camera').addEventListener('click', startVideoCamera);
+get('gallery-back').addEventListener('click', () => showHome('', 'open-gallery'));
+get('camera-back').addEventListener('click', () => showHome());
+get('preview-back').addEventListener('click', () => {
+  if (savedVideos.includes(previewVideo)) showGallery();
+  else showHome();
+});
 get('switch-camera').addEventListener('click', () => {
   facing = facing === 'environment' ? 'user' : 'environment';
   void startVideoCamera();
@@ -385,8 +478,8 @@ get('switch-camera').addEventListener('click', () => {
 get('camera-retry').addEventListener('click', startVideoCamera);
 get('capture').addEventListener('click', () => recorder ? stopRecording() : startRecording());
 get('retake').addEventListener('click', startVideoCamera);
-get('new-video').addEventListener('click', startVideoCamera);
-get('video-form').addEventListener('submit', saveVideo);
+get('save').addEventListener('click', saveVideo);
+uploadButton.addEventListener('click', submitVideo);
 get('play').addEventListener('click', () => {
   if (!preview.paused) preview.pause();
   else void preview.play().catch(() => status('Die Vorschau konnte nicht abgespielt werden.', true));

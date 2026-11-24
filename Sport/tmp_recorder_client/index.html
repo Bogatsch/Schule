@@ -7,13 +7,14 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; media-src 'self' blob:; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
   <title>Videoabgabe | Sportkamera</title>
-  <link rel="stylesheet" href="./styles.css?v=2">
+  <link rel="stylesheet" href="./styles.css?v=3">
   <script defer src="./vendor/jsqr/jsQR-1.4.0.js"></script>
-  <script type="module" src="./client.js?v=4"></script>
+  <script type="module" src="./client.js?v=5"></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><h1>Sportkamera <small>Videoabgabe</small></h1></div>
+    <div class="brand" id="brand"><span class="brand-mark" aria-hidden="true"></span><h1>Sportkamera <small>Videoabgabe</small></h1></div>
+    <h1 id="student-label" class="student-label" hidden></h1>
     <button id="logout" class="secondary" type="button" hidden>Abmelden</button>
   </header>
   <main id="app">
@@ -35,45 +36,68 @@
       </form>
     </section>
 
+    <section id="name-view" aria-labelledby="name-heading" hidden>
+      <h2 id="name-heading">Wer gibt das Video ab?</h2>
+      <form id="name-form" class="entry-form">
+        <label for="student-name">Name oder Namen der Gruppe</label>
+        <input id="student-name" type="text" maxlength="80" autocomplete="off" autocapitalize="words" required>
+        <button type="submit">Weiter</button>
+      </form>
+    </section>
+
+    <section id="home-view" class="home-actions" aria-label="Startseite" hidden>
+      <button id="open-gallery" class="secondary" type="button">Galerie</button>
+      <button id="open-camera" type="button">Kamera</button>
+    </section>
+
+    <section id="gallery-view" aria-labelledby="gallery-heading" hidden>
+      <div class="view-heading">
+        <h2 id="gallery-heading">Galerie</h2>
+        <button id="gallery-back" class="secondary" type="button">Zurück</button>
+      </div>
+      <p id="gallery-empty">In der Galerie sind noch keine Videos.</p>
+      <ul id="gallery-list" class="gallery-list" hidden></ul>
+    </section>
+
     <section id="record-view" aria-labelledby="record-heading" hidden>
       <div class="view-heading">
         <h2 id="record-heading">Video aufnehmen</h2>
-        <button id="switch-camera" class="secondary" type="button">Kamera wechseln</button>
+        <button id="camera-back" class="secondary" type="button">Zurück</button>
       </div>
       <div class="stage video-stage">
         <video id="live-camera" playsinline muted aria-label="Livebild der Kamera"></video>
-        <video id="preview" playsinline muted preload="metadata" disablepictureinpicture aria-label="Vorschau der Aufnahme" hidden></video>
         <output id="record-time" class="record-time" aria-label="Aufnahmedauer" hidden>00:00.0</output>
       </div>
-      <div id="capture-actions" class="actions">
+      <div class="actions">
         <button id="capture" type="button" disabled>Aufnahme starten</button>
+        <button id="switch-camera" class="secondary" type="button">Kamera wechseln</button>
         <button id="camera-retry" class="secondary" type="button" hidden>Kamera erneut öffnen</button>
-      </div>
-      <div id="preview-actions" hidden>
-        <div class="playback" aria-label="Videowiedergabe">
-          <button id="play" class="secondary" type="button">Abspielen</button>
-          <button id="back-step" class="secondary step" type="button" aria-label="0,1 Sekunden zurück">−0,1 s</button>
-          <input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Wiedergabeposition">
-          <button id="forward-step" class="secondary step" type="button" aria-label="0,1 Sekunden vor">+0,1 s</button>
-          <output id="playback-time" for="timeline">0:00 / 0:00</output>
-          <select id="speed" aria-label="Wiedergabegeschwindigkeit">
-            <option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option>
-          </select>
-        </div>
-        <form id="video-form">
-          <label for="video-name">Videoname</label>
-          <input id="video-name" type="text" maxlength="80" autocomplete="off" required>
-          <div class="actions">
-            <button id="save" type="submit">Speichern &amp; abgeben</button>
-            <button id="retake" class="secondary" type="button">Neu aufnehmen</button>
-          </div>
-        </form>
       </div>
     </section>
 
-    <section id="done-view" aria-labelledby="done-heading" hidden>
-      <h2 id="done-heading">Video abgegeben</h2>
-      <button id="new-video" type="button">Weiteres Video aufnehmen</button>
+    <section id="preview-view" aria-labelledby="preview-heading" hidden>
+      <div class="view-heading">
+        <h2 id="preview-heading" tabindex="-1">Video ansehen</h2>
+        <button id="preview-back" class="secondary" type="button">Zurück</button>
+      </div>
+      <div class="stage video-stage">
+        <video id="preview" playsinline muted preload="metadata" disablepictureinpicture aria-label="Vorschau der Aufnahme"></video>
+      </div>
+      <div class="playback" aria-label="Videowiedergabe">
+        <button id="play" class="secondary" type="button">Abspielen</button>
+        <button id="back-step" class="secondary step" type="button" aria-label="0,1 Sekunden zurück">−0,1 s</button>
+        <input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Wiedergabeposition">
+        <button id="forward-step" class="secondary step" type="button" aria-label="0,1 Sekunden vor">+0,1 s</button>
+        <output id="playback-time" for="timeline">0:00 / 0:00</output>
+        <select id="speed" aria-label="Wiedergabegeschwindigkeit">
+          <option value="0.25">0,25×</option><option value="0.5">0,5×</option><option value="1" selected>1×</option>
+        </select>
+      </div>
+      <div class="actions">
+        <button id="save" type="button">Speichern</button>
+        <button id="retake" class="secondary" type="button">Neu aufnehmen</button>
+        <button id="upload-video" type="button" hidden>Hochladen</button>
+      </div>
     </section>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </main>

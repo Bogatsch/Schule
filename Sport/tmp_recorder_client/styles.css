@@ -36,6 +36,8 @@ label { font-weight: 700; }
 .brand-mark::after { content: ""; display: block; width: 0.7rem; height: 0.7rem; border: 2px solid #8bddd0; border-radius: 50%; }
 h1 { margin: 0; font-size: 1.03rem; }
 h1 small { display: block; margin-top: 0.12rem; color: #c7efea; font-size: 0.88rem; font-weight: 600; }
+.student-label { font-size: clamp(1.03rem, 2.5vw, 1.3rem); overflow-wrap: anywhere; min-width: 0; }
+#logout { flex-shrink: 0; }
 h2 { margin: 0 0 0.8rem; font-size: clamp(1.25rem, 3vw, 1.7rem); }
 main { max-width: 960px; margin-inline: auto; padding: clamp(0.85rem, 3vw, 1.8rem); }
 .view-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.65rem; margin-bottom: 0.65rem; }
@@ -53,15 +55,17 @@ main { max-width: 960px; margin-inline: auto; padding: clamp(0.85rem, 3vw, 1.8re
 .playback output { font-variant-numeric: tabular-nums; }
 .step { padding-inline: 0.5rem; }
 form { display: grid; gap: 0.45rem; margin-top: 0.8rem; }
-form .actions { margin-top: 0.3rem; }
-#pin-form { max-width: 24rem; }
+#pin-form, .entry-form { max-width: 26rem; }
 #pin-input { padding-inline: 0.8rem; font-size: 1.25rem; font-variant-numeric: tabular-nums; letter-spacing: 0.16em; }
+.home-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; }
+.home-actions button { min-height: clamp(6rem, 20vw, 12rem); font-size: clamp(1.2rem, 3vw, 1.8rem); }
+.gallery-list { display: grid; gap: 0.55rem; list-style: none; padding: 0; }
+.gallery-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; width: 100%; text-align: left; }
+.gallery-item time, .gallery-item .duration { font-variant-numeric: tabular-nums; }
+.gallery-item .duration { font-weight: 500; }
+.gallery-item .submitted { margin-inline-start: auto; color: #24644d; font-size: 0.9rem; }
 .status { min-height: 1.4em; margin: 1rem 0 0; color: var(--teal); font-weight: 650; }
 .status[data-error="true"] { color: var(--coral); }
-.teacher { max-width: 540px; }
-#active-pairing { margin-top: 1rem; }
-#qr { display: block; width: min(100%, 295px); height: auto; margin-inline: auto; image-rendering: pixelated; border-radius: 12px; }
-#expires { text-align: center; }
 
 @media (max-width: 470px) {
   .playback input { order: 1; flex-basis: 100%; }
