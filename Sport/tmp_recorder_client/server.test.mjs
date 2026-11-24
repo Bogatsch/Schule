@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { createUploadServer } from './server.mjs';
@@ -58,8 +58,47 @@ async function setup(t, { handleUpload, ...options } = {}) {
       method: 'PUT', body, headers: { Authorization: `Bearer ${token}`, 'Content-Type': type, 'X-Video-Name': encodeURIComponent(name) }
     });
   }
-  return { api, createPairing, redeem, upload, probes, stored };
+  return { api, createPairing, redeem, upload, probes, stored, davUrl };
 }
+
+test('erlaubt der Hauptapp nur die Freigabe-API und prüft den passenden Zielordner bei der Kopplung', async (t) => {
+  const teacherOrigin = 'https://lehrkraft.example.test';
+  const { api, redeem, upload, davUrl, probes } = await setup(t, { teacherOrigin });
+  const origin = { Origin: teacherOrigin };
+  const options = { method: 'OPTIONS', headers: { ...origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' } };
+  const preflight = await api('/api/pairings', options);
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers.get('access-control-allow-origin'), teacherOrigin);
+  assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST');
+  assert.equal(preflight.headers.get('access-control-allow-headers'), 'Authorization, Content-Type');
+  assert.equal((await api('/api/session', options)).status, 403);
+  assert.equal((await api('/api/pairings', { ...options, headers: { Origin: 'https://fremd.example.test' } })).status, 403);
+
+  const create = (folderHash, replace) => api('/api/pairings', {
+    method: 'POST', headers: { ...origin, ...admin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderHash, replace })
+  });
+  const mismatch = await create('0'.repeat(64));
+  assert.equal(mismatch.status, 409);
+  assert.equal(mismatch.headers.get('access-control-allow-origin'), teacherOrigin);
+  assert.equal(probes.length, 0);
+
+  const folderHash = createHash('sha256').update(davUrl).digest('hex');
+  const first = await create(folderHash);
+  assert.equal(first.status, 201);
+  const { pairing, link } = await first.json();
+  assert.equal(readPairingLink(link, appUrl), pairing);
+  const { token } = await (await redeem(pairing)).json();
+  const replacement = await create(folderHash, pairing);
+  assert.equal(replacement.status, 201);
+  assert.equal((await upload(token, randomUUID())).status, 401);
+  const next = (await replacement.json()).pairing;
+  assert.equal((await redeem(next)).status, 201);
+  const url = `/api/pairings/${next}`;
+  assert.equal((await api(url, { method: 'OPTIONS', headers: origin })).headers.get('access-control-allow-methods'), 'DELETE');
+  assert.equal((await api(url, { method: 'DELETE', headers: { ...origin, ...admin } })).status, 204);
+  assert.equal((await redeem(next)).status, 401);
+});
 
 test('liefert den Client und erzeugt QR-Einladungen nur mit Freigabeschlüssel', async (t) => {
   const { api, createPairing, probes } = await setup(t);

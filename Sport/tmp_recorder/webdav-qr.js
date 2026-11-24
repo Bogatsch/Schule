@@ -1,42 +1,8 @@
 import qrcode from './vendor/qrcode-generator/qrcode-2.0.4.js';
 
-function comparablePath(url) {
-  let pathname = url.pathname;
-  try {
-    pathname = decodeURIComponent(pathname);
-  } catch {
-    // URL-Pfade können auch Prozentzeichen enthalten, die kein gültiges UTF-8 ergeben.
-  }
-  return pathname.replace(/\/+$/, '').toLowerCase();
-}
-
-export function normalizeSubmissionUrl(value, webDavUrl) {
-  const message = 'Gib einen HTTPS-Link zur Abgabeseite ohne eingebettete Zugangsdaten ein.';
-  let url;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error(message);
-  }
-  if (url.protocol !== 'https:' || url.username || url.password || url.href.length > 512) {
-    throw new Error(message);
-  }
-  if (webDavUrl) {
-    const folder = new URL(webDavUrl);
-    if (url.origin === folder.origin) {
-      const submissionPath = comparablePath(url);
-      const folderPath = comparablePath(folder);
-      if (submissionPath === folderPath || (folderPath && submissionPath.startsWith(`${folderPath}/`))) {
-        throw new Error('Gib den Link zur Abgabeseite an. Die WebDAV-Ordneradresse ist privat.');
-      }
-    }
-  }
-  return url.href;
-}
-
 export function drawSubmissionQr(canvas, submissionUrl) {
   const code = qrcode(0, 'M');
-  code.addData(normalizeSubmissionUrl(submissionUrl), 'Byte');
+  code.addData(submissionUrl, 'Byte');
   code.make();
 
   const modules = code.getModuleCount();

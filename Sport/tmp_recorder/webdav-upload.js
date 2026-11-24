@@ -1,4 +1,4 @@
-import { normalizeSubmissionUrl } from './webdav-qr.js?v=2';
+import { normalizeClientPairing } from './client-pairing.js?v=1';
 
 const LEGACY_TARGET_KEY = 'sportkamera-webdav-target-v1';
 const LEGACY_RECEIPT_PREFIX = 'sportkamera-webdav-uploaded-v1:';
@@ -24,15 +24,15 @@ function validateSettings(value) {
   try {
     if (typeof value?.id === 'string' && typeof value.username === 'string'
       && value.username && !value.username.includes(':') && folderUrl(value.url) === value.url) {
-      let submissionUrl = null;
-      if (typeof value.submissionUrl === 'string') {
+      let clientPairing = null;
+      if (value.clientPairing) {
         try {
-          submissionUrl = normalizeSubmissionUrl(value.submissionUrl, value.url);
+          clientPairing = normalizeClientPairing(value.clientPairing);
         } catch {
-          // Die private WebDAV-Konfiguration bleibt auch bei einem ungültigen Abgabelink verwendbar.
+          // Eine ungültige Kopplung verändert die WebDAV-Verbindung nicht.
         }
       }
-      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null, submissionUrl };
+      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null, clientPairing };
     }
   } catch {
     // Ungültige Ziele werden beim Laden ignoriert.
@@ -153,7 +153,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function getState() {
     return {
       target: target && { url: target.url, username: target.username },
-      submissionUrl: target?.submissionUrl ?? null,
+      clientPairing: target?.clientPairing ?? null,
       ready: Boolean(authorization || (target?.credential && !credentialRejected)),
       remembered: Boolean(target?.credential),
       connecting: probe !== null,
@@ -192,7 +192,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       const saved = await savedTarget();
       if (writing !== pendingWrite) return;
       if (saved?.id === target?.id) {
-        if (saved?.submissionUrl !== target?.submissionUrl) {
+        if (JSON.stringify(saved?.clientPairing) !== JSON.stringify(target?.clientPairing)) {
           target = saved;
           notify();
         }
@@ -214,15 +214,15 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     return pendingWrite;
   }
 
-  async function setSubmissionUrl(value) {
-    if (!getState().ready || probe || upload) {
-      throw new Error('Verbinde WebDAV, um den Abgabelink zu speichern.');
+  async function setClientPairing(value, targetUrl) {
+    if (!getState().ready || probe || upload || target.url !== targetUrl) {
+      throw new Error('Die WebDAV-Verbindung wurde geändert. Öffne die QR-Einstellungen erneut.');
     }
-    const next = { ...target, submissionUrl: normalizeSubmissionUrl(value, target.url) };
+    const next = { ...target, clientPairing: normalizeClientPairing(value) };
     try {
       await persist(next, { expectedId: next.id });
     } catch (cause) {
-      throw new Error('Der Abgabelink konnte nicht gespeichert werden.', { cause });
+      throw new Error('Der QR-Code konnte nicht gespeichert werden.', { cause });
     }
     await refresh();
     onSettingsChange();
@@ -244,7 +244,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     cancelUpload();
     const previous = target;
     const next = passwordOnly && previous
-      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username, submissionUrl: previous.submissionUrl }
+      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username, clientPairing: previous.clientPairing }
       : null;
     await persist(next, next ? { expectedId: previous.id } : undefined);
     clearLegacySettings();
@@ -273,7 +273,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
         id: crypto.randomUUID(),
         url: current?.url ?? folderUrl(url),
         username: current?.username ?? username?.trim(),
-        submissionUrl: current?.submissionUrl ?? null
+        clientPairing: current?.clientPairing ?? null
       };
       if (!next.username || next.username.includes(':') || !password) {
         throw new Error('Gib einen Benutzernamen ohne Doppelpunkt und ein WebDAV-Passwort ein.');
@@ -391,5 +391,5 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     return result;
   }
 
-  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget, setSubmissionUrl };
+  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget, setClientPairing };
 }

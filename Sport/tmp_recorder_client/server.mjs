@@ -123,12 +123,15 @@ async function* videoBody(request, length, type) {
   if (header !== null || seen !== length) throw new RequestError(400, 'Die Aufnahme ist unvollständig.');
 }
 
-export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, adminKey,
+export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, adminKey, teacherOrigin,
   now = Date.now, sessionMs = SESSION_MS, maxVideoBytes = MAX_VIDEO_BYTES }) {
   const publicUrl = checkedUrl(appUrl);
   if (publicUrl.pathname !== '/') throw new Error('APP_URL muss auf das Stammverzeichnis des Clients zeigen.');
+  const teacherUrl = teacherOrigin ? checkedUrl(teacherOrigin) : null;
+  if (teacherUrl && teacherUrl.pathname !== '/') throw new Error('TEACHER_ORIGIN braucht nur die Origin der Hauptapp.');
   const destination = checkedUrl(davUrl);
   if (!destination.pathname.endsWith('/')) destination.pathname += '/';
+  const folderHash = digest(destination.href).toString('hex');
   if (!davUsername || davUsername.includes(':') || !davPassword || !adminKey || adminKey.length < 32) {
     throw new Error('WebDAV-Zugangsdaten und ein Schlüssel mit mindestens 32 Zeichen werden benötigt.');
   }
@@ -235,20 +238,42 @@ export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, a
         response.writeHead(308, { Location: '/lehrkraft/' });
         return response.end();
       }
-      if (request.headers.origin && request.headers.origin !== publicUrl.origin) throw new RequestError(403, 'Die Anfrage stammt von einer anderen Webseite.');
+      const revokeMatch = /^\/api\/pairings\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      const pairingRoute = pathname === '/api/pairings' || revokeMatch;
+      const origin = request.headers.origin;
+      const fromTeacher = pairingRoute && origin && origin === teacherUrl?.origin && origin !== publicUrl.origin;
+      if (pairingRoute) response.setHeader('Vary', 'Origin');
+      if (fromTeacher) {
+        response.setHeader('Access-Control-Allow-Origin', origin);
+        if (request.method === 'OPTIONS') {
+          response.setHeader('Access-Control-Allow-Methods', revokeMatch ? 'DELETE' : 'POST');
+          response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+          return reply(response, 204);
+        }
+      }
+      if (origin && origin !== publicUrl.origin && !fromTeacher) throw new RequestError(403, 'Die Anfrage stammt von einer anderen Webseite.');
       expirePairings();
       const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
       if (pathname === '/api/pairings' && request.method === 'POST') {
         checkAdmin(token);
-        if (pairings.size >= CAPACITY.pairings) throw new RequestError(429, 'Es sind zu viele Abgaben geöffnet.');
+        const hasPayload = request.headers['content-type']?.startsWith('application/json');
+        const payload = hasPayload ? await readJson(request) : null;
+        if ((fromTeacher || hasPayload) && payload?.folderHash !== folderHash) {
+          throw new RequestError(409, 'Der Upload-Dienst verwendet einen anderen WebDAV-Zielordner als die Hauptapp.');
+        }
+        const previous = payload?.replace;
+        if (previous !== undefined && (typeof previous !== 'string' || !PAIRING_TOKEN_PATTERN.test(previous))) {
+          throw new RequestError(400, 'Die bisherige Freigabe ist ungültig.');
+        }
+        if (pairings.size >= CAPACITY.pairings && !pairings.has(previous)) throw new RequestError(429, 'Es sind zu viele Abgaben geöffnet.');
         await checkWebDav();
-        if (pairings.size >= CAPACITY.pairings) throw new RequestError(429, 'Es sind zu viele Abgaben geöffnet.');
+        if (pairings.size >= CAPACITY.pairings && !pairings.has(previous)) throw new RequestError(429, 'Es sind zu viele Abgaben geöffnet.');
+        if (previous) removePairing(previous);
         const pairing = newToken();
         const expires = now() + sessionMs;
         pairings.set(pairing, expires);
         return reply(response, 201, { pairing, expires, link: createPairingLink(publicUrl, pairing) });
       }
-      const revokeMatch = /^\/api\/pairings\/([A-Za-z0-9_-]+)$/.exec(pathname);
       if (revokeMatch && request.method === 'DELETE') {
         checkAdmin(token);
         removePairing(revokeMatch[1]);
@@ -298,6 +323,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const appUrl = process.env.APP_URL || `http://localhost:${port}/`;
   const server = createUploadServer({ appUrl, davUrl: process.env.WEBDAV_URL,
     davUsername: process.env.WEBDAV_USERNAME, davPassword: process.env.WEBDAV_PASSWORD,
-    adminKey: process.env.PAIRING_ADMIN_KEY });
+    adminKey: process.env.PAIRING_ADMIN_KEY, teacherOrigin: process.env.TEACHER_ORIGIN });
   server.listen(port, host, () => console.log(`Videoabgabe ${appUrl}\nQR-Codes für Lehrkräfte ${new URL('lehrkraft/', appUrl)}`));
 }

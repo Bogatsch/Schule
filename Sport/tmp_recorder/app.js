@@ -20,8 +20,9 @@ import {
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
-import { createWebDavUpload } from './webdav-upload.js?v=4';
-import { drawSubmissionQr } from './webdav-qr.js?v=2';
+import { createWebDavUpload } from './webdav-upload.js?v=5';
+import { drawSubmissionQr } from './webdav-qr.js?v=3';
+import { clientPairingLink, closeClientPairing, createClientPairing } from './client-pairing.js?v=1';
 import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=e354de49';
 import {
   deleteMedia,
@@ -213,7 +214,9 @@ const elements = {
   webDavQrCanvas: document.querySelector('#webdav-qr'),
   webDavQrEditor: document.querySelector('#webdav-qr-editor'),
   webDavQrUrl: document.querySelector('#webdav-qr-url'),
+  webDavQrKey: document.querySelector('#webdav-qr-key'),
   webDavQrSave: document.querySelector('#webdav-qr-save'),
+  webDavQrClose: document.querySelector('#webdav-qr-close'),
   webDavQrCancel: document.querySelector('#webdav-qr-cancel'),
   webDavConnect: document.querySelector('#webdav-connect'),
   webDavForgetPassword: document.querySelector('#webdav-forget-password'),
@@ -339,6 +342,7 @@ let editingWebDavQr = false;
 let savingWebDavQr = false;
 let webDavQrError = '';
 let drawnSubmissionUrl = null;
+let webDavQrExpiryTimer = null;
 const webDav = createWebDavUpload({
   getMedia,
   readSettings: readWebDavSettings,
@@ -1742,10 +1746,16 @@ function updateProtectedAccessUI() {
   );
 }
 
-function renderWebDav({ target, submissionUrl, ready, remembered, connecting, uploading, status, error }) {
+function renderWebDav({ target, clientPairing, ready, remembered, connecting, uploading, status, error }) {
   const busy = connecting || uploading || savingWebDavQr;
+  const submissionUrl = clientPairingLink(clientPairing);
   const showQr = ready && submissionUrl && !editingWebDavQr;
   const showEditor = ready && !showQr;
+  clearTimeout(webDavQrExpiryTimer);
+  if (ready && submissionUrl) {
+    webDavQrExpiryTimer = window.setTimeout(() => renderWebDav(webDav.getState()),
+      Math.min(2_147_483_647, Math.max(1, clientPairing.expires - Date.now())));
+  }
   elements.webDavNewTarget.hidden = Boolean(target);
   elements.webDavPasswordField.hidden = ready;
   elements.webDavConnectActions.hidden = ready;
@@ -1755,13 +1765,19 @@ function renderWebDav({ target, submissionUrl, ready, remembered, connecting, up
   elements.webDavQrButton.hidden = !showQr;
   elements.webDavQrEditor.hidden = !showEditor;
   elements.webDavQrCancel.hidden = !submissionUrl;
+  elements.webDavQrClose.hidden = !submissionUrl;
   elements.webDavUrl.disabled = busy || Boolean(target);
   elements.webDavUsername.disabled = busy || Boolean(target);
   elements.webDavRemember.disabled = busy || ready;
   elements.webDavPassword.disabled = busy || ready;
   elements.webDavConnect.disabled = busy || ready;
   elements.webDavQrUrl.disabled = busy || !showEditor;
+  elements.webDavQrUrl.readOnly = Boolean(submissionUrl);
+  if (!elements.webDavQrUrl.value && clientPairing) elements.webDavQrUrl.value = clientPairing.service;
+  elements.webDavQrKey.disabled = busy || !showEditor;
   elements.webDavQrSave.disabled = busy || !showEditor;
+  elements.webDavQrSave.textContent = submissionUrl ? 'Neuen QR-Code erzeugen' : 'QR-Code erzeugen';
+  elements.webDavQrClose.disabled = busy || !showEditor;
   elements.webDavQrCancel.disabled = busy;
   elements.webDavQrButton.disabled = busy;
   elements.webDavForget.disabled = busy;
@@ -1774,7 +1790,8 @@ function renderWebDav({ target, submissionUrl, ready, remembered, connecting, up
     elements.webDavQrCanvas.height = 0;
     drawnSubmissionUrl = null;
   }
-  elements.webDavStatus.textContent = showEditor && webDavQrError ? webDavQrError : ready && !error ? '' : status;
+  const qrStatus = savingWebDavQr ? 'Freigabe wird aktualisiert …' : webDavQrError;
+  elements.webDavStatus.textContent = showEditor && qrStatus ? qrStatus : ready && !error ? '' : status;
   elements.webDavStatus.dataset.status = error || (showEditor && webDavQrError) ? 'error' : '';
   elements.webDavStatus.hidden = !elements.webDavStatus.textContent;
   updateGalleryUploadButton();
@@ -1783,15 +1800,18 @@ function renderWebDav({ target, submissionUrl, ready, remembered, connecting, up
 function resetWebDavQrEditor() {
   editingWebDavQr = false;
   webDavQrError = '';
-  elements.webDavQrUrl.value = '';
-  renderWebDav(webDav.getState());
+  const state = webDav.getState();
+  elements.webDavQrUrl.value = state.clientPairing?.service ?? '';
+  elements.webDavQrKey.value = '';
+  renderWebDav(state);
 }
 
 function focusWebDavPanel() {
   const { ready, target } = webDav.getState();
   let field = target ? elements.webDavPassword : elements.webDavUrl;
   if (ready) {
-    field = elements.webDavQrEditor.hidden ? elements.webDavQrButton : elements.webDavQrUrl;
+    field = elements.webDavQrUrl.readOnly ? elements.webDavQrKey : elements.webDavQrUrl;
+    if (elements.webDavQrEditor.hidden) field = elements.webDavQrButton;
   }
   field.focus({ preventScroll: true });
 }
@@ -3192,7 +3212,7 @@ elements.accountEnrollmentSkip.addEventListener('click', () => {
 elements.accountLogout.addEventListener('click', () => exitTeacherMode());
 elements.webDavQrButton.addEventListener('click', () => {
   editingWebDavQr = true;
-  elements.webDavQrUrl.value = webDav.getState().submissionUrl ?? '';
+  elements.webDavQrUrl.value = webDav.getState().clientPairing?.service ?? '';
   renderWebDav(webDav.getState());
   focusWebDavPanel();
 });
@@ -3200,29 +3220,45 @@ elements.webDavQrCancel.addEventListener('click', () => {
   resetWebDavQrEditor();
   focusWebDavPanel();
 });
-elements.webDavQrUrl.addEventListener('input', () => {
-  if (webDavQrError) {
-    webDavQrError = '';
-    renderWebDav(webDav.getState());
-  }
+[elements.webDavQrUrl, elements.webDavQrKey].forEach((field) => {
+  field.addEventListener('input', () => {
+    if (webDavQrError) {
+      webDavQrError = '';
+      renderWebDav(webDav.getState());
+    }
+  });
 });
 
-async function saveWebDavQr() {
-  if (savingWebDavQr) return;
+async function saveWebDavQr(close = false) {
+  const { target, clientPairing: previous, ready } = webDav.getState();
+  if (savingWebDavQr || !teacherMode || !ready || elements.webDavQrEditor.hidden) return;
+  if (close && (!clientPairingLink(previous) || !elements.webDavQrKey.reportValidity())) return;
+  const key = elements.webDavQrKey.value;
+  elements.webDavQrKey.value = '';
   savingWebDavQr = true;
   webDavQrError = '';
   renderWebDav(webDav.getState());
+  let created = null;
   try {
-    await webDav.setSubmissionUrl(elements.webDavQrUrl.value);
+    if (close) {
+      await closeClientPairing(previous, key);
+      await webDav.setClientPairing({ service: previous.service }, target.url);
+    } else {
+      created = await createClientPairing({ service: elements.webDavQrUrl.value, key, targetUrl: target.url, previous });
+      await webDav.setClientPairing(created, target.url);
+    }
     resetWebDavQrEditor();
   } catch (error) {
     webDavQrError = error.message;
+    if (created) void closeClientPairing(created, key).catch(() => {});
   } finally {
     savingWebDavQr = false;
     renderWebDav(webDav.getState());
     if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) focusWebDavPanel();
   }
 }
+
+elements.webDavQrClose.addEventListener('click', () => void saveWebDavQr(true));
 
 elements.accountWebDavForm.addEventListener('submit', (event) => {
   event.preventDefault();

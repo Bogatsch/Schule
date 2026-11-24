@@ -21,11 +21,15 @@ npm.cmd start
 3. Ein Video aufnehmen, benennen und **Speichern & abgeben** wählen. Für weitere Abgaben kann dieselbe Sitzung genutzt werden.
 4. Zum Beenden auf dem Schülergerät **Abmelden** wählen. Die Lehrkraft kann die gesamte Freigabe über **Abgabe schließen** beenden.
 
-Die Seite `/lehrkraft/` erzeugt den QR-Code automatisch für den konfigurierten Zielordner und kann den zugehörigen Link kopieren. Bei einer HTTPS-Bereitstellung kann dieser Link auch im Reiter **WebDAV** der Hauptapp als Abgabelink angezeigt werden. Eine Freigabe läuft nach 60 Minuten aus. Die Lehrkraft kann denselben QR-Code mehreren Geräten zeigen. Jedes Gerät erhält beim Scannen eine eigene Upload-Sitzung.
+Die Seite `/lehrkraft/` erzeugt den QR-Code für den konfigurierten Zielordner und kann den zugehörigen Link kopieren. Eine Freigabe läuft nach 60 Minuten aus. Die Lehrkraft kann denselben QR-Code mehreren Geräten zeigen. Jedes Gerät erhält beim Scannen eine eigene Upload-Sitzung.
 
 ## Auf iPads im Netz verwenden
 
 Den Node-Dienst unter einer HTTPS-Adresse bereitstellen und `APP_URL` auf diese Adresse am Stammverzeichnis setzen, etwa `https://video.example.org/`. Für lokale Tests nutzt der Dienst `localhost:8080`. `HOST` und `PORT` steuern die Bind-Adresse und den Port. Bei einem HTTPS-Reverse-Proxy müssen Uploads bis 200 MiB und die für die Übertragung nötigen Zeitlimits zugelassen werden.
+
+### QR-Code in der Hauptapp erzeugen
+
+Setze `TEACHER_ORIGIN` am Upload-Dienst auf die Origin der Hauptapp, beispielsweise `https://bogatsch.github.io`. Der Seitenpfad gehört nicht zur Einstellung. Verwende in `WEBDAV_URL` denselben Zielordner wie in der Hauptapp. Im WebDAV-Reiter der Hauptapp als **HTTPS-Adresse des Schüler-Clients** den Wert von `APP_URL` und als **Freigabeschlüssel** den Wert von `PAIRING_ADMIN_KEY` eingeben. Die Hauptapp erzeugt dann den Code über die Freigabe-API. Ein neuer Code im selben Reiter beendet die vorherige Freigabe.
 
 Der Browser sendet das Video an den Dienst unter derselben Adresse wie die Client-Seite. Der Dienst überträgt es per WebDAV `PUT`. Die WebDAV-Zugangsdaten liegen im Serverprozess. Er prüft beim Erstellen einer Freigabe den Zielordner mit `PROPFIND`. Der QR-Code enthält eine zufällige Einladung, die nur zur Upload-Abgabe berechtigt. Weder der Client noch der Upload-Dienst legen lokale Videodateien an. Die Sitzungsdaten werden im Arbeitsspeicher gehalten. Beim Abmelden bleibt der Upload bereits bestätigter Videos im WebDAV-Ordner erhalten.
 
