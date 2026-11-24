@@ -20,7 +20,8 @@ import {
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
-import { createWebDavUpload } from './webdav-upload.js?v=2';
+import { createWebDavUpload } from './webdav-upload.js?v=4';
+import { drawSubmissionQr } from './webdav-qr.js?v=2';
 import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=e354de49';
 import {
   deleteMedia,
@@ -200,13 +201,20 @@ const elements = {
   accountResetConfirmation: document.querySelector('#account-reset-confirmation'),
   accountResetSubmit: document.querySelector('#account-reset-submit'),
   accountStatus: document.querySelector('#account-status'),
-  webDavSelectedTarget: document.querySelector('#webdav-selected-target'),
   webDavNewTarget: document.querySelector('#webdav-new-target'),
   webDavUrl: document.querySelector('#webdav-url'),
   webDavUsername: document.querySelector('#webdav-username'),
   webDavRemember: document.querySelector('#webdav-remember'),
   webDavPasswordField: document.querySelector('#webdav-password-field'),
   webDavPassword: document.querySelector('#webdav-password'),
+  webDavConnectActions: document.querySelector('#webdav-connect-actions'),
+  webDavManagementActions: document.querySelector('#webdav-management-actions'),
+  webDavQrButton: document.querySelector('#webdav-qr-button'),
+  webDavQrCanvas: document.querySelector('#webdav-qr'),
+  webDavQrEditor: document.querySelector('#webdav-qr-editor'),
+  webDavQrUrl: document.querySelector('#webdav-qr-url'),
+  webDavQrSave: document.querySelector('#webdav-qr-save'),
+  webDavQrCancel: document.querySelector('#webdav-qr-cancel'),
   webDavConnect: document.querySelector('#webdav-connect'),
   webDavForgetPassword: document.querySelector('#webdav-forget-password'),
   webDavForget: document.querySelector('#webdav-forget'),
@@ -327,6 +335,10 @@ const galleryCardObjectUrls = new Set();
 const galleryLoadedMedia = new Map();
 const delayedDownloadObjectUrls = new Set();
 const annotation = setupVideoAnnotation({ statusElement: elements.previewStatus });
+let editingWebDavQr = false;
+let savingWebDavQr = false;
+let webDavQrError = '';
+let drawnSubmissionUrl = null;
 const webDav = createWebDavUpload({
   getMedia,
   readSettings: readWebDavSettings,
@@ -1730,27 +1742,65 @@ function updateProtectedAccessUI() {
   );
 }
 
-function renderWebDav({ target, ready, remembered, connecting, uploading, status, error }) {
-  elements.webDavSelectedTarget.hidden = !target;
-  elements.webDavSelectedTarget.textContent = target ? `${target.url} (${target.username})` : '';
+function renderWebDav({ target, submissionUrl, ready, remembered, connecting, uploading, status, error }) {
+  const busy = connecting || uploading || savingWebDavQr;
+  const showQr = ready && submissionUrl && !editingWebDavQr;
+  const showEditor = ready && !showQr;
   elements.webDavNewTarget.hidden = Boolean(target);
   elements.webDavPasswordField.hidden = ready;
-  elements.webDavConnect.hidden = ready;
+  elements.webDavConnectActions.hidden = ready;
+  elements.webDavManagementActions.hidden = !target;
   elements.webDavForgetPassword.hidden = !ready && !remembered;
   elements.webDavForget.hidden = !target;
-  [elements.webDavUrl, elements.webDavUsername, elements.webDavRemember, elements.webDavPassword,
-    elements.webDavConnect, elements.webDavForget, elements.webDavForgetPassword].forEach((field) => {
-    field.disabled = connecting || uploading;
-  });
-  elements.webDavStatus.textContent = status;
-  elements.webDavStatus.dataset.status = error ? 'error' : '';
+  elements.webDavQrButton.hidden = !showQr;
+  elements.webDavQrEditor.hidden = !showEditor;
+  elements.webDavQrCancel.hidden = !submissionUrl;
+  elements.webDavUrl.disabled = busy || Boolean(target);
+  elements.webDavUsername.disabled = busy || Boolean(target);
+  elements.webDavRemember.disabled = busy || ready;
+  elements.webDavPassword.disabled = busy || ready;
+  elements.webDavConnect.disabled = busy || ready;
+  elements.webDavQrUrl.disabled = busy || !showEditor;
+  elements.webDavQrSave.disabled = busy || !showEditor;
+  elements.webDavQrCancel.disabled = busy;
+  elements.webDavQrButton.disabled = busy;
+  elements.webDavForget.disabled = busy;
+  elements.webDavForgetPassword.disabled = busy;
+  if (showQr && submissionUrl !== drawnSubmissionUrl) {
+    drawSubmissionQr(elements.webDavQrCanvas, submissionUrl);
+    drawnSubmissionUrl = submissionUrl;
+  } else if (!showQr && drawnSubmissionUrl) {
+    elements.webDavQrCanvas.width = 0;
+    elements.webDavQrCanvas.height = 0;
+    drawnSubmissionUrl = null;
+  }
+  elements.webDavStatus.textContent = showEditor && webDavQrError ? webDavQrError : ready && !error ? '' : status;
+  elements.webDavStatus.dataset.status = error || (showEditor && webDavQrError) ? 'error' : '';
+  elements.webDavStatus.hidden = !elements.webDavStatus.textContent;
   updateGalleryUploadButton();
+}
+
+function resetWebDavQrEditor() {
+  editingWebDavQr = false;
+  webDavQrError = '';
+  elements.webDavQrUrl.value = '';
+  renderWebDav(webDav.getState());
+}
+
+function focusWebDavPanel() {
+  const { ready, target } = webDav.getState();
+  let field = target ? elements.webDavPassword : elements.webDavUrl;
+  if (ready) {
+    field = elements.webDavQrEditor.hidden ? elements.webDavQrButton : elements.webDavQrUrl;
+  }
+  field.focus({ preventScroll: true });
 }
 
 function setAccountPanel(panel, { focus = false } = {}) {
   if (panel !== 'webdav') {
     webDav.cancelConnection();
     elements.webDavPassword.value = '';
+    resetWebDavQrEditor();
   }
   for (const [name, { tab, form }] of Object.entries(accountPanels)) {
     const selected = name === panel;
@@ -1776,9 +1826,7 @@ function setAccountPanel(panel, { focus = false } = {}) {
     } else if (panel === 'reset') {
       elements.accountResetConfirmation.focus({ preventScroll: true });
     } else {
-      const { ready, target } = webDav.getState();
-      const field = ready ? elements.webDavForgetPassword : target ? elements.webDavPassword : elements.webDavUrl;
-      field.focus({ preventScroll: true });
+      focusWebDavPanel();
     }
   });
 }
@@ -3142,9 +3190,47 @@ elements.accountEnrollmentSkip.addEventListener('click', () => {
   }
 });
 elements.accountLogout.addEventListener('click', () => exitTeacherMode());
+elements.webDavQrButton.addEventListener('click', () => {
+  editingWebDavQr = true;
+  elements.webDavQrUrl.value = webDav.getState().submissionUrl ?? '';
+  renderWebDav(webDav.getState());
+  focusWebDavPanel();
+});
+elements.webDavQrCancel.addEventListener('click', () => {
+  resetWebDavQrEditor();
+  focusWebDavPanel();
+});
+elements.webDavQrUrl.addEventListener('input', () => {
+  if (webDavQrError) {
+    webDavQrError = '';
+    renderWebDav(webDav.getState());
+  }
+});
+
+async function saveWebDavQr() {
+  if (savingWebDavQr) return;
+  savingWebDavQr = true;
+  webDavQrError = '';
+  renderWebDav(webDav.getState());
+  try {
+    await webDav.setSubmissionUrl(elements.webDavQrUrl.value);
+    resetWebDavQrEditor();
+  } catch (error) {
+    webDavQrError = error.message;
+  } finally {
+    savingWebDavQr = false;
+    renderWebDav(webDav.getState());
+    if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) focusWebDavPanel();
+  }
+}
+
 elements.accountWebDavForm.addEventListener('submit', (event) => {
   event.preventDefault();
   if (!teacherMode || !elements.accountDialog.open || elements.accountWebDavForm.hidden) {
+    return;
+  }
+  if (webDav.getState().ready) {
+    if (!elements.webDavQrEditor.hidden) void saveWebDavQr();
     return;
   }
   const password = elements.webDavPassword.value;
@@ -3154,10 +3240,13 @@ elements.accountWebDavForm.addEventListener('submit', (event) => {
     username: elements.webDavUsername.value,
     password,
     remember: elements.webDavRemember.checked
-  }).then(() => {
+  }).then((connected) => {
+    if (connected) {
+      elements.webDavUrl.value = '';
+      elements.webDavUsername.value = '';
+    }
     if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) {
-      const focus = webDav.getState().ready ? elements.webDavForgetPassword : elements.webDavPassword;
-      focus.focus({ preventScroll: true });
+      focusWebDavPanel();
     }
   });
 });
@@ -3166,6 +3255,7 @@ async function forgetWebDav(passwordOnly) {
   try {
     await webDav.forget({ passwordOnly });
     elements.accountWebDavForm.reset();
+    resetWebDavQrEditor();
     if (elements.accountDialog.open && !elements.accountWebDavForm.hidden) {
       const field = passwordOnly ? elements.webDavPassword : elements.webDavUrl;
       field.focus({ preventScroll: true });
@@ -3173,6 +3263,7 @@ async function forgetWebDav(passwordOnly) {
   } catch {
     elements.webDavStatus.textContent = 'Die WebDAV-Einstellung konnte nicht entfernt werden.';
     elements.webDavStatus.dataset.status = 'error';
+    elements.webDavStatus.hidden = false;
   }
 }
 elements.webDavForgetPassword.addEventListener('click', () => void forgetWebDav(true));
@@ -3198,6 +3289,7 @@ elements.accountDialog.addEventListener('close', () => {
   teacherAuthVerified = false;
   webDav.cancelConnection();
   elements.accountWebDavForm.reset();
+  resetWebDavQrEditor();
   elements.accountLoginForm.reset();
   elements.accountResetForm.reset();
   elements.accountPassword.disabled = false;

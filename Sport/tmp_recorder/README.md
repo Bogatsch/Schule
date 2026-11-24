@@ -72,6 +72,10 @@ Ordneradresse und Benutzername bleiben im jeweiligen Browserprofil gespeichert. 
 
 Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann einmalig mit der neuen Speicheroption hinterlegt werden. Gespeicherte Aufnahmen werden nur nach Auswahl und Tippen auf die Upload-Taste übertragen.
 
+### QR-Code zur Videoabgabe
+
+Im verbundenen WebDAV-Reiter unter **Abgabelink** die HTTPS-Adresse einer Upload-Freigabe oder einer eigenen Videoabgabeseite einfügen und **QR-Code anzeigen** wählen. Der QR-Code enthält ausschließlich diesen Link. Die verlinkte Seite übernimmt den Upload in den vorgesehenen Ordner. Wenn der Server nur eine WebDAV-Schnittstelle anbietet, braucht es dafür eine eigene Abgabeseite. Ein Tippen auf den QR-Code öffnet das Feld zum Bearbeiten des Links.
+
 ### Voraussetzungen am Server
 
 Die App verwendet HTTP Basic Auth über HTTPS, `PROPFIND` mit `Depth: 0` zum Prüfen des Zielordners und `PUT` zum Schreiben. Verwende die endgültige Ordneradresse ohne Weiterleitung und ein Zertifikat, dem die Geräte vertrauen. Der Server oder dessen Reverse Proxy muss ausreichend große Uploads zulassen. Bei drei Minuten und 8 Mbit/s kann ein Video rund 180 MB groß sein. [WebDAV-Standard](https://www.rfc-editor.org/rfc/rfc4918.html#section-9.7)

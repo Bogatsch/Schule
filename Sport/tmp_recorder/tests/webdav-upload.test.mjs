@@ -169,3 +169,37 @@ test('bricht auch beim Laden der Einstellungen ab, wenn die Galerie geschlossen 
   assert.equal((await pending).cancelled, true);
   assert.equal(uploads().length, 0);
 });
+
+test('behält den Abgabelink getrennt von den WebDAV-Zugangsdaten und entfernt ihn mit dem Ziel', async (t) => {
+  const { newSession, save, uploads, settings } = setup(t);
+  const upload = newSession();
+  const link = 'https://upload.example.org/aufgaben/sport?einladung=Gruppe%2FA#aufnahme';
+  await assert.rejects(upload.setSubmissionUrl(link), /Verbinde WebDAV/);
+  assert.equal(await upload.connect({ ...login, remember: true }), true);
+  const targetId = settings().id;
+  for (const url of ['http://upload.example.org/aufgaben/sport', 'https://user:pass@upload.example.org/aufgaben/sport']) {
+    await assert.rejects(upload.setSubmissionUrl(url), /HTTPS-Link/);
+  }
+  for (const url of [login.url, `${login.url}/?einladung=abc`, `${login.url}/team/`]) {
+    await assert.rejects(upload.setSubmissionUrl(url), /WebDAV-Ordneradresse ist privat/);
+  }
+  await upload.setSubmissionUrl('https://dav.example.org/abgabe');
+  assert.equal(upload.getState().submissionUrl, 'https://dav.example.org/abgabe');
+  await upload.setSubmissionUrl(link);
+  assert.equal(upload.getState().submissionUrl, link);
+  assert.equal(settings().id, targetId);
+  assert.equal(settings().url, `${login.url}/`);
+
+  const reopened = newSession();
+  await reopened.refresh();
+  assert.equal(reopened.getState().submissionUrl, link);
+  save('video');
+  assert.equal((await reopened.uploadSelected(['video'])).sent, 1);
+  assert.equal(uploads()[0].headers.Authorization, authorization);
+  await reopened.forget({ passwordOnly: true });
+  assert.equal(reopened.getState().submissionUrl, link);
+  assert.equal(await reopened.connect({ password: login.password }), true);
+  assert.equal(reopened.getState().submissionUrl, link);
+  await reopened.forget();
+  assert.equal(reopened.getState().submissionUrl, null);
+});

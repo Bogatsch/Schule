@@ -15,8 +15,8 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
-    <link rel="stylesheet" href="./styles.css?v=43">
-    <script type="module" src="./app.js?v=46"></script>
+    <link rel="stylesheet" href="./styles.css?v=44">
+    <script type="module" src="./app.js?v=48"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -458,9 +458,6 @@
 
           <form id="account-webdav-form" hidden>
             <section id="account-webdav-panel" class="account-panel" role="tabpanel" aria-labelledby="account-webdav-tab">
-              <h3>WebDAV für die Galerie</h3>
-              <p class="dialog-copy">Wähle in der Galerie die Videos aus, die du in diesen Ordner hochladen möchtest.</p>
-              <p id="webdav-selected-target" class="dialog-copy webdav-target" hidden></p>
               <div id="webdav-new-target" class="account-step">
                 <div class="account-password-field">
                   <label for="webdav-url">HTTPS-Adresse des WebDAV-Ordners</label>
@@ -479,12 +476,28 @@
                   Passwort auf diesem Gerät merken
                 </label>
               </div>
-              <div class="dialog-actions">
+              <button id="webdav-qr-button" class="webdav-qr-button" type="button" aria-label="Abgabelink des QR-Codes bearbeiten" hidden>
+                <canvas id="webdav-qr" role="img" aria-label="QR-Code zur Videoabgabe"></canvas>
+              </button>
+              <div id="webdav-qr-editor" class="account-step" hidden>
+                <div class="account-password-field">
+                  <label for="webdav-qr-url">Abgabelink</label>
+                  <input id="webdav-qr-url" type="url" maxlength="512" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="webdav-qr-help" required disabled>
+                  <small id="webdav-qr-help">Füge den HTTPS-Link zur Upload-Freigabe oder zur Videoabgabeseite ein.</small>
+                </div>
+                <div class="dialog-actions">
+                  <button id="webdav-qr-save" class="primary-action" type="submit">QR-Code anzeigen</button>
+                  <button id="webdav-qr-cancel" class="secondary-action" type="button" hidden>Abbrechen</button>
+                </div>
+              </div>
+              <div id="webdav-connect-actions" class="dialog-actions">
                 <button id="webdav-connect" class="primary-action" type="submit">Verbinden</button>
+              </div>
+              <div id="webdav-management-actions" class="webdav-management-actions" hidden>
                 <button id="webdav-forget-password" class="secondary-action" type="button" hidden>Passwort entfernen</button>
                 <button id="webdav-forget" class="secondary-action" type="button" hidden>Ziel entfernen</button>
               </div>
-              <p id="webdav-status" class="dialog-status" role="status"></p>
+              <p id="webdav-status" class="dialog-status" role="status" hidden></p>
             </section>
           </form>
 

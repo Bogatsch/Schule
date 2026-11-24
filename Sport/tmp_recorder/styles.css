@@ -1926,9 +1926,37 @@ input.gallery-card-selection {
   font-size: 0.75rem;
 }
 
-.webdav-target {
-  font-weight: 700;
-  overflow-wrap: anywhere;
+.webdav-qr-button {
+  display: block;
+  width: min(100%, 232px);
+  padding: 0;
+  justify-self: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.webdav-qr-button canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.webdav-management-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.webdav-management-actions .secondary-action {
+  min-height: 48px;
+  padding-inline: 0.6rem;
+  justify-content: center;
+  text-align: center;
 }
 
 .webdav-checkbox {

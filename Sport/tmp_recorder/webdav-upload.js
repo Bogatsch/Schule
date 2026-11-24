@@ -1,3 +1,5 @@
+import { normalizeSubmissionUrl } from './webdav-qr.js?v=2';
+
 const LEGACY_TARGET_KEY = 'sportkamera-webdav-target-v1';
 const LEGACY_RECEIPT_PREFIX = 'sportkamera-webdav-uploaded-v1:';
 const ENTER_PASSWORD = 'Verbinde das WebDAV-Ziel mit deinem App-Passwort.';
@@ -22,7 +24,15 @@ function validateSettings(value) {
   try {
     if (typeof value?.id === 'string' && typeof value.username === 'string'
       && value.username && !value.username.includes(':') && folderUrl(value.url) === value.url) {
-      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null };
+      let submissionUrl = null;
+      if (typeof value.submissionUrl === 'string') {
+        try {
+          submissionUrl = normalizeSubmissionUrl(value.submissionUrl, value.url);
+        } catch {
+          // Die private WebDAV-Konfiguration bleibt auch bei einem ungültigen Abgabelink verwendbar.
+        }
+      }
+      return { id: value.id, url: value.url, username: value.username, credential: value.credential ?? null, submissionUrl };
     }
   } catch {
     // Ungültige Ziele werden beim Laden ignoriert.
@@ -143,6 +153,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function getState() {
     return {
       target: target && { url: target.url, username: target.username },
+      submissionUrl: target?.submissionUrl ?? null,
       ready: Boolean(authorization || (target?.credential && !credentialRejected)),
       remembered: Boolean(target?.credential),
       connecting: probe !== null,
@@ -179,7 +190,14 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       const writing = pendingWrite;
       await writing.catch(() => {});
       const saved = await savedTarget();
-      if (writing !== pendingWrite || saved?.id === target?.id) return;
+      if (writing !== pendingWrite) return;
+      if (saved?.id === target?.id) {
+        if (saved?.submissionUrl !== target?.submissionUrl) {
+          target = saved;
+          notify();
+        }
+        return;
+      }
       cancelConnection();
       if (cancelTransfer) cancelUpload();
       target = saved;
@@ -194,6 +212,20 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
   function persist(settings, options) {
     pendingWrite = pendingWrite.catch(() => {}).then(() => writeSettings(settings, options));
     return pendingWrite;
+  }
+
+  async function setSubmissionUrl(value) {
+    if (!getState().ready || probe || upload) {
+      throw new Error('Verbinde WebDAV, um den Abgabelink zu speichern.');
+    }
+    const next = { ...target, submissionUrl: normalizeSubmissionUrl(value, target.url) };
+    try {
+      await persist(next, { expectedId: next.id });
+    } catch (cause) {
+      throw new Error('Der Abgabelink konnte nicht gespeichert werden.', { cause });
+    }
+    await refresh();
+    onSettingsChange();
   }
 
   function cancelConnection() {
@@ -212,7 +244,7 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     cancelUpload();
     const previous = target;
     const next = passwordOnly && previous
-      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username }
+      ? { id: crypto.randomUUID(), url: previous.url, username: previous.username, submissionUrl: previous.submissionUrl }
       : null;
     await persist(next, next ? { expectedId: previous.id } : undefined);
     clearLegacySettings();
@@ -240,7 +272,8 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
       const next = {
         id: crypto.randomUUID(),
         url: current?.url ?? folderUrl(url),
-        username: current?.username ?? username?.trim()
+        username: current?.username ?? username?.trim(),
+        submissionUrl: current?.submissionUrl ?? null
       };
       if (!next.username || next.username.includes(':') || !password) {
         throw new Error('Gib einen Benutzernamen ohne Doppelpunkt und ein WebDAV-Passwort ein.');
@@ -358,5 +391,5 @@ export function createWebDavUpload({ getMedia, readSettings, writeSettings, onCh
     return result;
   }
 
-  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget };
+  return { getState, refresh, connect, cancelConnection, uploadSelected, cancelUpload, forget, setSubmissionUrl };
 }
