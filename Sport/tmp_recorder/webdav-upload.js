@@ -1,4 +1,4 @@
-import { normalizeClientPairing } from './client-pairing.js?v=1';
+import { normalizeClientPairing } from './client-pairing.js?v=2';
 
 const LEGACY_TARGET_KEY = 'sportkamera-webdav-target-v1';
 const LEGACY_RECEIPT_PREFIX = 'sportkamera-webdav-uploaded-v1:';

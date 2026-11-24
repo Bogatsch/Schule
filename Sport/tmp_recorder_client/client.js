@@ -1,8 +1,9 @@
 import { readPairingLink } from './pairing.js';
+import { STUDENT_CLIENT_URL, UPLOAD_SERVICE_URL } from '../tmp_recorder/client-hosting.js?v=1';
 import {
   CAMERA_TARGET_FRAME_RATE, MAX_RECORDING_MS, formatPlaybackTime, formatRecordingTime,
   nextStepTime, selectSupportedVideoMimeType, videoBitrateForFrameRate
-} from './shared/media-utils.js';
+} from '../tmp_recorder/media-utils.js?v=39';
 
 const get = (id) => document.getElementById(id);
 const views = { scan: get('scan-view'), record: get('record-view'), done: get('done-view') };
@@ -11,6 +12,10 @@ const liveVideo = get('live-camera');
 const preview = get('preview');
 const scanCanvas = document.createElement('canvas');
 const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
+const clientPage = new URL('./', location.href);
+const standalone = clientPage.pathname === '/' && clientPage.href !== STUDENT_CLIENT_URL;
+const uploadService = standalone ? clientPage.origin : UPLOAD_SERVICE_URL;
+const pairingPage = standalone ? clientPage : STUDENT_CLIENT_URL;
 
 let epoch = 0;
 let session = null;
@@ -92,9 +97,16 @@ function authorization(value) {
   return { Authorization: `Bearer ${value}` };
 }
 
+function uploadRequest(path, options) {
+  if (!uploadService) throw new Error('Der Upload-Dienst für diese Videoabgabe ist noch nicht eingerichtet.');
+  return fetch(new URL(path, uploadService), {
+    ...options, mode: 'cors', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer'
+  });
+}
+
 function closeSession(value) {
   if (value) {
-    void fetch('/api/session', { method: 'DELETE', headers: authorization(value), keepalive: true }).catch(() => {});
+    void uploadRequest('/api/session', { method: 'DELETE', headers: authorization(value), keepalive: true }).catch(() => {});
   }
 }
 
@@ -147,7 +159,7 @@ function lookForCode(generation) {
     const frame = scanContext.getImageData(0, 0, width, height);
     const code = window.jsQR(frame.data, width, height, { inversionAttempts: 'dontInvert' });
     if (code) {
-      const pairing = readPairingLink(code.data, location.origin);
+      const pairing = readPairingLink(code.data, pairingPage);
       if (pairing) {
         void connect(pairing);
         return;
@@ -191,7 +203,7 @@ async function connect(pairing) {
   view('scan');
   status('Videoabgabe wird verbunden …');
   try {
-    const response = await fetch('/api/session', {
+    const response = await uploadRequest('/api/session', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pairing }),
       signal: controller.signal
     });
@@ -346,7 +358,7 @@ async function saveVideo(event) {
   preview.pause();
   status('Video wird hochgeladen …');
   try {
-    const response = await fetch(`/api/video/${recording.id}`, {
+    const response = await uploadRequest(`/api/video/${recording.id}`, {
       method: 'PUT', body: recording.file, signal: controller.signal,
       headers: { ...authorization(session), 'Content-Type': recording.file.type, 'X-Video-Name': encodeURIComponent(title) }
     });
@@ -404,7 +416,7 @@ for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', '
 }
 window.addEventListener('pagehide', () => logout(''));
 
-const incoming = readPairingLink(location.href, location.origin);
+const incoming = readPairingLink(location.href, pairingPage);
 if (location.hash) history.replaceState(null, '', location.pathname + location.search);
 if (incoming) void connect(incoming);
 else void startScan();

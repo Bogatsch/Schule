@@ -1,7 +1,9 @@
+import { STUDENT_CLIENT_URL } from './client-hosting.js?v=1';
+
 const INVITATION = /^[A-Za-z0-9_-]{43}$/;
 
 export function normalizeClientService(value) {
-  const message = 'Gib die HTTPS-Adresse des Schüler-Clients ein.';
+  const message = 'In client-hosting.js fehlt eine gültige HTTPS-Adresse für den Upload-Dienst.';
   let url;
   try {
     url = new URL(value);
@@ -17,14 +19,17 @@ export function normalizeClientService(value) {
 export function normalizeClientPairing(value) {
   if (!value) return null;
   const service = normalizeClientService(value.service);
-  if (typeof value.code === 'string' && INVITATION.test(value.code) && Number.isSafeInteger(value.expires) && value.expires > 0) {
-    return { service, code: value.code, expires: value.expires };
+  if (value.client === STUDENT_CLIENT_URL && typeof value.code === 'string' && INVITATION.test(value.code)
+    && Number.isSafeInteger(value.expires) && value.expires > 0) {
+    return { service, client: value.client, code: value.code, expires: value.expires };
   }
   return { service, code: null, expires: null };
 }
 
-export function clientPairingLink(pairing) {
-  return pairing?.code && pairing.expires > Date.now() ? `${pairing.service}/#abgabe=${pairing.code}` : null;
+export function clientPairingLink(pairing, service = pairing?.service) {
+  if (!pairing?.code || pairing.client !== STUDENT_CLIENT_URL || pairing.expires <= Date.now()
+    || pairing.service !== service?.replace(/\/$/, '')) return null;
+  return `${STUDENT_CLIENT_URL}#abgabe=${pairing.code}`;
 }
 
 async function pairingRequest(service, endpoint, key, options) {
@@ -54,7 +59,7 @@ export async function createClientPairing({ service, key, targetUrl, previous })
   const data = await pairingRequest(origin, '/api/pairings', key.trim(), {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folderHash, replace })
   });
-  const pairing = normalizeClientPairing({ service: origin, code: data?.pairing, expires: data?.expires });
+  const pairing = normalizeClientPairing({ service: origin, client: STUDENT_CLIENT_URL, code: data?.pairing, expires: data?.expires });
   const link = clientPairingLink(pairing);
   if (!link || data.link !== link) throw new Error('Der Upload-Dienst hat keinen gültigen QR-Code für diesen Schüler-Client geliefert.');
   return pairing;

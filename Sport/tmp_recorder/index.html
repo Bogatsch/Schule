@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
     <link rel="stylesheet" href="./styles.css?v=44">
-    <script type="module" src="./app.js?v=49"></script>
+    <script type="module" src="./app.js?v=50"></script>
   </head>
   <body data-view="start">
     <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -480,11 +480,6 @@
                 <canvas id="webdav-qr" role="img" aria-label="QR-Code zur Videoabgabe"></canvas>
               </button>
               <div id="webdav-qr-editor" class="account-step" hidden>
-                <div class="account-password-field">
-                  <label for="webdav-qr-url">HTTPS-Adresse des Schüler-Clients</label>
-                  <input id="webdav-qr-url" type="url" maxlength="512" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="webdav-qr-help" required disabled>
-                  <small id="webdav-qr-help">Hier kommt die Startadresse des Clients hin. Die Sportkamera erzeugt daraus die QR-Freigabe.</small>
-                </div>
                 <div class="account-password-field">
                   <label for="webdav-qr-key">Freigabeschlüssel des Upload-Dienstes</label>
                   <input id="webdav-qr-key" type="password" maxlength="512" autocomplete="off" required disabled>

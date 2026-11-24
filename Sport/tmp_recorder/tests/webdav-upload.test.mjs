@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createWebDavUpload } from '../webdav-upload.js';
 import { clientPairingLink, closeClientPairing, createClientPairing } from '../client-pairing.js';
+import { STUDENT_CLIENT_URL } from '../client-hosting.js';
 
 const login = {
   url: 'https://dav.example.org/remote/Sport%20Kamera',
@@ -175,7 +176,7 @@ test('behält die Client-Freigabe getrennt von den WebDAV-Zugangsdaten und entfe
   const { newSession, save, uploads, settings } = setup(t);
   const upload = newSession();
   const targetUrl = `${login.url}/`;
-  const pairing = { service: 'https://client.example.org', code: 'a'.repeat(43), expires: Date.now() + 60_000 };
+  const pairing = { service: 'https://client.example.org', client: STUDENT_CLIENT_URL, code: 'a'.repeat(43), expires: Date.now() + 60_000 };
   await assert.rejects(upload.setClientPairing(pairing, targetUrl), /WebDAV-Verbindung/);
   assert.equal(await upload.connect({ ...login, remember: true }), true);
   const targetId = settings().id;
@@ -201,9 +202,9 @@ test('behält die Client-Freigabe getrennt von den WebDAV-Zugangsdaten und entfe
 
 test('fordert beim Upload-Dienst einen passenden Client-Code an und sendet nur den Zielordner-Prüfwert', async (t) => {
   const service = 'https://client.example.org';
-  const previous = { service, code: 'a'.repeat(43), expires: Date.now() + 60_000 };
+  const previous = { service, client: STUDENT_CLIENT_URL, code: 'a'.repeat(43), expires: Date.now() + 60_000 };
   const code = 'b'.repeat(43);
-  const link = `${service}/#abgabe=${code}`;
+  const link = `${STUDENT_CLIENT_URL}#abgabe=${code}`;
   const requests = [];
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     requests.push({ url: String(url), ...options });
@@ -217,6 +218,8 @@ test('fordert beim Upload-Dienst einen passenden Client-Code an und sendet nur d
   assert.equal(requests.length, 0);
   const pairing = await createClientPairing(args);
   assert.equal(clientPairingLink(pairing), link);
+  assert.equal(clientPairingLink(pairing, 'https://anderer-dienst.example.org'), null);
+  assert.equal(clientPairingLink({ ...pairing, client: undefined }), null);
   assert.equal(clientPairingLink({ ...pairing, expires: 1 }), null);
   assert.equal(requests[0].url, `${service}/api/pairings`);
   assert.equal(requests[0].headers.Authorization, 'Bearer freigabeschluessel');

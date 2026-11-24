@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { createUploadServer } from './server.mjs';
 import { readPairingLink } from './pairing.js';
+import { STUDENT_CLIENT_URL } from '../tmp_recorder/client-hosting.js';
 
 const adminKey = 'test-key-for-the-video-upload-service';
 const admin = { Authorization: `Bearer ${adminKey}` };
@@ -98,6 +99,39 @@ test('erlaubt der Hauptapp nur die Freigabe-API und prüft den passenden Zielord
   assert.equal((await api(url, { method: 'OPTIONS', headers: origin })).headers.get('access-control-allow-methods'), 'DELETE');
   assert.equal((await api(url, { method: 'DELETE', headers: { ...origin, ...admin } })).status, 204);
   assert.equal((await redeem(next)).status, 401);
+});
+
+test('koppelt die feste GitHub-Pages-Seite über den separaten Upload-Dienst', async (t) => {
+  const studentOrigin = new URL(STUDENT_CLIENT_URL).origin;
+  const { api, createPairing, stored } = await setup(t, { clientUrl: STUDENT_CLIENT_URL });
+  const home = await (await api('/')).text();
+  assert.match(home, /src="\.\/client\.js\?v=2"/);
+  assert.match(home, /href="\.\/styles\.css"/);
+  assert.equal((await api('/tmp_recorder/client-hosting.js?v=1')).status, 200);
+  const { pairing, link } = await createPairing();
+  assert.equal(link, `${STUDENT_CLIENT_URL}#abgabe=${pairing}`);
+  assert.equal(readPairingLink(link, STUDENT_CLIENT_URL), pairing);
+  assert.equal(readPairingLink(link, appUrl), null);
+
+  const origin = { Origin: studentOrigin };
+  const sessionPreflight = await api('/api/session', { method: 'OPTIONS', headers: origin });
+  assert.equal(sessionPreflight.headers.get('access-control-allow-origin'), studentOrigin);
+  assert.equal(sessionPreflight.headers.get('access-control-allow-methods'), 'POST, DELETE');
+  const response = await api('/api/session', {
+    method: 'POST', headers: { ...origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ pairing })
+  });
+  assert.equal(response.status, 201);
+  const { token } = await response.json();
+  const path = `/api/video/${randomUUID()}`;
+  const videoPreflight = await api(path, { method: 'OPTIONS', headers: origin });
+  assert.equal(videoPreflight.headers.get('access-control-allow-methods'), 'PUT');
+  assert.match(videoPreflight.headers.get('access-control-allow-headers'), /X-Video-Name/);
+  const put = await api(path, { method: 'PUT', body: sample,
+    headers: { ...origin, Authorization: `Bearer ${token}`, 'Content-Type': 'video/webm', 'X-Video-Name': 'Sport' } });
+  assert.equal(put.status, 201);
+  assert.equal(put.headers.get('access-control-allow-origin'), studentOrigin);
+  assert.deepEqual(stored[0].file, sample);
+  assert.equal((await api('/api/pairings', { method: 'OPTIONS', headers: origin })).status, 403);
 });
 
 test('liefert den Client und erzeugt QR-Einladungen nur mit Freigabeschlüssel', async (t) => {

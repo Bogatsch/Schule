@@ -20,9 +20,10 @@ import {
 import { setupVideoAnnotation } from './annotation.js?v=29';
 import { convertWebMToMp4, isWebMVideo } from './video-converter.js?v=35';
 import { createZip } from './zip-utils.js?v=33';
-import { createWebDavUpload } from './webdav-upload.js?v=5';
+import { createWebDavUpload } from './webdav-upload.js?v=6';
 import { drawSubmissionQr } from './webdav-qr.js?v=3';
-import { clientPairingLink, closeClientPairing, createClientPairing } from './client-pairing.js?v=1';
+import { clientPairingLink, closeClientPairing, createClientPairing } from './client-pairing.js?v=2';
+import { UPLOAD_SERVICE_URL } from './client-hosting.js?v=1';
 import { GUIDE_TREE } from './pages/leitbilder/guide-tree.js?v=e354de49';
 import {
   deleteMedia,
@@ -213,7 +214,6 @@ const elements = {
   webDavQrButton: document.querySelector('#webdav-qr-button'),
   webDavQrCanvas: document.querySelector('#webdav-qr'),
   webDavQrEditor: document.querySelector('#webdav-qr-editor'),
-  webDavQrUrl: document.querySelector('#webdav-qr-url'),
   webDavQrKey: document.querySelector('#webdav-qr-key'),
   webDavQrSave: document.querySelector('#webdav-qr-save'),
   webDavQrClose: document.querySelector('#webdav-qr-close'),
@@ -1748,7 +1748,7 @@ function updateProtectedAccessUI() {
 
 function renderWebDav({ target, clientPairing, ready, remembered, connecting, uploading, status, error }) {
   const busy = connecting || uploading || savingWebDavQr;
-  const submissionUrl = clientPairingLink(clientPairing);
+  const submissionUrl = clientPairingLink(clientPairing, UPLOAD_SERVICE_URL);
   const showQr = ready && submissionUrl && !editingWebDavQr;
   const showEditor = ready && !showQr;
   clearTimeout(webDavQrExpiryTimer);
@@ -1771,11 +1771,8 @@ function renderWebDav({ target, clientPairing, ready, remembered, connecting, up
   elements.webDavRemember.disabled = busy || ready;
   elements.webDavPassword.disabled = busy || ready;
   elements.webDavConnect.disabled = busy || ready;
-  elements.webDavQrUrl.disabled = busy || !showEditor;
-  elements.webDavQrUrl.readOnly = Boolean(submissionUrl);
-  if (!elements.webDavQrUrl.value && clientPairing) elements.webDavQrUrl.value = clientPairing.service;
-  elements.webDavQrKey.disabled = busy || !showEditor;
-  elements.webDavQrSave.disabled = busy || !showEditor;
+  elements.webDavQrKey.disabled = busy || !showEditor || !UPLOAD_SERVICE_URL;
+  elements.webDavQrSave.disabled = busy || !showEditor || !UPLOAD_SERVICE_URL;
   elements.webDavQrSave.textContent = submissionUrl ? 'Neuen QR-Code erzeugen' : 'QR-Code erzeugen';
   elements.webDavQrClose.disabled = busy || !showEditor;
   elements.webDavQrCancel.disabled = busy;
@@ -1790,7 +1787,9 @@ function renderWebDav({ target, clientPairing, ready, remembered, connecting, up
     elements.webDavQrCanvas.height = 0;
     drawnSubmissionUrl = null;
   }
-  const qrStatus = savingWebDavQr ? 'Freigabe wird aktualisiert …' : webDavQrError;
+  const qrStatus = UPLOAD_SERVICE_URL
+    ? savingWebDavQr ? 'Freigabe wird aktualisiert …' : webDavQrError
+    : 'Die HTTPS-Adresse des Upload-Dienstes fehlt in client-hosting.js.';
   elements.webDavStatus.textContent = showEditor && qrStatus ? qrStatus : ready && !error ? '' : status;
   elements.webDavStatus.dataset.status = error || (showEditor && webDavQrError) ? 'error' : '';
   elements.webDavStatus.hidden = !elements.webDavStatus.textContent;
@@ -1800,18 +1799,15 @@ function renderWebDav({ target, clientPairing, ready, remembered, connecting, up
 function resetWebDavQrEditor() {
   editingWebDavQr = false;
   webDavQrError = '';
-  const state = webDav.getState();
-  elements.webDavQrUrl.value = state.clientPairing?.service ?? '';
   elements.webDavQrKey.value = '';
-  renderWebDav(state);
+  renderWebDav(webDav.getState());
 }
 
 function focusWebDavPanel() {
   const { ready, target } = webDav.getState();
   let field = target ? elements.webDavPassword : elements.webDavUrl;
   if (ready) {
-    field = elements.webDavQrUrl.readOnly ? elements.webDavQrKey : elements.webDavQrUrl;
-    if (elements.webDavQrEditor.hidden) field = elements.webDavQrButton;
+    field = elements.webDavQrEditor.hidden ? elements.webDavQrButton : elements.webDavQrKey;
   }
   field.focus({ preventScroll: true });
 }
@@ -3212,7 +3208,6 @@ elements.accountEnrollmentSkip.addEventListener('click', () => {
 elements.accountLogout.addEventListener('click', () => exitTeacherMode());
 elements.webDavQrButton.addEventListener('click', () => {
   editingWebDavQr = true;
-  elements.webDavQrUrl.value = webDav.getState().clientPairing?.service ?? '';
   renderWebDav(webDav.getState());
   focusWebDavPanel();
 });
@@ -3220,19 +3215,17 @@ elements.webDavQrCancel.addEventListener('click', () => {
   resetWebDavQrEditor();
   focusWebDavPanel();
 });
-[elements.webDavQrUrl, elements.webDavQrKey].forEach((field) => {
-  field.addEventListener('input', () => {
-    if (webDavQrError) {
-      webDavQrError = '';
-      renderWebDav(webDav.getState());
-    }
-  });
+elements.webDavQrKey.addEventListener('input', () => {
+  if (webDavQrError) {
+    webDavQrError = '';
+    renderWebDav(webDav.getState());
+  }
 });
 
 async function saveWebDavQr(close = false) {
   const { target, clientPairing: previous, ready } = webDav.getState();
-  if (savingWebDavQr || !teacherMode || !ready || elements.webDavQrEditor.hidden) return;
-  if (close && (!clientPairingLink(previous) || !elements.webDavQrKey.reportValidity())) return;
+  if (savingWebDavQr || !teacherMode || !ready || !UPLOAD_SERVICE_URL || elements.webDavQrEditor.hidden) return;
+  if (close && (!clientPairingLink(previous, UPLOAD_SERVICE_URL) || !elements.webDavQrKey.reportValidity())) return;
   const key = elements.webDavQrKey.value;
   elements.webDavQrKey.value = '';
   savingWebDavQr = true;
@@ -3244,7 +3237,7 @@ async function saveWebDavQr(close = false) {
       await closeClientPairing(previous, key);
       await webDav.setClientPairing({ service: previous.service }, target.url);
     } else {
-      created = await createClientPairing({ service: elements.webDavQrUrl.value, key, targetUrl: target.url, previous });
+      created = await createClientPairing({ service: UPLOAD_SERVICE_URL, key, targetUrl: target.url, previous });
       await webDav.setClientPairing(created, target.url);
     }
     resetWebDavQrEditor();

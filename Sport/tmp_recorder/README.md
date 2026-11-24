@@ -74,9 +74,9 @@ Die Ordneradresse aus der älteren Version wird übernommen. Das Passwort kann e
 
 ### QR-Code zur Videoabgabe
 
-Im verbundenen WebDAV-Reiter die **HTTPS-Adresse des Schüler-Clients** und den **Freigabeschlüssel des Upload-Dienstes** eingeben. Mit **QR-Code erzeugen** erstellt der Dienst eine zeitlich begrenzte Upload-Freigabe für denselben WebDAV-Ordner. Der Client scannt den Code und erhält damit seine eigene Upload-Sitzung. Die QR-Ansicht zeigt die Einladung ohne WebDAV-Adresse, Benutzernamen oder Freigabeschlüssel. Mit einem Tipp auf den QR-Code lässt sich die Abgabe erneuern oder schließen. Die Hauptapp merkt sich die Dienstadresse und zeigt den gespeicherten QR-Code bis zum Ablauf der Freigabe an. Gib den Freigabeschlüssel bei jeder Änderung erneut ein.
+Im verbundenen WebDAV-Reiter den **Freigabeschlüssel des Upload-Dienstes** eingeben. Mit **QR-Code erzeugen** erstellt der Dienst eine zeitlich begrenzte Upload-Freigabe für denselben WebDAV-Ordner. Der QR-Code verwendet die feste GitHub-Pages-Adresse des Schüler-Clients. Der Client scannt den Code und erhält damit seine eigene Upload-Sitzung. Mit einem Tipp auf den QR-Code lässt sich die Abgabe erneuern oder schließen. Gib den Freigabeschlüssel bei jeder Änderung erneut ein.
 
-Der Upload-Dienst muss unter der HTTPS-Adresse des Clients laufen. Seine `WEBDAV_URL` entspricht dem Ordner der Hauptapp. Über `TEACHER_ORIGIN` erhält die Hauptapp Zugriff auf die Freigabe-API. [Einrichtung des Upload-Dienstes](../tmp_recorder_client/README.md)
+Client und Hauptapp lesen die öffentliche HTTPS-Adresse des Upload-Dienstes einmalig aus `client-hosting.js`. Seine `WEBDAV_URL` entspricht dem Ordner der Hauptapp. [Einrichtung des Upload-Dienstes](../tmp_recorder_client/README.md)
 
 ### Voraussetzungen am Server
 

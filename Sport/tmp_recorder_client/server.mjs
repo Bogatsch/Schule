@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { pathToFileURL } from 'node:url';
 import { createPairingLink, PAIRING_TOKEN_PATTERN } from './pairing.js';
+import { STUDENT_CLIENT_URL, UPLOAD_SERVICE_URL } from '../tmp_recorder/client-hosting.js';
 
 const SESSION_MS = 60 * 60_000;
 const UPLOAD_TIMEOUT_MS = 10 * 60_000;
@@ -18,7 +19,8 @@ const assets = new Map([
   ['/client.js', ['client.js', 'text/javascript; charset=utf-8']],
   ['/teacher.js', ['teacher.js', 'text/javascript; charset=utf-8']],
   ['/vendor/jsqr/jsQR-1.4.0.js', ['vendor/jsqr/jsQR-1.4.0.js', 'text/javascript; charset=utf-8']],
-  ['/shared/media-utils.js', ['../tmp_recorder/media-utils.js', 'text/javascript; charset=utf-8']],
+  ['/tmp_recorder/media-utils.js', ['../tmp_recorder/media-utils.js', 'text/javascript; charset=utf-8']],
+  ['/tmp_recorder/client-hosting.js', ['../tmp_recorder/client-hosting.js', 'text/javascript; charset=utf-8']],
   ['/shared/vendor/qrcode-generator/qrcode-2.0.4.js', ['../tmp_recorder/vendor/qrcode-generator/qrcode-2.0.4.js', 'text/javascript; charset=utf-8']]
 ]);
 
@@ -123,10 +125,12 @@ async function* videoBody(request, length, type) {
   if (header !== null || seen !== length) throw new RequestError(400, 'Die Aufnahme ist unvollständig.');
 }
 
-export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, adminKey, teacherOrigin,
+export function createUploadServer({ appUrl, clientUrl = appUrl, davUrl, davUsername, davPassword, adminKey, teacherOrigin,
   now = Date.now, sessionMs = SESSION_MS, maxVideoBytes = MAX_VIDEO_BYTES }) {
   const publicUrl = checkedUrl(appUrl);
-  if (publicUrl.pathname !== '/') throw new Error('APP_URL muss auf das Stammverzeichnis des Clients zeigen.');
+  if (publicUrl.pathname !== '/') throw new Error('APP_URL muss auf das Stammverzeichnis des Upload-Dienstes zeigen.');
+  const studentUrl = checkedUrl(clientUrl);
+  if (!studentUrl.pathname.endsWith('/')) throw new Error('Die Client-Adresse muss mit einem Schrägstrich enden.');
   const teacherUrl = teacherOrigin ? checkedUrl(teacherOrigin) : null;
   if (teacherUrl && teacherUrl.pathname !== '/') throw new Error('TEACHER_ORIGIN braucht nur die Origin der Hauptapp.');
   const destination = checkedUrl(davUrl);
@@ -239,19 +243,22 @@ export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, a
         return response.end();
       }
       const revokeMatch = /^\/api\/pairings\/([A-Za-z0-9_-]+)$/.exec(pathname);
-      const pairingRoute = pathname === '/api/pairings' || revokeMatch;
+      const pairingMethods = pathname === '/api/pairings' ? 'POST' : revokeMatch ? 'DELETE' : null;
+      const videoId = /^\/api\/video\/([^/]+)$/.exec(pathname)?.[1];
+      const studentMethods = pathname === '/api/session' ? 'POST, DELETE' : VIDEO_ID.test(videoId ?? '') ? 'PUT' : null;
       const origin = request.headers.origin;
-      const fromTeacher = pairingRoute && origin && origin === teacherUrl?.origin && origin !== publicUrl.origin;
-      if (pairingRoute) response.setHeader('Vary', 'Origin');
-      if (fromTeacher) {
+      const fromTeacher = pairingMethods && origin && origin === teacherUrl?.origin && origin !== publicUrl.origin;
+      const fromStudent = studentMethods && origin && origin === studentUrl.origin && origin !== publicUrl.origin;
+      if (pairingMethods || studentMethods) response.setHeader('Vary', 'Origin');
+      if (fromTeacher || fromStudent) {
         response.setHeader('Access-Control-Allow-Origin', origin);
         if (request.method === 'OPTIONS') {
-          response.setHeader('Access-Control-Allow-Methods', revokeMatch ? 'DELETE' : 'POST');
-          response.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+          response.setHeader('Access-Control-Allow-Methods', fromTeacher ? pairingMethods : studentMethods);
+          response.setHeader('Access-Control-Allow-Headers', fromStudent ? 'Authorization, Content-Type, X-Video-Name' : 'Authorization, Content-Type');
           return reply(response, 204);
         }
       }
-      if (origin && origin !== publicUrl.origin && !fromTeacher) throw new RequestError(403, 'Die Anfrage stammt von einer anderen Webseite.');
+      if (origin && origin !== publicUrl.origin && !fromTeacher && !fromStudent) throw new RequestError(403, 'Die Anfrage stammt von einer anderen Webseite.');
       expirePairings();
       const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
       if (pathname === '/api/pairings' && request.method === 'POST') {
@@ -272,7 +279,7 @@ export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, a
         const pairing = newToken();
         const expires = now() + sessionMs;
         pairings.set(pairing, expires);
-        return reply(response, 201, { pairing, expires, link: createPairingLink(publicUrl, pairing) });
+        return reply(response, 201, { pairing, expires, link: createPairingLink(studentUrl, pairing) });
       }
       if (revokeMatch && request.method === 'DELETE') {
         checkAdmin(token);
@@ -295,7 +302,6 @@ export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, a
         if (session) revokeSession(token, session);
         return reply(response, 204);
       }
-      const videoId = /^\/api\/video\/([^/]+)$/.exec(pathname)?.[1];
       if (videoId && VIDEO_ID.test(videoId) && request.method === 'PUT') {
         const session = sessions.get(token);
         if (!session) throw new RequestError(401, 'Die Abgabe ist abgelaufen. Scanne einen neuen QR-Code.');
@@ -320,9 +326,11 @@ export function createUploadServer({ appUrl, davUrl, davUsername, davPassword, a
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT || 8080);
   const host = process.env.HOST || '127.0.0.1';
-  const appUrl = process.env.APP_URL || `http://localhost:${port}/`;
-  const server = createUploadServer({ appUrl, davUrl: process.env.WEBDAV_URL,
+  const appUrl = process.env.APP_URL || UPLOAD_SERVICE_URL || `http://localhost:${port}/`;
+  const clientUrl = new URL(appUrl).protocol === 'https:' ? STUDENT_CLIENT_URL : appUrl;
+  const teacherOrigin = process.env.TEACHER_ORIGIN || new URL(clientUrl).origin;
+  const server = createUploadServer({ appUrl, clientUrl, davUrl: process.env.WEBDAV_URL,
     davUsername: process.env.WEBDAV_USERNAME, davPassword: process.env.WEBDAV_PASSWORD,
-    adminKey: process.env.PAIRING_ADMIN_KEY, teacherOrigin: process.env.TEACHER_ORIGIN });
-  server.listen(port, host, () => console.log(`Videoabgabe ${appUrl}\nQR-Codes für Lehrkräfte ${new URL('lehrkraft/', appUrl)}`));
+    adminKey: process.env.PAIRING_ADMIN_KEY, teacherOrigin });
+  server.listen(port, host, () => console.log(`Schüler-Client ${clientUrl}\nUpload-Dienst ${appUrl}\nQR-Codes für Lehrkräfte ${new URL('lehrkraft/', appUrl)}`));
 }
