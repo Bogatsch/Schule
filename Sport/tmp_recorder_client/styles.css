@@ -51,6 +51,7 @@ main { max-width: 960px; margin-inline: auto; padding: clamp(0.85rem, 3vw, 1.8re
 .record-time { position: absolute; top: 0.75rem; left: 0.75rem; padding: 0.4rem 0.65rem; background: var(--coral); color: white; border-radius: 8px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.85rem; }
 .playback { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+#play { inline-size: 8rem; flex: 0 0 auto; white-space: nowrap; }
 .playback input { min-width: 5rem; flex: 1; accent-color: var(--teal); height: 44px; }
 .playback output { font-variant-numeric: tabular-nums; }
 .step { padding-inline: 0.5rem; }
@@ -63,9 +64,20 @@ form { display: grid; gap: 0.45rem; margin-top: 0.8rem; }
 .gallery-item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; width: 100%; text-align: left; }
 .gallery-item time, .gallery-item .duration { font-variant-numeric: tabular-nums; }
 .gallery-item .duration { font-weight: 500; }
-.gallery-item .submitted { margin-inline-start: auto; color: #24644d; font-size: 0.9rem; }
 .status { min-height: 1.4em; margin: 1rem 0 0; color: var(--teal); font-weight: 650; }
 .status[data-error="true"] { color: var(--coral); }
+.upload-dialog {
+  width: min(calc(100% - 2rem), 27rem);
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+}
+.upload-dialog:not([open]) { display: none; }
+.upload-dialog::backdrop { background: rgb(7 24 28 / 48%); }
+.upload-dialog p { margin-block: 0; line-height: 1.5; }
+.upload-dialog .actions { justify-content: flex-end; }
 
 @media (max-width: 470px) {
   .playback input { order: 1; flex-basis: 100%; }

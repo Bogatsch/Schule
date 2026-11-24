@@ -4,7 +4,7 @@
 2. Die Schülerinnen und Schüler scannen den QR-Code im Client, geben den Zahlencode ein und tippen auf **Verbinden**. [Schüler-Client auf GitHub Pages](https://bogatsch.github.io/Schule/Sport/tmp_recorder_client/)
 3. Nach der Verbindung den eigenen Namen oder die Namen der Gruppe eingeben. Die Namen stehen anschließend oben links.
 4. Unter **Kamera** ein Video aufnehmen, in der Vorschau prüfen und **Speichern** wählen. Die Aufnahme liegt jetzt vorübergehend in der **Galerie**. Anhand von Uhrzeit und Dauer lassen sich die Videos unterscheiden und einzeln ansehen.
-5. In der **Galerie** ein Video öffnen und **Hochladen** wählen. Der Browser sendet dieses Video direkt per WebDAV an den Zielordner. Der Dateiname verwendet die eingegebenen Namen und eine eindeutige Kennung, damit gleichnamige Abgaben einander nicht überschreiben.
+5. In der **Galerie** ein Video öffnen, **Hochladen** wählen und mit **Video abgeben** bestätigen. Pro Sitzung lässt sich ein Video abgeben. Der Browser sendet es direkt an WebDAV und meldet die Gruppe nach erfolgreichem Upload ab. Dabei wird die lokale Galerie geleert. Der Dateiname enthält die eingegebenen Namen und eine eindeutige Kennung, damit gleichnamige Abgaben einander nicht überschreiben.
 6. **Abmelden** bricht eine laufende Übertragung ab, schließt die Kamera und verwirft Namen, Zugangsdaten und Galerie aus der Sitzung. Auch beim Neuladen wird die Galerie geleert. Bereits bestätigte Uploads bleiben im WebDAV-Ordner.
 
 ## WebDAV vorbereiten

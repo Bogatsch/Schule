@@ -17,6 +17,7 @@ const pinSubmit = get('pin-submit');
 const nameInput = get('student-name');
 const gallery = get('gallery-list');
 const uploadButton = get('upload-video');
+const uploadDialog = get('upload-dialog');
 const scanCanvas = document.createElement('canvas');
 const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
 const pairingPage = new URL('./', location.href);
@@ -112,6 +113,7 @@ function logout(message = 'Abgemeldet.') {
   epoch += 1;
   session = null;
   pairing = null;
+  if (uploadDialog.open) uploadDialog.close();
   pending?.abort();
   pending = null;
   pinInput.value = '';
@@ -321,8 +323,7 @@ function openPreview(video) {
   get('save').hidden = saved;
   get('retake').hidden = saved;
   uploadButton.hidden = !saved;
-  uploadButton.disabled = video.uploaded;
-  uploadButton.textContent = video.uploaded ? 'Hochgeladen' : 'Hochladen';
+  uploadButton.disabled = false;
   view('preview');
   updatePlayback();
   status('');
@@ -347,12 +348,6 @@ function showGallery() {
     length.className = 'duration';
     length.textContent = formatPlaybackTime(video.duration);
     button.append(time, length);
-    if (video.uploaded) {
-      const submitted = document.createElement('span');
-      submitted.className = 'submitted';
-      submitted.textContent = 'Hochgeladen';
-      button.append(submitted);
-    }
     button.addEventListener('click', () => openPreview(video));
     item.append(button);
     gallery.append(item);
@@ -383,7 +378,7 @@ function startRecording() {
       recorder = null;
       releaseCamera();
       if (file.size) {
-        openPreview({ file, duration: videoDuration, id: crypto.randomUUID(), recordedAt: Date.now(), uploaded: false });
+        openPreview({ file, duration: videoDuration, id: crypto.randomUUID(), recordedAt: Date.now() });
       } else {
         resetRecorder();
         get('capture').disabled = true;
@@ -430,22 +425,35 @@ function saveVideo() {
   showHome('Video in der Galerie gespeichert.');
 }
 
+function canSubmitVideo() {
+  return session && studentNames && savedVideos.includes(previewVideo) && !pending;
+}
+
+function confirmSubmission() {
+  if (!canSubmitVideo()) return;
+  preview.pause();
+  if (typeof uploadDialog.showModal === 'function') {
+    uploadDialog.showModal();
+  } else if (window.confirm(get('upload-message').textContent)) {
+    void submitVideo();
+  }
+}
+
 async function submitVideo() {
+  if (!canSubmitVideo()) return;
   const video = previewVideo;
-  if (!session || !studentNames || !video || video.uploaded || !savedVideos.includes(video) || pending) return;
   const generation = epoch;
   const controller = new AbortController();
   pending = controller;
   uploadButton.disabled = true;
   get('preview-back').disabled = true;
-  preview.pause();
   status('Video wird hochgeladen …');
   try {
     await uploadSubmission(session, { title: studentNames, id: video.id, file: video.file }, controller.signal);
     if (generation !== epoch) return;
-    video.uploaded = true;
-    uploadButton.textContent = 'Hochgeladen';
-    status('Video erfolgreich abgegeben.');
+    pending = null;
+    logout('Video hochgeladen. Du bist jetzt abgemeldet.');
+    get('scan-start').focus({ preventScroll: true });
   } catch (error) {
     if (generation === epoch) {
       status(error.message, true);
@@ -453,8 +461,9 @@ async function submitVideo() {
   } finally {
     if (generation === epoch) {
       pending = null;
-      uploadButton.disabled = video.uploaded;
+      uploadButton.disabled = false;
       get('preview-back').disabled = false;
+      uploadButton.focus({ preventScroll: true });
     }
   }
 }
@@ -479,7 +488,13 @@ get('camera-retry').addEventListener('click', startVideoCamera);
 get('capture').addEventListener('click', () => recorder ? stopRecording() : startRecording());
 get('retake').addEventListener('click', startVideoCamera);
 get('save').addEventListener('click', saveVideo);
-uploadButton.addEventListener('click', submitVideo);
+uploadButton.addEventListener('click', confirmSubmission);
+get('upload-cancel').addEventListener('click', () => uploadDialog.close());
+get('upload-confirm').addEventListener('click', () => {
+  if (!uploadDialog.open) return;
+  uploadDialog.close();
+  void submitVideo();
+});
 get('play').addEventListener('click', () => {
   if (!preview.paused) preview.pause();
   else void preview.play().catch(() => status('Die Vorschau konnte nicht abgespielt werden.', true));
