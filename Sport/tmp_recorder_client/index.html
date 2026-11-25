@@ -9,7 +9,7 @@
   <title>Videoabgabe | Sportkamera</title>
   <link rel="stylesheet" href="./styles.css?v=4">
   <script defer src="./vendor/jsqr/jsQR-1.4.0.js"></script>
-  <script type="module" src="./client.js?v=6"></script>
+  <script type="module" src="./client.js?v=8"></script>
 </head>
 <body>
   <header class="topbar">
@@ -18,7 +18,7 @@
     <button id="logout" class="secondary" type="button" hidden>Abmelden</button>
   </header>
   <main id="app">
-    <section id="scan-view" aria-labelledby="scan-heading">
+    <section id="scan-view" aria-labelledby="scan-heading" hidden>
       <h2 id="scan-heading">Abgabe-QR-Code scannen</h2>
       <div class="stage scan-stage" id="scan-stage" hidden>
         <video id="scan-camera" playsinline muted aria-label="Kamera für den QR-Scan"></video>
@@ -33,6 +33,7 @@
         <label for="pin-input">Vierstelliger Zahlencode unter dem QR-Code</label>
         <input id="pin-input" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
         <button id="pin-submit" type="submit">Verbinden</button>
+        <button id="renew-qr" class="secondary" type="button" hidden>Neuen QR-Code scannen</button>
       </form>
     </section>
 

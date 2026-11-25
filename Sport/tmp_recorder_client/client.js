@@ -1,5 +1,9 @@
 import { checkSubmissionAccess, readClientPairing, unlockClientPairing, uploadSubmission } from '../tmp_recorder/client-pairing.js?v=4';
 import {
+  createSubmission, deleteSubmission, loadSubmission, restoreSubmissionAccess, selectUpload, storeVideo,
+  updateSubmission, updateSubmissionAccess
+} from './submission-store.js?v=2';
+import {
   CAMERA_TARGET_FRAME_RATE, MAX_RECORDING_MS, formatPlaybackTime, formatRecordingTime,
   nextStepTime, selectSupportedVideoMimeType, videoBitrateForFrameRate
 } from '../tmp_recorder/media-utils.js?v=39';
@@ -21,9 +25,22 @@ const uploadDialog = get('upload-dialog');
 const scanCanvas = document.createElement('canvas');
 const scanContext = scanCanvas.getContext('2d', { willReadFrequently: true });
 const pairingPage = new URL('./', location.href);
+const expiredMessage = 'Die Abgabesitzung ist nach 90 Minuten abgelaufen.';
+let submissionChanges = null;
+try {
+  submissionChanges = new BroadcastChannel('sportkamera-submission');
+} catch {
+  // Die Sitzung kann auch ohne Benachrichtigungen zwischen Tabs gespeichert werden.
+}
 
 let epoch = 0;
 let session = null;
+let submission = null;
+let expiryTimer = null;
+let reconnecting = false;
+let writing = false;
+let ending = false;
+let loading = false;
 let pairing = null;
 let pending = null;
 let studentNames = '';
@@ -47,8 +64,10 @@ function status(message, error = false) {
 
 function view(name) {
   for (const [id, element] of Object.entries(views)) element.hidden = id !== name;
-  get('logout').hidden = !session && !pairing;
-  get('logout').textContent = session ? 'Abmelden' : 'Abbrechen';
+  get('logout').hidden = !submission && !pairing;
+  get('logout').disabled = ending;
+  get('logout').textContent = reconnecting ? 'Zurück' : submission ? 'Abmelden' : 'Abbrechen';
+  get('renew-qr').hidden = name !== 'pin' || !reconnecting;
 }
 
 function showStudentNames(names) {
@@ -109,9 +128,16 @@ function closePreview() {
   get('preview-back').disabled = false;
 }
 
-function logout(message = 'Abgemeldet.') {
+function clearSessionView(message) {
   epoch += 1;
+  clearTimeout(expiryTimer);
+  expiryTimer = null;
   session = null;
+  submission = null;
+  reconnecting = false;
+  ending = false;
+  writing = false;
+  loading = false;
   pairing = null;
   if (uploadDialog.open) uploadDialog.close();
   pending?.abort();
@@ -130,6 +156,54 @@ function logout(message = 'Abgemeldet.') {
   get('scan-start').hidden = false;
   view('scan');
   status(message);
+}
+
+async function removeSubmission(id) {
+  await deleteSubmission(id);
+  submissionChanges?.postMessage(id);
+}
+
+async function logout(message = 'Abgemeldet.') {
+  if (ending) return;
+  const current = submission;
+  if (!current) {
+    clearSessionView(message);
+    return;
+  }
+  const generation = ++epoch;
+  ending = true;
+  reconnecting = false;
+  clearTimeout(expiryTimer);
+  if (uploadDialog.open) uploadDialog.close();
+  pending?.abort();
+  pending = null;
+  resetRecorder();
+  releaseCamera();
+  closePreview();
+  view('waiting');
+  status('Lokale Sitzung wird gelöscht …');
+  try {
+    await removeSubmission(current.id);
+    if (generation === epoch) clearSessionView(message);
+  } catch {
+    if (generation !== epoch) return;
+    ending = false;
+    view('waiting');
+    status('Die lokalen Aufnahmen konnten nicht gelöscht werden. Tippe erneut auf „Abmelden“.', true);
+  }
+}
+
+function expired() {
+  if (!submission || submission.expiresAt > Date.now()) return false;
+  void logout(expiredMessage);
+  return true;
+}
+
+function setExpiryTimer() {
+  clearTimeout(expiryTimer);
+  expiryTimer = setTimeout(() => {
+    if (submission && !expired()) setExpiryTimer();
+  }, Math.max(0, submission.expiresAt - Date.now()));
 }
 
 function cameraMessage(error) {
@@ -212,27 +286,46 @@ function promptForPin(incoming) {
 
 async function connect(event) {
   event.preventDefault();
-  if (!pairing || pending) return;
+  if (!pairing || pending || expired()) return;
   const pin = pinInput.value;
+  const packet = pairing;
   const generation = ++epoch;
   const controller = new AbortController();
   pending = controller;
   pinInput.value = '';
   pinInput.disabled = true;
   pinSubmit.disabled = true;
+  get('renew-qr').disabled = true;
   status('Zahlencode wird geprüft …');
   try {
-    const access = await unlockClientPairing(pairing, pin);
+    const access = await unlockClientPairing(packet, pin);
     if (generation !== epoch) return;
     if (!access) {
       status('Der Zahlencode stimmt nicht. Versuche es erneut.', true);
       return;
     }
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(access.url));
+    const destination = btoa(String.fromCharCode(...new Uint8Array(digest)));
+    if (generation !== epoch || expired()) return;
+    if (submission && submission.destination !== destination) {
+      status('Dieser QR-Code gehört zu einem anderen Abgabeordner.', true);
+      return;
+    }
     status('Videoabgabe wird verbunden …');
     await checkSubmissionAccess(access, controller);
+    if (generation !== epoch || expired()) return;
+    const current = submission;
+    const stored = current ? await updateSubmissionAccess(current, access) : await createSubmission(destination, access);
     if (generation !== epoch) return;
+    if (!stored) {
+      if (current) clearSessionView('Die bisherige Abgabesitzung ist beendet.');
+      else status('In diesem Browser gibt es bereits eine Abgabesitzung. Lade die Seite neu, um sie fortzusetzen.', true);
+      return;
+    }
+    submission = stored;
     session = access;
     pairing = null;
+    setExpiryTimer();
   } catch (error) {
     if (generation === epoch) status(error.message, true);
   } finally {
@@ -240,7 +333,10 @@ async function connect(event) {
       pending = null;
       pinInput.disabled = false;
       pinSubmit.disabled = false;
-      if (session) {
+      get('renew-qr').disabled = false;
+      if (session && reconnecting) {
+        leaveReconnect('WebDAV ist verbunden. Du kannst das Video abgeben.');
+      } else if (session) {
         view('name');
         status('');
         nameInput.focus({ preventScroll: true });
@@ -249,6 +345,21 @@ async function connect(event) {
       }
     }
   }
+}
+
+function leaveReconnect(message = '') {
+  epoch += 1;
+  pending?.abort();
+  pending = null;
+  pairing = null;
+  reconnecting = false;
+  pinInput.value = '';
+  pinInput.disabled = false;
+  pinSubmit.disabled = false;
+  get('renew-qr').disabled = false;
+  releaseCamera();
+  openPreview(previewVideo);
+  status(message);
 }
 
 function showHome(message = '', focusTarget = 'open-camera') {
@@ -261,22 +372,40 @@ function showHome(message = '', focusTarget = 'open-camera') {
   get(focusTarget).focus({ preventScroll: true });
 }
 
-function acceptNames(event) {
+async function acceptNames(event) {
   event.preventDefault();
-  if (!session) return;
+  if (!submission || writing || expired()) return;
   const names = nameInput.value.trim().replace(/\s+/g, ' ');
   if (!names) {
     status('Gib mindestens einen Namen ein.', true);
     nameInput.focus({ preventScroll: true });
     return;
   }
-  showStudentNames(names);
-  nameInput.value = '';
-  showHome();
+  const generation = epoch;
+  writing = true;
+  const button = get('name-form').querySelector('button');
+  button.disabled = true;
+  try {
+    const stored = await updateSubmission(submission.id, { names });
+    if (generation !== epoch) return;
+    if (!stored) {
+      clearSessionView('Die bisherige Abgabesitzung ist beendet.');
+      return;
+    }
+    submission = stored;
+    showStudentNames(names);
+    nameInput.value = '';
+    showHome();
+  } catch {
+    if (generation === epoch) status('Die Abgabesitzung konnte nicht gespeichert werden. Versuche es erneut.', true);
+  } finally {
+    writing = false;
+    button.disabled = false;
+  }
 }
 
 async function startVideoCamera() {
-  if (!session || !studentNames) return;
+  if (!submission || !studentNames || expired()) return;
   const generation = ++epoch;
   resetRecorder();
   closePreview();
@@ -321,7 +450,9 @@ function openPreview(video) {
   preview.playbackRate = 1;
   preview.load();
   get('save').hidden = saved;
+  get('save').disabled = false;
   get('retake').hidden = saved;
+  get('retake').disabled = false;
   uploadButton.hidden = !saved;
   uploadButton.disabled = false;
   view('preview');
@@ -331,6 +462,7 @@ function openPreview(video) {
 }
 
 function showGallery() {
+  if (!submission || expired()) return;
   const previousVideo = previewVideo;
   closePreview();
   gallery.replaceChildren();
@@ -348,6 +480,11 @@ function showGallery() {
     length.className = 'duration';
     length.textContent = formatPlaybackTime(video.duration);
     button.append(time, length);
+    if (video.id === submission.uploadVideoId) {
+      const selection = document.createElement('span');
+      selection.textContent = 'Für Abgabe gewählt';
+      button.append(selection);
+    }
     button.addEventListener('click', () => openPreview(video));
     item.append(button);
     gallery.append(item);
@@ -361,7 +498,7 @@ function showGallery() {
 }
 
 function startRecording() {
-  if (!session || !stream || recorder) return;
+  if (!submission || !stream || recorder || expired()) return;
   const generation = epoch;
   const type = selectSupportedVideoMimeType(window.MediaRecorder);
   try {
@@ -419,19 +556,47 @@ function updatePlayback() {
   get('play').textContent = preview.paused ? 'Abspielen' : 'Pause';
 }
 
-function saveVideo() {
-  if (!previewVideo || savedVideos.includes(previewVideo)) return;
-  savedVideos.push(previewVideo);
-  showHome('Video in der Galerie gespeichert.');
+async function saveVideo() {
+  const video = previewVideo;
+  if (!submission || !video || writing || savedVideos.includes(video) || expired()) return;
+  const generation = epoch;
+  const controls = [get('save'), get('retake'), get('preview-back')];
+  writing = true;
+  for (const control of controls) control.disabled = true;
+  try {
+    const stored = await storeVideo(submission.id, video);
+    if (generation !== epoch) return;
+    if (!stored) {
+      clearSessionView('Die bisherige Abgabesitzung ist beendet.');
+      return;
+    }
+    savedVideos.push(video);
+    showHome('Video in der Galerie gespeichert.');
+  } catch {
+    if (generation === epoch) status('Das Video konnte im Browser nicht gespeichert werden. Prüfe den freien Speicher und versuche es erneut.', true);
+  } finally {
+    writing = false;
+    for (const control of controls) control.disabled = false;
+  }
 }
 
 function canSubmitVideo() {
-  return session && studentNames && savedVideos.includes(previewVideo) && !pending;
+  return submission && studentNames && savedVideos.includes(previewVideo) && !pending && !expired();
 }
 
 function confirmSubmission() {
   if (!canSubmitVideo()) return;
   preview.pause();
+  if (!session) {
+    reconnecting = true;
+    if (submission.pairing) {
+      promptForPin(submission.pairing);
+      status('Gib den Zahlencode für diese ältere Sitzung einmalig erneut ein.');
+    } else {
+      void startScan();
+    }
+    return;
+  }
   if (typeof uploadDialog.showModal === 'function') {
     uploadDialog.showModal();
   } else if (window.confirm(get('upload-message').textContent)) {
@@ -440,23 +605,43 @@ function confirmSubmission() {
 }
 
 async function submitVideo() {
-  if (!canSubmitVideo()) return;
+  if (!canSubmitVideo() || !session) return;
   const video = previewVideo;
+  const current = submission;
+  const access = session;
   const generation = epoch;
   const controller = new AbortController();
   pending = controller;
   uploadButton.disabled = true;
   get('preview-back').disabled = true;
-  status('Video wird hochgeladen …');
+  status('Verbindung zu WebDAV wird geprüft …');
   try {
-    await uploadSubmission(session, { title: studentNames, id: video.id, file: video.file }, controller.signal);
-    if (generation !== epoch) return;
+    await checkSubmissionAccess(access, controller);
+    if (generation !== epoch || expired()) return;
+    const selected = await selectUpload(current.id, video.id);
+    if (generation !== epoch || expired()) return;
+    if (selected === 'ended') {
+      clearSessionView('Die bisherige Abgabesitzung ist beendet.');
+      return;
+    }
+    if (selected === 'another-video') {
+      status('Für diese Sitzung ist bereits ein anderes Video für die Abgabe gewählt. Setze dessen Upload fort.', true);
+      return;
+    }
+    submission.uploadVideoId = video.id;
+    status('Video wird hochgeladen …');
+    await uploadSubmission(access, { title: studentNames, id: video.id, file: video.file }, controller.signal);
+    if (generation !== epoch) {
+      await removeSubmission(current.id);
+      return;
+    }
     pending = null;
-    logout('Video hochgeladen. Du bist jetzt abgemeldet.');
+    await logout('Video hochgeladen. Du bist jetzt abgemeldet.');
     get('scan-start').focus({ preventScroll: true });
   } catch (error) {
     if (generation === epoch) {
-      status(error.message, true);
+      if (error.status === 401) session = null;
+      status(`${error.message} Das Video bleibt in der Galerie.`, true);
     }
   } finally {
     if (generation === epoch) {
@@ -469,8 +654,15 @@ async function submitVideo() {
 }
 
 get('scan-start').addEventListener('click', startScan);
-get('logout').addEventListener('click', () => logout(session ? 'Abgemeldet.' : ''));
+get('logout').addEventListener('click', () => {
+  if (reconnecting) leaveReconnect();
+  else void logout(submission ? 'Abgemeldet.' : '');
+});
 get('pin-form').addEventListener('submit', connect);
+get('renew-qr').addEventListener('click', () => {
+  pairing = null;
+  void startScan();
+});
 get('name-form').addEventListener('submit', acceptNames);
 get('open-gallery').addEventListener('click', showGallery);
 get('open-camera').addEventListener('click', startVideoCamera);
@@ -513,16 +705,66 @@ for (const [id, direction] of [['back-step', -1], ['forward-step', 1]]) {
 for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'pause', 'ended']) {
   preview.addEventListener(event, updatePlayback);
 }
-window.addEventListener('pagehide', () => logout(''));
-
-function connectFromLink() {
-  if (!location.hash) return false;
+function takePairingLink() {
+  if (!location.hash) return null;
   const incoming = readClientPairing(location.href, pairingPage);
   history.replaceState(null, '', location.pathname + location.search);
-  if (!incoming || session || pairing || pending) return false;
-  promptForPin(incoming);
-  return true;
+  return incoming;
 }
 
-window.addEventListener('hashchange', connectFromLink);
-if (!connectFromLink()) void startScan();
+async function restoreSubmission() {
+  const incoming = takePairingLink();
+  const generation = ++epoch;
+  loading = true;
+  view('waiting');
+  try {
+    const saved = await loadSubmission();
+    if (generation !== epoch) return;
+    if (saved.session) {
+      const access = await restoreSubmissionAccess(saved.session).catch(() => null);
+      if (generation !== epoch) return;
+      submission = saved.session;
+      if (expired()) return;
+      session = access;
+      savedVideos.push(...saved.videos.sort((left, right) => left.recordedAt - right.recordedAt));
+      setExpiryTimer();
+      showStudentNames(submission.names);
+      if (submission.names) {
+        showHome(savedVideos.length ? 'Gespeicherte Aufnahmen wiederhergestellt.' : '');
+      } else {
+        view('name');
+        status('');
+        nameInput.focus({ preventScroll: true });
+      }
+    } else if (incoming) {
+      promptForPin(incoming);
+    } else if (saved.expired) {
+      clearSessionView(expiredMessage);
+    } else {
+      void startScan();
+    }
+  } catch {
+    if (generation === epoch) {
+      clearSessionView('');
+      status('Der lokale Videospeicher konnte nicht geöffnet werden. Lade die Seite neu und versuche es erneut.', true);
+    }
+  } finally {
+    loading = false;
+  }
+}
+
+submissionChanges?.addEventListener('message', (event) => {
+  if (submission?.id === event.data && !ending) clearSessionView('Die Abgabesitzung wurde in einem anderen Tab beendet.');
+});
+window.addEventListener('hashchange', () => {
+  const incoming = takePairingLink();
+  if (incoming && !loading && (!submission || reconnecting) && !pairing && !pending) promptForPin(incoming);
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) expired();
+});
+window.addEventListener('pagehide', () => clearSessionView(''));
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) void restoreSubmission();
+});
+void restoreSubmission();
